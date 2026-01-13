@@ -100,7 +100,10 @@ export default function Onboarding() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              {STEPS[step - 1].icon && <STEPS[step - 1].icon className="h-5 w-5 text-primary" />}
+              {(() => {
+                const IconComponent = STEPS[step - 1].icon;
+                return IconComponent ? <IconComponent className="h-5 w-5 text-primary" /> : null;
+              })()}
               {STEPS[step - 1].title}
             </CardTitle>
             <CardDescription>{STEPS[step - 1].description}</CardDescription>
