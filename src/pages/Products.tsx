@@ -15,7 +15,7 @@ import { Loader2, Sparkles, Package, FileText, Trophy, Plus, Trash2, Copy, Check
 import { toast } from "sonner";
 
 export default function Products() {
-  const { products, addProduct, removeProduct } = useProducts();
+  const { products, addProduct, deleteProduct } = useProducts();
   const { generateContent, isLoading, streamedContent } = useAISpecialist();
   const { saveGeneration } = useGenerations();
   const [activeTab, setActiveTab] = useState("ladder");
@@ -46,6 +46,8 @@ export default function Products() {
     await addProduct({
       ...newProduct,
       ticket: parseFloat(newProduct.ticket),
+      ativo: true,
+      ordem: products?.length || 0,
     });
     setNewProduct({ nome: "", ticket: "", tipo_produto: "servico", tipo_cliente: "desenvolvimento", descricao: "" });
     toast.success("Produto adicionado!");
@@ -91,6 +93,8 @@ export default function Products() {
         output_content: streamedContent,
         titulo,
         input_data: {},
+        favorito: false,
+        tags: [],
       });
       toast.success("Salvo na biblioteca!");
     }
@@ -134,7 +138,7 @@ export default function Products() {
                           <span className="font-bold text-lg">
                             R$ {product.ticket.toLocaleString("pt-BR")}
                           </span>
-                          <Button size="icon" variant="ghost" onClick={() => removeProduct(product.id)}>
+                          <Button size="icon" variant="ghost" onClick={() => deleteProduct(product.id)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>

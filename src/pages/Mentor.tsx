@@ -48,7 +48,7 @@ export default function Mentor() {
 
     if (data) {
       setConversationId(data.id);
-      const loadedMessages = data.messages as Message[];
+      const loadedMessages = data.messages as unknown as Message[];
       setMessages(Array.isArray(loadedMessages) ? loadedMessages : []);
     }
   };

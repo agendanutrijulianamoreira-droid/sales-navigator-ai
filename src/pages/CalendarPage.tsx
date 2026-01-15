@@ -63,6 +63,8 @@ export default function CalendarPage() {
         output_content: streamedContent,
         titulo: topic,
         input_data: { pillar, topic, postType },
+        favorito: false,
+        tags: [],
       });
       toast.success("Salvo na biblioteca!");
     }

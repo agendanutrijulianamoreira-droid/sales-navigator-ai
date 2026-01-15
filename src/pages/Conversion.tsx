@@ -61,6 +61,8 @@ export default function Conversion() {
         output_content: streamedContent,
         titulo: MESSAGE_TYPES.find(t => t.value === messageType)?.label || messageType,
         input_data: { context, selectedProduct },
+        favorito: false,
+        tags: [],
       });
       toast.success("Salvo na biblioteca!");
     }
