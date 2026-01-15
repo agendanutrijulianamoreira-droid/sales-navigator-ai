@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { useProfile } from "./useProfile";
 import { useProducts } from "./useProducts";
 
-type Specialist = 
+export type Specialist = 
   | "COMMAND_CENTER"
   | "BRAND_ARCHITECT"
   | "SOCIAL_MEDIA_MANAGER"
@@ -13,15 +13,29 @@ type Specialist =
   | "CFO_STRATEGIST"
   | "MENTOR_ORCHESTRATOR";
 
-interface Message {
+export interface Message {
   role: "user" | "assistant";
   content: string;
+  specialist?: string;
 }
+
+// Map page specialist names to edge function specialist names
+const specialistMap: Record<string, Specialist> = {
+  brand_architect: "BRAND_ARCHITECT",
+  social_media_manager: "SOCIAL_MEDIA_MANAGER",
+  growth_strategist: "GROWTH_STRATEGIST",
+  material_copywriter: "MATERIAL_COPYWRITER",
+  challenge_coach: "CHALLENGE_COACH",
+  vip_closer: "VIP_CLOSER",
+  cfo_strategist: "CFO_STRATEGIST",
+  mentor_orchestrator: "MENTOR_ORCHESTRATOR",
+};
 
 export function useAISpecialist() {
   const { profile } = useProfile();
   const { products } = useProducts();
   const [isLoading, setIsLoading] = useState(false);
+  const [streamedContent, setStreamedContent] = useState<string>("");
 
   const streamResponse = useCallback(async (
     specialist: Specialist,
@@ -117,9 +131,40 @@ export function useAISpecialist() {
     }
   }, [profile, products]);
 
-  const routeToSpecialist = useCallback(async (query: string): Promise<Specialist> => {
+  const generateContent = useCallback(async (
+    specialistKey: string,
+    subtipo: string,
+    inputData: Record<string, any>
+  ) => {
+    const specialist = specialistMap[specialistKey] || "MENTOR_ORCHESTRATOR";
+    const prompt = `Tipo: ${subtipo}\nDados: ${JSON.stringify(inputData, null, 2)}`;
+    
+    setStreamedContent("");
+    setIsLoading(true);
+
+    let fullContent = "";
+    
+    await streamResponse(
+      specialist,
+      prompt,
+      [],
+      (delta) => {
+        fullContent += delta;
+        setStreamedContent(fullContent);
+      },
+      () => {
+        setIsLoading(false);
+      }
+    );
+
+    return fullContent;
+  }, [streamResponse]);
+
+  const routeToSpecialist = useCallback(async (query: string): Promise<{ content: string; specialist: string }> => {
+    setIsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mentor-router`, {
+      // First, get the right specialist
+      const routerResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mentor-router`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -128,16 +173,45 @@ export function useAISpecialist() {
         body: JSON.stringify({ query }),
       });
 
-      if (!response.ok) {
-        return "MENTOR_ORCHESTRATOR";
+      let specialist: Specialist = "MENTOR_ORCHESTRATOR";
+      if (routerResponse.ok) {
+        const data = await routerResponse.json();
+        specialist = data.specialist || "MENTOR_ORCHESTRATOR";
       }
 
-      const data = await response.json();
-      return data.specialist || "MENTOR_ORCHESTRATOR";
-    } catch {
-      return "MENTOR_ORCHESTRATOR";
-    }
-  }, []);
+      // Then get the response from that specialist
+      let fullContent = "";
+      
+      await streamResponse(
+        specialist,
+        query,
+        [],
+        (delta) => {
+          fullContent += delta;
+        },
+        () => {}
+      );
 
-  return { streamResponse, routeToSpecialist, isLoading };
+      return { 
+        content: fullContent, 
+        specialist: specialist.toLowerCase() 
+      };
+    } catch (error) {
+      console.error("Route to specialist error:", error);
+      return { 
+        content: "Desculpe, ocorreu um erro. Por favor, tente novamente.", 
+        specialist: "mentor_orchestrator" 
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [streamResponse]);
+
+  return { 
+    streamResponse, 
+    generateContent, 
+    routeToSpecialist, 
+    isLoading, 
+    streamedContent 
+  };
 }

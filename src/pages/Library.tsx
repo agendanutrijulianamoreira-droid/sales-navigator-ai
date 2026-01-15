@@ -21,7 +21,7 @@ const TYPE_CONFIG: Record<string, { label: string; icon: any; color: string }> =
 };
 
 export default function Library() {
-  const { generations, toggleFavorite, deleteGeneration, isLoading } = useGenerations();
+  const { generations, toggleFavorite, deleteGeneration, loading } = useGenerations();
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [copiedId, setCopiedId] = useState<string | null>(null);
