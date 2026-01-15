@@ -26,7 +26,8 @@ export function ProtectedRoute({ children, requireOnboarding = true }: Protected
   }
 
   // Check if onboarding is required and not completed
-  if (requireOnboarding && profile && !profile.onboarding_completed) {
+  // If no profile exists or onboarding not completed, redirect to onboarding
+  if (requireOnboarding && (!profile || !profile.onboarding_completed)) {
     if (location.pathname !== "/onboarding") {
       return <Navigate to="/onboarding" replace />;
     }
