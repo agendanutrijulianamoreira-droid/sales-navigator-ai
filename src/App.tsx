@@ -10,6 +10,8 @@ import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Strategy from "./pages/Strategy";
 import CalendarPage from "./pages/CalendarPage";
+import ContentPlanner from "./pages/ContentPlanner";
+import CarouselCreator from "./pages/CarouselCreator";
 import Products from "./pages/Products";
 import Conversion from "./pages/Conversion";
 import Results from "./pages/Results";
@@ -50,6 +52,8 @@ const App = () => (
               <Route path="/" element={<Dashboard />} />
               <Route path="/strategy" element={<Strategy />} />
               <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/planner" element={<ContentPlanner />} />
+              <Route path="/carousel-creator" element={<CarouselCreator />} />
               <Route path="/products" element={<Products />} />
               <Route path="/conversion" element={<Conversion />} />
               <Route path="/results" element={<Results />} />
