@@ -9,10 +9,10 @@ import {
 } from "lucide-react";
 
 const MODULES = [
-  { title: "Estratégia", description: "Brand Hub & Business Lab", icon: Target, href: "/strategy", color: "text-blue-500" },
-  { title: "Calendário", description: "Planeje seu conteúdo", icon: Calendar, href: "/calendar", color: "text-green-500" },
-  { title: "Produtos", description: "Materiais & Desafios", icon: ShoppingBag, href: "/products", color: "text-purple-500" },
-  { title: "Conversão", description: "Lista VIP & Mensagens", icon: MessageSquare, href: "/conversion", color: "text-orange-500" },
+  { title: "Criar Carrossel", description: "Gere posts com IA", icon: Sparkles, href: "/carousel-creator", color: "text-primary" },
+  { title: "Planejador", description: "Calendário de conteúdo", icon: Calendar, href: "/planner", color: "text-green-500" },
+  { title: "Estratégia", description: "Brand Hub & Posicionamento", icon: Target, href: "/strategy", color: "text-blue-500" },
+  { title: "Produtos", description: "Escada de ofertas", icon: ShoppingBag, href: "/products", color: "text-purple-500" },
   { title: "Resultados", description: "GPS Financeiro", icon: BarChart3, href: "/results", color: "text-emerald-500" },
   { title: "Biblioteca", description: "Tudo que você gerou", icon: BookOpen, href: "/library", color: "text-pink-500" },
 ];
