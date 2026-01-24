@@ -19,6 +19,23 @@ export interface CarouselData {
   cta_stories?: string;
 }
 
+export interface WeekContent {
+  id: string;
+  dayOfWeek: number;
+  topic: string;
+  postType: PostType;
+  contentPillar: string;
+  carousel: CarouselData | null;
+  status: "pending" | "generated" | "edited";
+}
+
+export interface DesignSettings {
+  style: string;
+  primaryColor: string;
+  secondaryColor: string;
+  fontFamily: string;
+}
+
 export type PostType = 
   | "PROMESSA"
   | "COMO_FIZ"
@@ -60,6 +77,22 @@ export const DESIGN_STYLES = [
   { id: "warm", label: "Acolhedor", description: "Tons quentes e amigáveis" },
 ];
 
+export const FONT_OPTIONS = [
+  { id: "inter", label: "Inter", style: "font-sans" },
+  { id: "playfair", label: "Playfair Display", style: "font-serif" },
+  { id: "montserrat", label: "Montserrat", style: "font-sans" },
+  { id: "lora", label: "Lora", style: "font-serif" },
+];
+
+export const COLOR_PALETTES = [
+  { id: "neutral", label: "Neutro", primary: "#1a1a1a", secondary: "#6b7280" },
+  { id: "warm", label: "Quente", primary: "#b45309", secondary: "#d97706" },
+  { id: "cool", label: "Frio", primary: "#0369a1", secondary: "#0891b2" },
+  { id: "nature", label: "Natural", primary: "#166534", secondary: "#15803d" },
+  { id: "rose", label: "Rosa", primary: "#9f1239", secondary: "#e11d48" },
+  { id: "purple", label: "Roxo", primary: "#6b21a8", secondary: "#9333ea" },
+];
+
 export function useCarouselGenerator() {
   const { profile } = useProfile();
   const { products } = useProducts();
@@ -67,8 +100,18 @@ export function useCarouselGenerator() {
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingDesign, setIsGeneratingDesign] = useState(false);
+  const [isGeneratingWeek, setIsGeneratingWeek] = useState(false);
+  const [isGeneratingAllDesigns, setIsGeneratingAllDesigns] = useState(false);
+  const [designProgress, setDesignProgress] = useState({ current: 0, total: 0 });
   const [carousel, setCarousel] = useState<CarouselData | null>(null);
+  const [weekContent, setWeekContent] = useState<WeekContent[]>([]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [designSettings, setDesignSettings] = useState<DesignSettings>({
+    style: "minimalist",
+    primaryColor: "#1a1a1a",
+    secondaryColor: "#6b7280",
+    fontFamily: "inter",
+  });
 
   const generateCarousel = useCallback(async (
     topic: string,
@@ -126,7 +169,9 @@ export function useCarouselGenerator() {
 
   const generateSlideDesign = useCallback(async (
     slideIndex: number,
-    style: string = "minimalist"
+    style: string = "minimalist",
+    brandColors?: { primary: string; secondary: string },
+    fontFamily?: string
   ) => {
     if (!carousel || !carousel.slides[slideIndex]) return null;
 
@@ -143,6 +188,8 @@ export function useCarouselGenerator() {
           slide: carousel.slides[slideIndex],
           style,
           profileName: profile?.nome,
+          brandColors: brandColors ? `Primary: ${brandColors.primary}, Secondary: ${brandColors.secondary}` : undefined,
+          fontFamily,
         }),
       });
 
@@ -179,6 +226,143 @@ export function useCarouselGenerator() {
       setIsGeneratingDesign(false);
     }
   }, [carousel, profile, toast]);
+
+  // Generate all slide designs at once with brand settings
+  const generateAllSlideDesigns = useCallback(async () => {
+    if (!carousel || carousel.slides.length === 0) return;
+
+    setIsGeneratingAllDesigns(true);
+    setDesignProgress({ current: 0, total: carousel.slides.length });
+
+    try {
+      for (let i = 0; i < carousel.slides.length; i++) {
+        setDesignProgress({ current: i + 1, total: carousel.slides.length });
+        
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-design`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            slide: carousel.slides[i],
+            style: designSettings.style,
+            profileName: profile?.nome,
+            brandColors: `Primary: ${designSettings.primaryColor}, Secondary: ${designSettings.secondaryColor}`,
+            fontFamily: designSettings.fontFamily,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || `Erro no slide ${i + 1}`);
+        }
+
+        const data = await response.json();
+        
+        setCarousel(prev => {
+          if (!prev) return null;
+          const newSlides = [...prev.slides];
+          newSlides[i] = { ...newSlides[i], imageUrl: data.imageUrl };
+          return { ...prev, slides: newSlides };
+        });
+      }
+
+      toast({
+        title: "Todos os designs gerados!",
+        description: `${carousel.slides.length} slides prontos`,
+      });
+    } catch (error) {
+      console.error("Generate all designs error:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao gerar designs",
+        description: error instanceof Error ? error.message : "Tente novamente",
+      });
+    } finally {
+      setIsGeneratingAllDesigns(false);
+      setDesignProgress({ current: 0, total: 0 });
+    }
+  }, [carousel, designSettings, profile, toast]);
+
+  // Generate a week of content at once
+  const generateWeekContent = useCallback(async (topics: { topic: string; postType: PostType; contentPillar: string }[]) => {
+    setIsGeneratingWeek(true);
+    const generated: WeekContent[] = [];
+
+    try {
+      for (let i = 0; i < topics.length; i++) {
+        const { topic, postType, contentPillar } = topics[i];
+        
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-carousel`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            topic,
+            postType,
+            contentPillar,
+            profile,
+            products,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || `Erro no post ${i + 1}`);
+        }
+
+        const data: CarouselData = await response.json();
+        
+        generated.push({
+          id: crypto.randomUUID(),
+          dayOfWeek: i,
+          topic,
+          postType,
+          contentPillar,
+          carousel: data,
+          status: "generated",
+        });
+      }
+
+      setWeekContent(generated);
+      
+      toast({
+        title: "Semana gerada!",
+        description: `${generated.length} posts criados`,
+      });
+
+      return generated;
+    } catch (error) {
+      console.error("Generate week error:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao gerar semana",
+        description: error instanceof Error ? error.message : "Tente novamente",
+      });
+      return null;
+    } finally {
+      setIsGeneratingWeek(false);
+    }
+  }, [profile, products, toast]);
+
+  // Select a week content item to edit
+  const selectWeekContentForEdit = useCallback((id: string) => {
+    const item = weekContent.find(w => w.id === id);
+    if (item?.carousel) {
+      setCarousel(item.carousel);
+      setCurrentSlideIndex(0);
+    }
+  }, [weekContent]);
+
+  // Update week content after editing
+  const updateWeekContent = useCallback((id: string, newCarousel: CarouselData) => {
+    setWeekContent(prev => prev.map(w => 
+      w.id === id ? { ...w, carousel: newCarousel, status: "edited" } : w
+    ));
+  }, []);
 
   const updateSlide = useCallback((index: number, updates: Partial<CarouselSlide>) => {
     setCarousel(prev => {
@@ -227,18 +411,33 @@ export function useCarouselGenerator() {
     setCurrentSlideIndex(0);
   }, []);
 
+  const resetWeekContent = useCallback(() => {
+    setWeekContent([]);
+  }, []);
+
   return {
     carousel,
+    weekContent,
     isGenerating,
     isGeneratingDesign,
+    isGeneratingWeek,
+    isGeneratingAllDesigns,
+    designProgress,
+    designSettings,
+    setDesignSettings,
     currentSlideIndex,
     setCurrentSlideIndex,
     generateCarousel,
     generateSlideDesign,
+    generateAllSlideDesigns,
+    generateWeekContent,
+    selectWeekContentForEdit,
+    updateWeekContent,
     updateSlide,
     updateLegenda,
     addSlide,
     removeSlide,
     resetCarousel,
+    resetWeekContent,
   };
 }

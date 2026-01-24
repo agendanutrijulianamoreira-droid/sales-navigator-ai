@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { slide, style, profileName, brandColors } = await req.json();
+    const { slide, style, profileName, brandColors, fontFamily } = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -27,11 +27,20 @@ serve(async (req) => {
       warm: "Warm, welcoming design with soft colors, friendly feel, rounded elements",
     };
 
+    const fontDescriptions: Record<string, string> = {
+      inter: "Modern sans-serif font (Inter style)",
+      playfair: "Elegant serif font (Playfair Display style)",
+      montserrat: "Clean geometric sans-serif (Montserrat style)",
+      lora: "Classic readable serif (Lora style)",
+    };
+
     const styleDesc = styleDescriptions[style] || styleDescriptions.minimalist;
+    const fontDesc = fontDescriptions[fontFamily] || fontDescriptions.inter;
     
     const prompt = `Create a professional Instagram carousel slide design:
 
 STYLE: ${styleDesc}
+TYPOGRAPHY: ${fontDesc}
 ${brandColors ? `BRAND COLORS: ${brandColors}` : ""}
 
 SLIDE CONTENT:
@@ -44,9 +53,10 @@ ${profileName ? `- Author name at bottom: "${profileName}"` : ""}
 Design requirements:
 - Instagram square format (1080x1080)
 - Professional, clean layout
-- Easy to read typography
+- Easy to read typography using ${fontDesc}
 - Visual hierarchy with headline as focus
 - ${slide.tipo === 'capa' ? 'Impactful cover design' : 'Content slide with clear structure'}
+${brandColors ? `- Use the brand colors: ${brandColors}` : ""}
 
 Generate a beautiful, professional slide design.`;
 
