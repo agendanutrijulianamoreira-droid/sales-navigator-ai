@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { useCarouselGenerator, POST_TYPE_LABELS, CONTENT_PILLARS, DESIGN_STYLES, PostType, CarouselSlide } from "@/hooks/useCarouselGenerator";
+import { 
+  useCarouselGenerator, 
+  POST_TYPE_LABELS, 
+  CONTENT_PILLARS, 
+  DESIGN_STYLES, 
+  FONT_OPTIONS,
+  COLOR_PALETTES,
+  PostType, 
+  CarouselSlide,
+  WeekContent
+} from "@/hooks/useCarouselGenerator";
 import { useGenerations } from "@/hooks/useGenerations";
 import { useCalendarItems } from "@/hooks/useCalendarItems";
 import { ScheduleDialog } from "@/components/ScheduleDialog";
@@ -11,12 +21,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
 import { 
   Loader2, Sparkles, Copy, Save, ChevronLeft, ChevronRight, 
-  Plus, Trash2, Image, RefreshCw, Wand2, Edit3, Check, ArrowLeft, CalendarPlus
+  Plus, Trash2, Image, RefreshCw, Wand2, Edit3, Check, ArrowLeft, CalendarPlus,
+  Calendar, Palette, Type, Images
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+
+const WEEK_DAYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
 export default function CarouselCreator() {
   const { toast } = useToast();
@@ -24,17 +38,27 @@ export default function CarouselCreator() {
   const { addItem: addCalendarItem } = useCalendarItems();
   const {
     carousel,
+    weekContent,
     isGenerating,
     isGeneratingDesign,
+    isGeneratingWeek,
+    isGeneratingAllDesigns,
+    designProgress,
+    designSettings,
+    setDesignSettings,
     currentSlideIndex,
     setCurrentSlideIndex,
     generateCarousel,
     generateSlideDesign,
+    generateAllSlideDesigns,
+    generateWeekContent,
+    selectWeekContentForEdit,
     updateSlide,
     updateLegenda,
     addSlide,
     removeSlide,
     resetCarousel,
+    resetWeekContent,
   } = useCarouselGenerator();
 
   // Form state
@@ -42,11 +66,21 @@ export default function CarouselCreator() {
   const [postType, setPostType] = useState<PostType>("ESTRATEGIA_UTIL");
   const [contentPillar, setContentPillar] = useState("Educativo");
   const [customInstructions, setCustomInstructions] = useState("");
-  const [designStyle, setDesignStyle] = useState("minimalist");
   const [editingSlide, setEditingSlide] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [savedGenerationId, setSavedGenerationId] = useState<string | null>(null);
+  const [mode, setMode] = useState<"single" | "week">("single");
+  const [editingWeekItem, setEditingWeekItem] = useState<string | null>(null);
+
+  // Week content form
+  const [weekTopics, setWeekTopics] = useState<{ topic: string; postType: PostType; contentPillar: string }[]>([
+    { topic: "", postType: "ESTRATEGIA_UTIL", contentPillar: "Educativo" },
+    { topic: "", postType: "PROMESSA", contentPillar: "Autoridade" },
+    { topic: "", postType: "COMO_FIZ", contentPillar: "Conexão/Bastidores" },
+    { topic: "", postType: "DOR_EVENTO", contentPillar: "Conversão/Venda" },
+    { topic: "", postType: "ALCANCE", contentPillar: "Entretenimento" },
+  ]);
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
@@ -56,8 +90,50 @@ export default function CarouselCreator() {
     await generateCarousel(topic, postType, contentPillar, customInstructions);
   };
 
+  const handleGenerateWeek = async () => {
+    const validTopics = weekTopics.filter(t => t.topic.trim());
+    if (validTopics.length === 0) {
+      toast({ variant: "destructive", title: "Adicione pelo menos um tema" });
+      return;
+    }
+    await generateWeekContent(validTopics);
+  };
+
+  const handleEditWeekItem = (item: WeekContent) => {
+    setEditingWeekItem(item.id);
+    selectWeekContentForEdit(item.id);
+  };
+
+  const handleBackToWeekList = () => {
+    setEditingWeekItem(null);
+    resetCarousel();
+  };
+
   const handleGenerateDesign = async (index: number) => {
-    await generateSlideDesign(index, designStyle);
+    await generateSlideDesign(index, designSettings.style, {
+      primary: designSettings.primaryColor,
+      secondary: designSettings.secondaryColor,
+    }, designSettings.fontFamily);
+  };
+
+  const handleGenerateAllDesigns = async () => {
+    await generateAllSlideDesigns();
+  };
+
+  const updateWeekTopic = (index: number, updates: Partial<{ topic: string; postType: PostType; contentPillar: string }>) => {
+    setWeekTopics(prev => prev.map((t, i) => i === index ? { ...t, ...updates } : t));
+  };
+
+  const addWeekTopic = () => {
+    if (weekTopics.length < 7) {
+      setWeekTopics(prev => [...prev, { topic: "", postType: "ESTRATEGIA_UTIL", contentPillar: "Educativo" }]);
+    }
+  };
+
+  const removeWeekTopic = (index: number) => {
+    if (weekTopics.length > 1) {
+      setWeekTopics(prev => prev.filter((_, i) => i !== index));
+    }
   };
 
   const handleCopyLegenda = async () => {
@@ -106,19 +182,36 @@ export default function CarouselCreator() {
       <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container flex items-center justify-between h-14 px-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/"><ArrowLeft className="h-4 w-4" /></Link>
-            </Button>
+            {editingWeekItem ? (
+              <Button variant="ghost" size="icon" onClick={handleBackToWeekList}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/"><ArrowLeft className="h-4 w-4" /></Link>
+              </Button>
+            )}
             <div>
-              <h1 className="font-semibold">Gerador de Carrossel</h1>
-              <p className="text-xs text-muted-foreground">Crie posts que convertem</p>
+              <h1 className="font-semibold">
+                {editingWeekItem ? "Editando Post" : "Gerador de Carrossel"}
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                {editingWeekItem ? "Voltar para lista da semana" : "Crie posts que convertem"}
+              </p>
             </div>
           </div>
           {carousel && (
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={resetCarousel}>
-                <RefreshCw className="h-4 w-4 mr-2" /> Novo
-              </Button>
+              {editingWeekItem && (
+                <Button variant="outline" size="sm" onClick={handleBackToWeekList}>
+                  <Check className="h-4 w-4 mr-2" /> Concluir Edição
+                </Button>
+              )}
+              {!editingWeekItem && (
+                <Button variant="outline" size="sm" onClick={resetCarousel}>
+                  <RefreshCw className="h-4 w-4 mr-2" /> Novo
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={() => setShowScheduleDialog(true)}>
                 <CalendarPlus className="h-4 w-4 mr-2" /> Agendar
               </Button>
@@ -131,116 +224,284 @@ export default function CarouselCreator() {
       </header>
 
       <main className="container px-4 py-6">
-        {!carousel ? (
+        {/* Week content list view */}
+        {weekContent.length > 0 && !carousel && !editingWeekItem ? (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold">Semana Gerada</h2>
+                <p className="text-sm text-muted-foreground">Clique em um post para editar</p>
+              </div>
+              <Button variant="outline" onClick={resetWeekContent}>
+                <RefreshCw className="h-4 w-4 mr-2" /> Nova Semana
+              </Button>
+            </div>
+            
+            <div className="grid gap-4">
+              {weekContent.map((item, index) => (
+                <Card 
+                  key={item.id} 
+                  className="cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => handleEditWeekItem(item)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <span className="font-semibold text-primary">{index + 1}</span>
+                        </div>
+                        <div>
+                          <p className="font-medium line-clamp-1">{item.carousel?.titulo || item.topic}</p>
+                          <div className="flex gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs">{POST_TYPE_LABELS[item.postType]}</Badge>
+                            <Badge variant="secondary" className="text-xs">{item.contentPillar}</Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={item.status === "edited" ? "default" : "secondary"}>
+                          {item.status === "edited" ? "Editado" : "Gerado"}
+                        </Badge>
+                        <Edit3 className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        ) : !carousel ? (
           /* Generator Form */
           <div className="max-w-2xl mx-auto space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  Criar Novo Carrossel
-                </CardTitle>
-                <CardDescription>
-                  A IA vai gerar os textos de cada slide baseado no seu perfil e método
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Topic */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Tema do Post</label>
-                  <Textarea
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                    placeholder="Ex: Por que dietas restritivas não funcionam a longo prazo"
-                    rows={2}
-                  />
-                </div>
+            {/* Mode Selector */}
+            <div className="flex gap-2 justify-center">
+              <Button 
+                variant={mode === "single" ? "default" : "outline"} 
+                onClick={() => setMode("single")}
+              >
+                <Wand2 className="h-4 w-4 mr-2" />
+                Post Único
+              </Button>
+              <Button 
+                variant={mode === "week" ? "default" : "outline"} 
+                onClick={() => setMode("week")}
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                Semana Completa
+              </Button>
+            </div>
 
-                {/* Post Type */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Tipo de Post</label>
-                  <Select value={postType} onValueChange={(v) => setPostType(v as PostType)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(POST_TYPE_LABELS).map(([key, label]) => (
-                        <SelectItem key={key} value={key}>{label}</SelectItem>
+            {mode === "single" ? (
+              /* Single Post Form */
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    Criar Novo Carrossel
+                  </CardTitle>
+                  <CardDescription>
+                    A IA vai gerar os textos de cada slide baseado no seu perfil e método
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Topic */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Tema do Post</label>
+                    <Textarea
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                      placeholder="Ex: Por que dietas restritivas não funcionam a longo prazo"
+                      rows={2}
+                    />
+                  </div>
+
+                  {/* Post Type */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Tipo de Post</label>
+                    <Select value={postType} onValueChange={(v) => setPostType(v as PostType)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(POST_TYPE_LABELS).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Content Pillar */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Pilar de Conteúdo</label>
+                    <div className="flex flex-wrap gap-2">
+                      {CONTENT_PILLARS.map((pillar) => (
+                        <Badge
+                          key={pillar}
+                          variant={contentPillar === pillar ? "default" : "outline"}
+                          className="cursor-pointer"
+                          onClick={() => setContentPillar(pillar)}
+                        >
+                          {pillar}
+                        </Badge>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    </div>
+                  </div>
 
-                {/* Content Pillar */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Pilar de Conteúdo</label>
+                  {/* Custom Instructions */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Instruções Adicionais (opcional)</label>
+                    <Input
+                      value={customInstructions}
+                      onChange={(e) => setCustomInstructions(e.target.value)}
+                      placeholder="Ex: Focar em mulheres 40+, usar linguagem leve"
+                    />
+                  </div>
+
+                  {/* Generate Button */}
+                  <Button onClick={handleGenerate} disabled={isGenerating} className="w-full" size="lg">
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Gerando carrossel...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="h-4 w-4 mr-2" />
+                        Gerar Carrossel
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              /* Week Content Form */
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    Gerar Semana de Conteúdo
+                  </CardTitle>
+                  <CardDescription>
+                    Configure os temas da semana e gere todos de uma vez
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ScrollArea className="h-[400px] pr-4">
+                    <div className="space-y-4">
+                      {weekTopics.map((item, index) => (
+                        <Card key={index} className="p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <Badge variant="outline">{WEEK_DAYS[index] || `Post ${index + 1}`}</Badge>
+                            {weekTopics.length > 1 && (
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-6 w-6"
+                                onClick={() => removeWeekTopic(index)}
+                              >
+                                <Trash2 className="h-3 w-3 text-destructive" />
+                              </Button>
+                            )}
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <Input
+                              value={item.topic}
+                              onChange={(e) => updateWeekTopic(index, { topic: e.target.value })}
+                              placeholder="Tema do post..."
+                            />
+                            
+                            <div className="grid grid-cols-2 gap-2">
+                              <Select 
+                                value={item.postType} 
+                                onValueChange={(v) => updateWeekTopic(index, { postType: v as PostType })}
+                              >
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(POST_TYPE_LABELS).map(([key, label]) => (
+                                    <SelectItem key={key} value={key} className="text-xs">{label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              
+                              <Select 
+                                value={item.contentPillar} 
+                                onValueChange={(v) => updateWeekTopic(index, { contentPillar: v })}
+                              >
+                                <SelectTrigger className="h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {CONTENT_PILLARS.map((pillar) => (
+                                    <SelectItem key={pillar} value={pillar} className="text-xs">{pillar}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </ScrollArea>
+
+                  {weekTopics.length < 7 && (
+                    <Button variant="outline" onClick={addWeekTopic} className="w-full">
+                      <Plus className="h-4 w-4 mr-2" /> Adicionar Post
+                    </Button>
+                  )}
+
+                  <Button 
+                    onClick={handleGenerateWeek} 
+                    disabled={isGeneratingWeek} 
+                    className="w-full" 
+                    size="lg"
+                  >
+                    {isGeneratingWeek ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Gerando {weekTopics.filter(t => t.topic.trim()).length} posts...
+                      </>
+                    ) : (
+                      <>
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Gerar Semana Completa
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Quick Ideas - only for single mode */}
+            {mode === "single" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Ideias Rápidas</CardTitle>
+                </CardHeader>
+                <CardContent>
                   <div className="flex flex-wrap gap-2">
-                    {CONTENT_PILLARS.map((pillar) => (
+                    {[
+                      "3 erros que sabotam seu emagrecimento",
+                      "O que comer antes de treinar",
+                      "Por que você não precisa de dieta, precisa de estratégia",
+                      "Minha rotina alimentar na prática",
+                      "Como lidar com a fome emocional",
+                    ].map((idea) => (
                       <Badge
-                        key={pillar}
-                        variant={contentPillar === pillar ? "default" : "outline"}
-                        className="cursor-pointer"
-                        onClick={() => setContentPillar(pillar)}
+                        key={idea}
+                        variant="secondary"
+                        className="cursor-pointer hover:bg-primary/10"
+                        onClick={() => setTopic(idea)}
                       >
-                        {pillar}
+                        {idea}
                       </Badge>
                     ))}
                   </div>
-                </div>
-
-                {/* Custom Instructions */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Instruções Adicionais (opcional)</label>
-                  <Input
-                    value={customInstructions}
-                    onChange={(e) => setCustomInstructions(e.target.value)}
-                    placeholder="Ex: Focar em mulheres 40+, usar linguagem leve"
-                  />
-                </div>
-
-                {/* Generate Button */}
-                <Button onClick={handleGenerate} disabled={isGenerating} className="w-full" size="lg">
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Gerando carrossel...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="h-4 w-4 mr-2" />
-                      Gerar Carrossel
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Quick Ideas */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Ideias Rápidas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    "3 erros que sabotam seu emagrecimento",
-                    "O que comer antes de treinar",
-                    "Por que você não precisa de dieta, precisa de estratégia",
-                    "Minha rotina alimentar na prática",
-                    "Como lidar com a fome emocional",
-                  ].map((idea) => (
-                    <Badge
-                      key={idea}
-                      variant="secondary"
-                      className="cursor-pointer hover:bg-primary/10"
-                      onClick={() => setTopic(idea)}
-                    >
-                      {idea}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
         ) : (
           /* Carousel Editor */
@@ -318,34 +579,127 @@ export default function CarouselCreator() {
                 </Button>
               </div>
 
-              {/* Design Actions */}
-              <div className="flex gap-2">
-                <Select value={designStyle} onValueChange={setDesignStyle}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DESIGN_STYLES.map((style) => (
-                      <SelectItem key={style.id} value={style.id}>
-                        {style.label} - {style.description}
-                      </SelectItem>
+              {/* Design Settings & Actions */}
+              <Card className="p-4 space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Palette className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">Design & Paleta</span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Style */}
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">Estilo</label>
+                    <Select 
+                      value={designSettings.style} 
+                      onValueChange={(v) => setDesignSettings(prev => ({ ...prev, style: v }))}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DESIGN_STYLES.map((style) => (
+                          <SelectItem key={style.id} value={style.id}>
+                            {style.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Font */}
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground">Tipografia</label>
+                    <Select 
+                      value={designSettings.fontFamily} 
+                      onValueChange={(v) => setDesignSettings(prev => ({ ...prev, fontFamily: v }))}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FONT_OPTIONS.map((font) => (
+                          <SelectItem key={font.id} value={font.id}>
+                            {font.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Color Palette */}
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground">Paleta de Cores</label>
+                  <div className="flex flex-wrap gap-2">
+                    {COLOR_PALETTES.map((palette) => (
+                      <button
+                        key={palette.id}
+                        onClick={() => setDesignSettings(prev => ({ 
+                          ...prev, 
+                          primaryColor: palette.primary, 
+                          secondaryColor: palette.secondary 
+                        }))}
+                        className={`flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs transition-all ${
+                          designSettings.primaryColor === palette.primary 
+                            ? "border-primary bg-primary/10" 
+                            : "hover:border-muted-foreground"
+                        }`}
+                      >
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: palette.primary }}
+                        />
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: palette.secondary }}
+                        />
+                        <span>{palette.label}</span>
+                      </button>
                     ))}
-                  </SelectContent>
-                </Select>
-                <Button 
-                  onClick={() => handleGenerateDesign(currentSlideIndex)}
-                  disabled={isGeneratingDesign}
-                >
-                  {isGeneratingDesign ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Image className="h-4 w-4 mr-2" />
-                      Gerar Design
-                    </>
-                  )}
-                </Button>
-              </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    onClick={() => handleGenerateDesign(currentSlideIndex)}
+                    disabled={isGeneratingDesign || isGeneratingAllDesigns}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    {isGeneratingDesign ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Image className="h-4 w-4 mr-2" />
+                        Slide Atual
+                      </>
+                    )}
+                  </Button>
+                  <Button 
+                    onClick={handleGenerateAllDesigns}
+                    disabled={isGeneratingDesign || isGeneratingAllDesigns}
+                    className="flex-1"
+                  >
+                    {isGeneratingAllDesigns ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        {designProgress.current}/{designProgress.total}
+                      </>
+                    ) : (
+                      <>
+                        <Images className="h-4 w-4 mr-2" />
+                        Todos os Slides
+                      </>
+                    )}
+                  </Button>
+                </div>
+                
+                {isGeneratingAllDesigns && (
+                  <Progress value={(designProgress.current / designProgress.total) * 100} className="h-2" />
+                )}
+              </Card>
             </div>
 
             {/* Editor Panel */}
