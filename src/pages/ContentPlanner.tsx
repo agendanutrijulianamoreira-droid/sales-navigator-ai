@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useProfile } from "@/hooks/useProfile";
+import { useCalendarItems, CalendarItem } from "@/hooks/useCalendarItems";
+import { ScheduleDialog } from "@/components/ScheduleDialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
 import { 
   Calendar, Grid3X3, Plus, ChevronLeft, ChevronRight,
-  FileText, Image, MessageSquare, TrendingUp, ArrowLeft
+  FileText, Image, MessageSquare, TrendingUp, ArrowLeft, Trash2, Loader2
 } from "lucide-react";
 
 // Tipos de conteúdo baseados na metodologia
@@ -25,17 +27,13 @@ const MONTHS = [
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
 ];
 
-// Mock data for demonstration
-const MOCK_POSTS = [
-  { date: new Date(2026, 0, 20), type: "carrossel", title: "3 erros que sabotam" },
-  { date: new Date(2026, 0, 22), type: "levantada", title: "Comente PRONTA" },
-  { date: new Date(2026, 0, 24), type: "reels", title: "Rotina alimentar" },
-];
-
 export default function ContentPlanner() {
   const { profile } = useProfile();
+  const { items, isLoading, addItem, deleteItem, getItemsForDate } = useCalendarItems();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"month" | "week">("month");
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
@@ -70,13 +68,45 @@ export default function ContentPlanner() {
     setCurrentDate(newDate);
   };
 
-  const getPostsForDate = (date: Date) => {
-    return MOCK_POSTS.filter(post => 
-      post.date.getDate() === date.getDate() &&
-      post.date.getMonth() === date.getMonth() &&
-      post.date.getFullYear() === date.getFullYear()
-    );
+  const handleSchedule = async (data: { date: string; tipo: string; titulo: string }) => {
+    await addItem({
+      data: data.date,
+      tipo: data.tipo,
+      titulo: data.titulo,
+    });
   };
+
+  const handleDayClick = (date: Date) => {
+    setSelectedDate(date);
+    setShowScheduleDialog(true);
+  };
+
+  // Count items by type for the current view
+  const getTypeCounts = () => {
+    const monthItems = items.filter(item => {
+      const itemDate = new Date(item.data);
+      return itemDate.getFullYear() === currentYear && itemDate.getMonth() === currentMonth;
+    });
+    
+    const counts: Record<string, number> = {};
+    Object.keys(CONTENT_TYPES).forEach(key => counts[key] = 0);
+    monthItems.forEach(item => {
+      if (counts[item.tipo] !== undefined) {
+        counts[item.tipo]++;
+      }
+    });
+    return counts;
+  };
+
+  const typeCounts = getTypeCounts();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -92,12 +122,18 @@ export default function ContentPlanner() {
               <p className="text-xs text-muted-foreground">Organize seus posts da semana</p>
             </div>
           </div>
-          <Button asChild>
-            <Link to="/carousel-creator">
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowScheduleDialog(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Novo Carrossel
-            </Link>
-          </Button>
+              Agendar
+            </Button>
+            <Button asChild>
+              <Link to="/carousel-creator">
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Carrossel
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -167,7 +203,7 @@ export default function ContentPlanner() {
                 {Array.from({ length: daysInMonth }).map((_, i) => {
                   const dayNumber = i + 1;
                   const date = new Date(currentYear, currentMonth, dayNumber);
-                  const posts = getPostsForDate(date);
+                  const posts = getItemsForDate(date);
                   const isToday = 
                     dayNumber === new Date().getDate() && 
                     currentMonth === new Date().getMonth() &&
@@ -176,6 +212,7 @@ export default function ContentPlanner() {
                   return (
                     <div
                       key={dayNumber}
+                      onClick={() => handleDayClick(date)}
                       className={`aspect-square p-1 rounded-lg border transition-all hover:border-primary/50 cursor-pointer ${
                         isToday ? "bg-primary/10 border-primary" : "border-transparent hover:bg-muted/50"
                       }`}
@@ -183,12 +220,12 @@ export default function ContentPlanner() {
                       <div className="text-xs font-medium mb-1">{dayNumber}</div>
                       <div className="space-y-0.5">
                         {posts.slice(0, 2).map((post, pi) => {
-                          const typeConfig = CONTENT_TYPES[post.type as keyof typeof CONTENT_TYPES];
+                          const typeConfig = CONTENT_TYPES[post.tipo as keyof typeof CONTENT_TYPES];
                           return (
                             <div
                               key={pi}
                               className={`h-1.5 rounded-full ${typeConfig?.color || "bg-gray-400"}`}
-                              title={post.title}
+                              title={post.titulo || post.tipo}
                             />
                           );
                         })}
@@ -208,7 +245,7 @@ export default function ContentPlanner() {
         {view === "week" && (
           <div className="grid grid-cols-7 gap-4">
             {weekDates.map((date, i) => {
-              const posts = getPostsForDate(date);
+              const posts = getItemsForDate(date);
               const isToday = 
                 date.getDate() === new Date().getDate() && 
                 date.getMonth() === new Date().getMonth() &&
@@ -224,24 +261,35 @@ export default function ContentPlanner() {
                   </CardHeader>
                   <CardContent className="space-y-2">
                     {posts.length > 0 ? (
-                      posts.map((post, pi) => {
-                        const typeConfig = CONTENT_TYPES[post.type as keyof typeof CONTENT_TYPES];
+                      posts.map((post) => {
+                        const typeConfig = CONTENT_TYPES[post.tipo as keyof typeof CONTENT_TYPES];
                         const IconComponent = typeConfig?.icon || FileText;
                         return (
-                          <div key={pi} className="p-2 rounded-lg bg-muted/50 text-xs">
+                          <div key={post.id} className="p-2 rounded-lg bg-muted/50 text-xs group relative">
                             <div className="flex items-center gap-1 mb-1">
                               <IconComponent className="h-3 w-3" />
-                              <span className="font-medium">{typeConfig?.label}</span>
+                              <span className="font-medium">{typeConfig?.label || post.tipo}</span>
                             </div>
-                            <p className="text-muted-foreground line-clamp-2">{post.title}</p>
+                            <p className="text-muted-foreground line-clamp-2">{post.titulo}</p>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => deleteItem(post.id)}
+                            >
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
                           </div>
                         );
                       })
                     ) : (
-                      <Button variant="ghost" size="sm" className="w-full h-20 border-2 border-dashed" asChild>
-                        <Link to="/carousel-creator">
-                          <Plus className="h-4 w-4" />
-                        </Link>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full h-20 border-2 border-dashed"
+                        onClick={() => handleDayClick(date)}
+                      >
+                        <Plus className="h-4 w-4" />
                       </Button>
                     )}
                   </CardContent>
@@ -263,7 +311,7 @@ export default function ContentPlanner() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">{config.label}</p>
-                    <p className="font-medium">0</p>
+                    <p className="font-medium">{typeCounts[key] || 0}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -288,6 +336,15 @@ export default function ContentPlanner() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Schedule Dialog */}
+      <ScheduleDialog
+        open={showScheduleDialog}
+        onOpenChange={setShowScheduleDialog}
+        onSchedule={handleSchedule}
+        defaultTitle=""
+        defaultTipo="carrossel"
+      />
     </div>
   );
 }
