@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useCarouselGenerator, POST_TYPE_LABELS, CONTENT_PILLARS, DESIGN_STYLES, PostType, CarouselSlide } from "@/hooks/useCarouselGenerator";
 import { useGenerations } from "@/hooks/useGenerations";
+import { useCalendarItems } from "@/hooks/useCalendarItems";
+import { ScheduleDialog } from "@/components/ScheduleDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Loader2, Sparkles, Copy, Save, ChevronLeft, ChevronRight, 
-  Plus, Trash2, Image, RefreshCw, Wand2, Edit3, Check, ArrowLeft
+  Plus, Trash2, Image, RefreshCw, Wand2, Edit3, Check, ArrowLeft, CalendarPlus
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -19,6 +21,7 @@ import { Link } from "react-router-dom";
 export default function CarouselCreator() {
   const { toast } = useToast();
   const { saveGeneration } = useGenerations();
+  const { addItem: addCalendarItem } = useCalendarItems();
   const {
     carousel,
     isGenerating,
@@ -42,6 +45,8 @@ export default function CarouselCreator() {
   const [designStyle, setDesignStyle] = useState("minimalist");
   const [editingSlide, setEditingSlide] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [savedGenerationId, setSavedGenerationId] = useState<string | null>(null);
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
@@ -66,7 +71,7 @@ export default function CarouselCreator() {
   const handleSave = async () => {
     if (!carousel) return;
     
-    await saveGeneration({
+    const result = await saveGeneration({
       tipo: "post",
       subtipo: "carrossel",
       specialist: "social_media_manager",
@@ -77,7 +82,20 @@ export default function CarouselCreator() {
       tags: [postType.toLowerCase(), contentPillar.toLowerCase()],
     });
     
+    if (!result.error && result.data?.id) {
+      setSavedGenerationId(result.data.id);
+    }
+    
     toast({ title: "Salvo na biblioteca!" });
+  };
+
+  const handleSchedule = async (data: { date: string; tipo: string; titulo: string }) => {
+    await addCalendarItem({
+      data: data.date,
+      tipo: data.tipo,
+      titulo: data.titulo,
+      generation_id: savedGenerationId || undefined,
+    });
   };
 
   const currentSlide = carousel?.slides[currentSlideIndex];
@@ -100,6 +118,9 @@ export default function CarouselCreator() {
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={resetCarousel}>
                 <RefreshCw className="h-4 w-4 mr-2" /> Novo
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowScheduleDialog(true)}>
+                <CalendarPlus className="h-4 w-4 mr-2" /> Agendar
               </Button>
               <Button size="sm" onClick={handleSave}>
                 <Save className="h-4 w-4 mr-2" /> Salvar
@@ -461,6 +482,15 @@ export default function CarouselCreator() {
           </div>
         )}
       </main>
+
+      {/* Schedule Dialog */}
+      <ScheduleDialog
+        open={showScheduleDialog}
+        onOpenChange={setShowScheduleDialog}
+        onSchedule={handleSchedule}
+        defaultTitle={carousel?.titulo || topic}
+        defaultTipo="carrossel"
+      />
     </div>
   );
 }
