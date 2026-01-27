@@ -48,6 +48,7 @@ export default function CarouselCreator() {
     designProgress,
     designSettings,
     setDesignSettings,
+    isBrandLocked,
     currentSlideIndex,
     setCurrentSlideIndex,
     generateCarousel,
@@ -621,9 +622,16 @@ export default function CarouselCreator() {
 
               {/* Design Settings & Actions */}
               <Card className="p-4 space-y-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Palette className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">Design & Paleta</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Palette className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">Design & Paleta</span>
+                  </div>
+                  {isBrandLocked && (
+                    <Badge variant="secondary" className="text-xs">
+                      Marca Travada
+                    </Badge>
+                  )}
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3">
@@ -633,6 +641,7 @@ export default function CarouselCreator() {
                     <Select 
                       value={designSettings.style} 
                       onValueChange={(v) => setDesignSettings(prev => ({ ...prev, style: v }))}
+                      disabled={isBrandLocked}
                     >
                       <SelectTrigger className="h-9">
                         <SelectValue />
@@ -653,6 +662,7 @@ export default function CarouselCreator() {
                     <Select 
                       value={designSettings.fontFamily} 
                       onValueChange={(v) => setDesignSettings(prev => ({ ...prev, fontFamily: v }))}
+                      disabled={isBrandLocked}
                     >
                       <SelectTrigger className="h-9">
                         <SelectValue />
@@ -668,69 +678,88 @@ export default function CarouselCreator() {
                   </div>
                 </div>
 
-                {/* Color Palette */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs text-muted-foreground">Paleta de Cores</label>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-6 text-xs"
-                      onClick={() => setUseCustomColors(!useCustomColors)}
-                    >
-                      {useCustomColors ? "Usar paletas" : "Cores personalizadas"}
-                    </Button>
+                {/* Color Palette - Only show if not brand locked */}
+                {!isBrandLocked && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs text-muted-foreground">Paleta de Cores</label>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-6 text-xs"
+                        onClick={() => setUseCustomColors(!useCustomColors)}
+                      >
+                        {useCustomColors ? "Usar paletas" : "Cores personalizadas"}
+                      </Button>
+                    </div>
+                    
+                    {useCustomColors ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <label className="text-xs text-muted-foreground">Cor Primária</label>
+                          <ColorPicker 
+                            color={designSettings.primaryColor}
+                            onChange={(c) => setDesignSettings(prev => ({ ...prev, primaryColor: c }))}
+                            label={designSettings.primaryColor}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-muted-foreground">Cor Secundária</label>
+                          <ColorPicker 
+                            color={designSettings.secondaryColor}
+                            onChange={(c) => setDesignSettings(prev => ({ ...prev, secondaryColor: c }))}
+                            label={designSettings.secondaryColor}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {COLOR_PALETTES.map((palette) => (
+                          <button
+                            key={palette.id}
+                            onClick={() => setDesignSettings(prev => ({ 
+                              ...prev, 
+                              primaryColor: palette.primary, 
+                              secondaryColor: palette.secondary 
+                            }))}
+                            className={`flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs transition-all ${
+                              designSettings.primaryColor === palette.primary 
+                                ? "border-primary bg-primary/10" 
+                                : "hover:border-muted-foreground"
+                            }`}
+                          >
+                            <div 
+                              className="w-3 h-3 rounded-full" 
+                              style={{ backgroundColor: palette.primary }}
+                            />
+                            <div 
+                              className="w-3 h-3 rounded-full" 
+                              style={{ backgroundColor: palette.secondary }}
+                            />
+                            <span>{palette.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  
-                  {useCustomColors ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <label className="text-xs text-muted-foreground">Cor Primária</label>
-                        <ColorPicker 
-                          color={designSettings.primaryColor}
-                          onChange={(c) => setDesignSettings(prev => ({ ...prev, primaryColor: c }))}
-                          label={designSettings.primaryColor}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-xs text-muted-foreground">Cor Secundária</label>
-                        <ColorPicker 
-                          color={designSettings.secondaryColor}
-                          onChange={(c) => setDesignSettings(prev => ({ ...prev, secondaryColor: c }))}
-                          label={designSettings.secondaryColor}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-                      {COLOR_PALETTES.map((palette) => (
-                        <button
-                          key={palette.id}
-                          onClick={() => setDesignSettings(prev => ({ 
-                            ...prev, 
-                            primaryColor: palette.primary, 
-                            secondaryColor: palette.secondary 
-                          }))}
-                          className={`flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs transition-all ${
-                            designSettings.primaryColor === palette.primary 
-                              ? "border-primary bg-primary/10" 
-                              : "hover:border-muted-foreground"
-                          }`}
-                        >
-                          <div 
-                            className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: palette.primary }}
-                          />
-                          <div 
-                            className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: palette.secondary }}
-                          />
-                          <span>{palette.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                )}
+
+                {/* Show current brand colors when locked */}
+                {isBrandLocked && (
+                  <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+                    <div 
+                      className="w-6 h-6 rounded-full border-2 border-white shadow-sm" 
+                      style={{ backgroundColor: designSettings.primaryColor }}
+                    />
+                    <div 
+                      className="w-6 h-6 rounded-full border-2 border-white shadow-sm" 
+                      style={{ backgroundColor: designSettings.secondaryColor }}
+                    />
+                    <span className="text-xs text-muted-foreground ml-2">
+                      Usando cores do Kit de Marca
+                    </span>
+                  </div>
+                )}
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">

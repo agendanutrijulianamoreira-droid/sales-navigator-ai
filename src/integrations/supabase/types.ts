@@ -208,6 +208,15 @@ export type Database = {
       profiles: {
         Row: {
           arquetipo: string | null
+          brand_font_body: string | null
+          brand_font_title: string | null
+          brand_locked: boolean | null
+          brand_logo_url: string | null
+          brand_neutral_color: string | null
+          brand_primary_color: string | null
+          brand_secondary_color: string | null
+          brand_style: string | null
+          brand_watermark_url: string | null
           created_at: string
           desejo_principal: string | null
           dor_principal: string | null
@@ -232,6 +241,15 @@ export type Database = {
         }
         Insert: {
           arquetipo?: string | null
+          brand_font_body?: string | null
+          brand_font_title?: string | null
+          brand_locked?: boolean | null
+          brand_logo_url?: string | null
+          brand_neutral_color?: string | null
+          brand_primary_color?: string | null
+          brand_secondary_color?: string | null
+          brand_style?: string | null
+          brand_watermark_url?: string | null
           created_at?: string
           desejo_principal?: string | null
           dor_principal?: string | null
@@ -256,6 +274,15 @@ export type Database = {
         }
         Update: {
           arquetipo?: string | null
+          brand_font_body?: string | null
+          brand_font_title?: string | null
+          brand_locked?: boolean | null
+          brand_logo_url?: string | null
+          brand_neutral_color?: string | null
+          brand_primary_color?: string | null
+          brand_secondary_color?: string | null
+          brand_style?: string | null
+          brand_watermark_url?: string | null
           created_at?: string
           desejo_principal?: string | null
           dor_principal?: string | null
