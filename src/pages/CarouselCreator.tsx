@@ -13,6 +13,8 @@ import {
 import { useGenerations } from "@/hooks/useGenerations";
 import { useCalendarItems } from "@/hooks/useCalendarItems";
 import { ScheduleDialog } from "@/components/ScheduleDialog";
+import { ColorPicker } from "@/components/ColorPicker";
+import { downloadCarouselAsZip } from "@/lib/downloadZip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,7 +27,7 @@ import { Progress } from "@/components/ui/progress";
 import { 
   Loader2, Sparkles, Copy, Save, ChevronLeft, ChevronRight, 
   Plus, Trash2, Image, RefreshCw, Wand2, Edit3, Check, ArrowLeft, CalendarPlus,
-  Calendar, Palette, Type, Images
+  Calendar, Palette, Type, Images, Download
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -70,6 +72,8 @@ export default function CarouselCreator() {
   const [copied, setCopied] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [savedGenerationId, setSavedGenerationId] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [useCustomColors, setUseCustomColors] = useState(false);
   const [mode, setMode] = useState<"single" | "week">("single");
   const [editingWeekItem, setEditingWeekItem] = useState<string | null>(null);
 
@@ -174,6 +178,30 @@ export default function CarouselCreator() {
     });
   };
 
+  const handleDownloadZip = async () => {
+    if (!carousel) return;
+    
+    const hasImages = carousel.slides.some(s => s.imageUrl);
+    if (!hasImages) {
+      toast({ variant: "destructive", title: "Gere os designs primeiro" });
+      return;
+    }
+    
+    setIsDownloading(true);
+    try {
+      await downloadCarouselAsZip(carousel.slides, carousel.titulo);
+      toast({ title: "Download iniciado!" });
+    } catch (error) {
+      toast({ 
+        variant: "destructive", 
+        title: "Erro no download", 
+        description: error instanceof Error ? error.message : "Tente novamente" 
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const currentSlide = carousel?.slides[currentSlideIndex];
 
   return (
@@ -212,6 +240,18 @@ export default function CarouselCreator() {
                   <RefreshCw className="h-4 w-4 mr-2" /> Novo
                 </Button>
               )}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleDownloadZip}
+                disabled={isDownloading || !carousel.slides.some(s => s.imageUrl)}
+              >
+                {isDownloading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <><Download className="h-4 w-4 mr-2" /> ZIP</>
+                )}
+              </Button>
               <Button variant="outline" size="sm" onClick={() => setShowScheduleDialog(true)}>
                 <CalendarPlus className="h-4 w-4 mr-2" /> Agendar
               </Button>
@@ -630,34 +670,66 @@ export default function CarouselCreator() {
 
                 {/* Color Palette */}
                 <div className="space-y-2">
-                  <label className="text-xs text-muted-foreground">Paleta de Cores</label>
-                  <div className="flex flex-wrap gap-2">
-                    {COLOR_PALETTES.map((palette) => (
-                      <button
-                        key={palette.id}
-                        onClick={() => setDesignSettings(prev => ({ 
-                          ...prev, 
-                          primaryColor: palette.primary, 
-                          secondaryColor: palette.secondary 
-                        }))}
-                        className={`flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs transition-all ${
-                          designSettings.primaryColor === palette.primary 
-                            ? "border-primary bg-primary/10" 
-                            : "hover:border-muted-foreground"
-                        }`}
-                      >
-                        <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: palette.primary }}
-                        />
-                        <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: palette.secondary }}
-                        />
-                        <span>{palette.label}</span>
-                      </button>
-                    ))}
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs text-muted-foreground">Paleta de Cores</label>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 text-xs"
+                      onClick={() => setUseCustomColors(!useCustomColors)}
+                    >
+                      {useCustomColors ? "Usar paletas" : "Cores personalizadas"}
+                    </Button>
                   </div>
+                  
+                  {useCustomColors ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Cor Primária</label>
+                        <ColorPicker 
+                          color={designSettings.primaryColor}
+                          onChange={(c) => setDesignSettings(prev => ({ ...prev, primaryColor: c }))}
+                          label={designSettings.primaryColor}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Cor Secundária</label>
+                        <ColorPicker 
+                          color={designSettings.secondaryColor}
+                          onChange={(c) => setDesignSettings(prev => ({ ...prev, secondaryColor: c }))}
+                          label={designSettings.secondaryColor}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {COLOR_PALETTES.map((palette) => (
+                        <button
+                          key={palette.id}
+                          onClick={() => setDesignSettings(prev => ({ 
+                            ...prev, 
+                            primaryColor: palette.primary, 
+                            secondaryColor: palette.secondary 
+                          }))}
+                          className={`flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs transition-all ${
+                            designSettings.primaryColor === palette.primary 
+                              ? "border-primary bg-primary/10" 
+                              : "hover:border-muted-foreground"
+                          }`}
+                        >
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: palette.primary }}
+                          />
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: palette.secondary }}
+                          />
+                          <span>{palette.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Actions */}
