@@ -10,11 +10,11 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { title: "Command Center", icon: Home, href: "/" },
   { title: "Estratégia", icon: Target, href: "/strategy" },
-  { title: "Calendário", icon: Calendar, href: "/calendar" },
+  { title: "Calendário", icon: Calendar, href: "/planner" },
+  { title: "Kit de Marca", icon: Zap, href: "/brand-kit" },
   { title: "Produtos", icon: ShoppingBag, href: "/products" },
-  { title: "Conversão", icon: MessageSquare, href: "/conversion" },
   { title: "Resultados", icon: BarChart3, href: "/results" },
-  { title: "Mentor IA", icon: Zap, href: "/mentor" },
+  { title: "Mentor IA", icon: MessageSquare, href: "/mentor" },
   { title: "Biblioteca", icon: BookOpen, href: "/library" },
 ];
 

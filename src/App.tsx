@@ -12,6 +12,7 @@ import Strategy from "./pages/Strategy";
 import CalendarPage from "./pages/CalendarPage";
 import ContentPlanner from "./pages/ContentPlanner";
 import CarouselCreator from "./pages/CarouselCreator";
+import BrandKitPage from "./pages/BrandKitPage";
 import Products from "./pages/Products";
 import Conversion from "./pages/Conversion";
 import Results from "./pages/Results";
@@ -54,6 +55,7 @@ const App = () => (
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/planner" element={<ContentPlanner />} />
               <Route path="/carousel-creator" element={<CarouselCreator />} />
+              <Route path="/brand-kit" element={<BrandKitPage />} />
               <Route path="/products" element={<Products />} />
               <Route path="/conversion" element={<Conversion />} />
               <Route path="/results" element={<Results />} />

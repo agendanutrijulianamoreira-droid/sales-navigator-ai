@@ -106,11 +106,30 @@ export function useCarouselGenerator() {
   const [carousel, setCarousel] = useState<CarouselData | null>(null);
   const [weekContent, setWeekContent] = useState<WeekContent[]>([]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [designSettings, setDesignSettings] = useState<DesignSettings>({
-    style: "minimalist",
-    primaryColor: "#1a1a1a",
-    secondaryColor: "#6b7280",
-    fontFamily: "inter",
+  
+  // Initialize design settings from profile's brand kit
+  const [designSettings, setDesignSettings] = useState<DesignSettings>(() => ({
+    style: profile?.brand_style || "minimalist",
+    primaryColor: profile?.brand_primary_color || "#1a1a1a",
+    secondaryColor: profile?.brand_secondary_color || "#6b7280",
+    fontFamily: profile?.brand_font_title || "inter",
+  }));
+
+  // Update design settings when profile loads/changes (if brand is locked)
+  const syncBrandFromProfile = useCallback(() => {
+    if (profile?.brand_locked) {
+      setDesignSettings({
+        style: profile.brand_style || "minimalist",
+        primaryColor: profile.brand_primary_color || "#1a1a1a",
+        secondaryColor: profile.brand_secondary_color || "#6b7280",
+        fontFamily: profile.brand_font_title || "inter",
+      });
+    }
+  }, [profile]);
+
+  // Sync on profile change
+  useState(() => {
+    syncBrandFromProfile();
   });
 
   const generateCarousel = useCallback(async (
@@ -425,6 +444,7 @@ export function useCarouselGenerator() {
     designProgress,
     designSettings,
     setDesignSettings,
+    isBrandLocked: profile?.brand_locked || false,
     currentSlideIndex,
     setCurrentSlideIndex,
     generateCarousel,
@@ -439,5 +459,6 @@ export function useCarouselGenerator() {
     removeSlide,
     resetCarousel,
     resetWeekContent,
+    syncBrandFromProfile,
   };
 }
