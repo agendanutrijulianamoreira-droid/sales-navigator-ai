@@ -277,15 +277,15 @@ export function UnifiedComposer({ onGenerate }: UnifiedComposerProps) {
           {themeSuggestions.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {themeSuggestions.map((suggestion, i) => (
-                <Badge
+                <button
                   key={i}
-                  variant="secondary"
-                  className="cursor-pointer hover:bg-primary/20 transition-colors"
+                  type="button"
+                  className="inline-flex items-center rounded-full border border-transparent bg-secondary text-secondary-foreground px-2.5 py-0.5 text-xs font-semibold cursor-pointer hover:bg-primary/20 transition-colors"
                   onClick={() => setTheme(suggestion as string)}
                 >
                   <Sparkles className="h-3 w-3 mr-1" />
                   {(suggestion as string).substring(0, 40)}...
-                </Badge>
+                </button>
               ))}
             </div>
           )}
@@ -335,15 +335,15 @@ export function UnifiedComposer({ onGenerate }: UnifiedComposerProps) {
           {offerSuggestions.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {offerSuggestions.map((suggestion, i) => (
-                <Badge
+                <button
                   key={i}
-                  variant="outline"
-                  className="cursor-pointer hover:bg-primary/10"
+                  type="button"
+                  className="inline-flex items-center rounded-full border text-foreground px-2.5 py-0.5 text-xs font-semibold cursor-pointer hover:bg-primary/10 transition-colors"
                   onClick={() => setOffer(suggestion)}
                 >
                   <ShoppingBag className="h-3 w-3 mr-1" />
                   {suggestion}
-                </Badge>
+                </button>
               ))}
             </div>
           )}
