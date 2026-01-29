@@ -21,6 +21,22 @@ const CONTENT_TYPES = {
   levantada: { label: "Levantada de Mão", icon: FileText, color: "bg-pink-500" },
 };
 
+const STRATEGIC_GOALS = {
+  atrair: { label: "Atrair", description: "Alcance e novos seguidores", color: "bg-blue-500/10 text-blue-600 border-blue-200" },
+  aquecer: { label: "Aquecer", description: "Autoridade e confiança", color: "bg-amber-500/10 text-amber-600 border-amber-200" },
+  converter: { label: "Converter", description: "Venda e ação direta", color: "bg-emerald-500/10 text-emerald-600 border-emerald-200" },
+};
+
+const WEEKLY_STRATEGY = [
+  { day: 1, goal: "atrair", type: "reels", title: "Dica rápida de nutrição" },
+  { day: 2, goal: "aquecer", type: "carrossel", title: "Explicação profunda sobre metabolismo" },
+  { day: 3, goal: "aquecer", type: "stories", title: "Bastidores do consultório" },
+  { day: 4, goal: "atrair", type: "post_unico", title: "Mito vs Verdade" },
+  { day: 5, goal: "converter", type: "carrossel", title: "Como funciona meu acompanhamento" },
+  { day: 6, goal: "aquecer", type: "reels", title: "Receita prática da semana" },
+  { day: 0, goal: "converter", type: "levantada", title: "Chamada para agendamento" },
+];
+
 const DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const MONTHS = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -76,6 +92,24 @@ export default function ContentPlanner() {
     });
   };
 
+  const handleGenerateWeeklyStrategy = async () => {
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+    
+    for (const step of WEEKLY_STRATEGY) {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + step.day);
+      
+      await addItem({
+        data: date.toISOString().split('T')[0],
+        tipo: step.type,
+        titulo: step.title,
+        notas: `Objetivo: ${STRATEGIC_GOALS[step.goal as keyof typeof STRATEGIC_GOALS].label}`,
+      });
+    }
+    toast.success("Estratégia semanal gerada com sucesso!");
+  };
+
   const handleDayClick = (date: Date) => {
     setSelectedDate(date);
     setShowScheduleDialog(true);
@@ -123,6 +157,10 @@ export default function ContentPlanner() {
             </div>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={handleGenerateWeeklyStrategy}>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Gerar Estratégia
+            </Button>
             <Button variant="outline" onClick={() => setShowScheduleDialog(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Agendar

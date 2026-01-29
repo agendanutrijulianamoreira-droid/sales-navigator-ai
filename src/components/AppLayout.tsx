@@ -3,7 +3,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { 
   Sparkles, Target, Calendar, ShoppingBag, MessageSquare, 
-  BarChart3, BookOpen, LogOut, User, Zap, Home, ChevronLeft
+  BarChart3, BookOpen, LogOut, User, Zap, Home, ChevronLeft,
+  Camera
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +13,7 @@ const NAV_ITEMS = [
   { title: "Estratégia", icon: Target, href: "/strategy" },
   { title: "Calendário", icon: Calendar, href: "/planner" },
   { title: "Kit de Marca", icon: Zap, href: "/brand-kit" },
+  { title: "Estúdio de Fotos", icon: Camera, href: "/photo-studio" },
   { title: "Produtos", icon: ShoppingBag, href: "/products" },
   { title: "Resultados", icon: BarChart3, href: "/results" },
   { title: "Mentor IA", icon: MessageSquare, href: "/mentor" },

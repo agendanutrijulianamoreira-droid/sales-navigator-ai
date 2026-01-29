@@ -7,7 +7,8 @@ import { Link } from "react-router-dom";
 import { UnifiedComposer } from "@/components/UnifiedComposer";
 import { 
   Sparkles, Target, Calendar, ShoppingBag, 
-  BarChart3, BookOpen, LogOut, User, Zap, Palette, Settings
+  BarChart3, BookOpen, LogOut, User, Zap, Palette, Settings,
+  Camera
 } from "lucide-react";
 
 const MODULES = [
@@ -17,6 +18,7 @@ const MODULES = [
   { title: "Produtos", description: "Escada de ofertas", icon: ShoppingBag, href: "/products", color: "text-purple-500" },
   { title: "Resultados", description: "GPS Financeiro", icon: BarChart3, href: "/results", color: "text-emerald-500" },
   { title: "Biblioteca", description: "Seus conteúdos", icon: BookOpen, href: "/library", color: "text-pink-500" },
+  { title: "Estúdio Fotos", description: "Fotos Profissionais", icon: Camera, href: "/photo-studio", color: "text-orange-500" },
 ];
 
 export default function Dashboard() {
@@ -24,17 +26,17 @@ export default function Dashboard() {
   const { signOut } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b bg-white/80 backdrop-blur-md sticky top-0 z-50">
         <div className="container flex items-center justify-between h-16 px-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Sparkles className="h-5 w-5 text-primary" />
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+              <Sparkles className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="font-semibold text-lg">NutriSales OS</h1>
-              <p className="text-xs text-muted-foreground">Command Center</p>
+              <h1 className="font-bold text-lg tracking-tight">NutriSales OS</h1>
+              <p className="text-[10px] uppercase tracking-widest font-bold text-primary/60">Command Center</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -50,9 +52,9 @@ export default function Dashboard() {
 
       <main className="container px-4 py-8">
         {/* Welcome */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold">Olá, {profile?.nome?.split(" ")[0] || "Nutri"}! 👋</h2>
-          <p className="text-muted-foreground">O que vamos criar hoje?</p>
+        <div className="mb-8">
+          <h2 className="text-3xl font-extrabold tracking-tight">Olá, {profile?.nome?.split(" ")[0] || "Nutri"}! 👋</h2>
+          <p className="text-muted-foreground text-lg">Sua estratégia está pronta para decolar.</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">

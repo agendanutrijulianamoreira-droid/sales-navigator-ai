@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useProfile } from "./useProfile";
 import { useProducts } from "./useProducts";
 import { useToast } from "./use-toast";
@@ -108,16 +108,16 @@ export function useCarouselGenerator() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   
   // Initialize design settings from profile's brand kit
-  const [designSettings, setDesignSettings] = useState<DesignSettings>(() => ({
-    style: profile?.brand_style || "minimalist",
-    primaryColor: profile?.brand_primary_color || "#1a1a1a",
-    secondaryColor: profile?.brand_secondary_color || "#6b7280",
-    fontFamily: profile?.brand_font_title || "inter",
-  }));
+  const [designSettings, setDesignSettings] = useState<DesignSettings>({
+    style: "minimalist",
+    primaryColor: "#1a1a1a",
+    secondaryColor: "#6b7280",
+    fontFamily: "inter",
+  });
 
-  // Update design settings when profile loads/changes (if brand is locked)
+  // Update design settings when profile loads/changes
   const syncBrandFromProfile = useCallback(() => {
-    if (profile?.brand_locked) {
+    if (profile) {
       setDesignSettings({
         style: profile.brand_style || "minimalist",
         primaryColor: profile.brand_primary_color || "#1a1a1a",
@@ -128,9 +128,9 @@ export function useCarouselGenerator() {
   }, [profile]);
 
   // Sync on profile change
-  useState(() => {
+  useEffect(() => {
     syncBrandFromProfile();
-  });
+  }, [profile, syncBrandFromProfile]);
 
   const generateCarousel = useCallback(async (
     topic: string,
@@ -460,5 +460,6 @@ export function useCarouselGenerator() {
     resetCarousel,
     resetWeekContent,
     syncBrandFromProfile,
+    setCarousel,
   };
 }

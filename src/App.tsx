@@ -19,6 +19,7 @@ import Results from "./pages/Results";
 import Mentor from "./pages/Mentor";
 import Library from "./pages/Library";
 import Settings from "./pages/Settings";
+import PhotoStudio from "./pages/PhotoStudio";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="/mentor" element={<Mentor />} />
               <Route path="/library" element={<Library />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/photo-studio" element={<PhotoStudio />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
