@@ -9,9 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
 import { 
   Calendar, Grid3X3, Plus, ChevronLeft, ChevronRight,
-  FileText, Image, MessageSquare, TrendingUp, ArrowLeft, Trash2, Loader2
+  FileText, Image, MessageSquare, TrendingUp, ArrowLeft, Trash2, Loader2, Sparkles
 } from "lucide-react";
-
+import { toast } from "sonner";
 // Tipos de conteúdo baseados na metodologia
 const CONTENT_TYPES = {
   carrossel: { label: "Carrossel", icon: Grid3X3, color: "bg-blue-500" },
