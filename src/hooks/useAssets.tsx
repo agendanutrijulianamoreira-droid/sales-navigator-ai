@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
@@ -12,29 +12,86 @@ export interface Asset {
   created_at: string;
 }
 
-// This hook is a placeholder for future asset management functionality.
-// The 'assets' table needs to be created via migration before this hook can be used.
 export function useAssets() {
   const { user } = useAuth();
   const [assets, setAssets] = useState<Asset[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Placeholder - assets table doesn't exist yet
   const fetchAssets = useCallback(async () => {
-    // Assets table not yet created - return empty array
-    setAssets([]);
-    setLoading(false);
+    if (!user) {
+      setAssets([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("assets")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setAssets(data || []);
+    } catch (error) {
+      console.error("Error fetching assets:", error);
+      setAssets([]);
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
+  useEffect(() => {
+    fetchAssets();
+  }, [fetchAssets]);
+
   const addAsset = async (asset: Omit<Asset, "id" | "user_id" | "created_at">) => {
-    if (!user) return { error: new Error("Not authenticated") };
-    // Assets table not yet created
-    return { data: null, error: new Error("Assets table not yet created") };
+    if (!user) return { data: null, error: new Error("Not authenticated") };
+
+    try {
+      const { data, error } = await supabase
+        .from("assets")
+        .insert({
+          user_id: user.id,
+          tipo: asset.tipo,
+          subtipo: asset.subtipo,
+          url: asset.url,
+          metadata: asset.metadata || {}
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      // Update local state
+      setAssets(prev => [data, ...prev]);
+      return { data, error: null };
+    } catch (error) {
+      console.error("Error adding asset:", error);
+      return { data: null, error: error as Error };
+    }
   };
 
   const deleteAsset = async (id: string) => {
-    // Assets table not yet created
-    return { error: new Error("Assets table not yet created") };
+    if (!user) return { error: new Error("Not authenticated") };
+
+    try {
+      const { error } = await supabase
+        .from("assets")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+      
+      // Update local state
+      setAssets(prev => prev.filter(a => a.id !== id));
+      return { error: null };
+    } catch (error) {
+      console.error("Error deleting asset:", error);
+      return { error: error as Error };
+    }
   };
 
   return { assets, loading, addAsset, deleteAsset, refetch: fetchAssets };

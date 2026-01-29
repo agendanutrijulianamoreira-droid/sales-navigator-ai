@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      assets: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          subtipo: string | null
+          tipo: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          subtipo?: string | null
+          tipo: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          subtipo?: string | null
+          tipo?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       calendar_items: {
         Row: {
           created_at: string
