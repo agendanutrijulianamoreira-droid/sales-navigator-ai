@@ -11,11 +11,16 @@ serve(async (req) => {
   }
 
   try {
-    const { basePhotoUrl, pack, profile } = await req.json();
+    const body = await req.json();
+    const { basePhotoUrl, pack } = body;
+    
+    console.log(`[Generate-Photo] Request received for pack: ${pack}`);
+    console.log(`[Generate-Photo] Base Photo URL: ${basePhotoUrl}`);
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+      console.error("[Generate-Photo] LOVABLE_API_KEY is missing in environment variables");
+      throw new Error("Configuração incompleta: LOVABLE_API_KEY não encontrada.");
     }
 
     const packDescriptions: Record<string, string> = {

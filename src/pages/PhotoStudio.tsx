@@ -99,23 +99,16 @@ export default function PhotoStudio() {
 
     setIsGenerating(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-photo`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({
+      const { data, error: functionError } = await supabase.functions.invoke('generate-photo', {
+        body: {
           basePhotoUrl: basePhoto.url,
           pack: selectedPack,
-        }),
+        },
       });
 
-      if (!response.ok) throw new Error("Falha na geração");
+      if (functionError) throw functionError;
 
-      const { imageUrl } = await response.json();
+      const { imageUrl } = data;
       
       await addAsset({
         tipo: 'foto_profissional',
