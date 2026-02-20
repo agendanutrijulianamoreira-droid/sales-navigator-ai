@@ -19,7 +19,7 @@ interface Message {
 
 export default function Mentor() {
   const { user } = useAuth();
-  const { routeToSpecialist, isLoading } = useAISpecialist();
+  const { routeToSpecialist, stopStreaming, isLoading } = useAISpecialist();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -59,7 +59,7 @@ export default function Mentor() {
     if (conversationId) {
       await supabase
         .from("conversations")
-        .update({ 
+        .update({
           messages: newMessages as any,
           updated_at: new Date().toISOString()
         })
@@ -92,12 +92,12 @@ export default function Mentor() {
 
     try {
       const response = await routeToSpecialist(input);
-      
+
       if (response) {
-        const assistantMessage: Message = { 
-          role: "assistant", 
+        const assistantMessage: Message = {
+          role: "assistant",
           content: response.content,
-          specialist: response.specialist 
+          specialist: response.specialist
         };
         const updatedMessages = [...newMessages, assistantMessage];
         setMessages(updatedMessages);
@@ -155,7 +155,7 @@ export default function Mentor() {
                     <Bot className="h-16 w-16 mx-auto mb-4 text-primary/20" />
                     <h3 className="font-medium mb-2">Olá! Sou seu Mentor IA.</h3>
                     <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                      Posso ajudar com estratégia de marca, conteúdo, vendas, finanças... 
+                      Posso ajudar com estratégia de marca, conteúdo, vendas, finanças...
                       Faça sua pergunta e vou direcionar para o especialista certo!
                     </p>
                     <div className="flex flex-wrap gap-2 justify-center mt-6">
@@ -228,31 +228,50 @@ export default function Mentor() {
             </ScrollArea>
 
             {/* Input */}
-            <div className="flex gap-2 pt-4 border-t">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Digite sua dúvida, pedido de ajuda ou desabafo..."
-                className="min-h-[60px] resize-none"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-              />
-              <Button 
-                onClick={handleSend} 
-                disabled={isLoading || !input.trim()}
-                size="icon"
-                className="h-[60px] w-[60px]"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Send className="h-5 w-5" />
-                )}
-              </Button>
+            <div className="flex flex-col gap-2 pt-4 border-t">
+              {isLoading && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={stopStreaming}
+                  className="self-center mb-2 text-destructive border-destructive/20 hover:bg-destructive/10"
+                >
+                  <span className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-destructive rounded-full animate-pulse" />
+                    Parar Geração (Esc)
+                  </span>
+                </Button>
+              )}
+              <div className="flex gap-2">
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Digite sua dúvida, pedido de ajuda ou desabafo..."
+                  className="min-h-[60px] resize-none"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                    if (e.key === "Escape" && isLoading) {
+                      stopStreaming();
+                    }
+                  }}
+                  disabled={isLoading}
+                />
+                <Button
+                  onClick={handleSend}
+                  disabled={isLoading || !input.trim()}
+                  size="icon"
+                  className="h-[60px] w-[60px]"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Send className="h-5 w-5" />
+                  )}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

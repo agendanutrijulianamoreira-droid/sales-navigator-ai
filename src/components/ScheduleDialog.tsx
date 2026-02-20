@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
@@ -22,6 +22,7 @@ interface ScheduleDialogProps {
   onSchedule: (data: { date: string; tipo: string; titulo: string }) => Promise<void>;
   defaultTitle?: string;
   defaultTipo?: string;
+  defaultDate?: Date;
 }
 
 const CONTENT_TYPES = [
@@ -38,11 +39,19 @@ export function ScheduleDialog({
   onSchedule,
   defaultTitle = "",
   defaultTipo = "carrossel",
+  defaultDate,
 }: ScheduleDialogProps) {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(addDays(new Date(), 1));
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(defaultDate || addDays(new Date(), 1));
   const [titulo, setTitulo] = useState(defaultTitle);
   const [tipo, setTipo] = useState(defaultTipo);
   const [isScheduling, setIsScheduling] = useState(false);
+
+  // Atualizar data quando defaultDate ou dialog abre
+  useEffect(() => {
+    if (open && defaultDate) {
+      setSelectedDate(defaultDate);
+    }
+  }, [open, defaultDate]);
 
   const handleSchedule = async () => {
     if (!selectedDate) return;

@@ -36,6 +36,15 @@ export function useAISpecialist() {
   const { products } = useProducts();
   const [isLoading, setIsLoading] = useState(false);
   const [streamedContent, setStreamedContent] = useState<string>("");
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
+
+  const stopStreaming = useCallback(() => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+      setIsLoading(false);
+    }
+  }, [abortController]);
 
   const streamResponse = useCallback(async (
     specialist: Specialist,
@@ -45,6 +54,8 @@ export function useAISpecialist() {
     onDone: () => void
   ) => {
     setIsLoading(true);
+    const controller = new AbortController();
+    setAbortController(controller);
 
     try {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-specialist`, {
@@ -53,6 +64,7 @@ export function useAISpecialist() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
+        signal: controller.signal,
         body: JSON.stringify({
           specialist,
           prompt,
@@ -64,70 +76,57 @@ export function useAISpecialist() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        if (response.status === 429) throw new Error("Muitas requisições. Tente em instantes.");
+        if (response.status === 402) throw new Error("Créditos de IA esgotados.");
         throw new Error(errorData.error || `Erro ${response.status}`);
       }
 
-      if (!response.body) throw new Error("No response body");
+      if (!response.body) throw new Error("Resposta vazia da IA");
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let textBuffer = "";
-      let streamDone = false;
 
-      while (!streamDone) {
+      while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+
         textBuffer += decoder.decode(value, { stream: true });
 
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
+        const lines = textBuffer.split("\n");
+        // Keep the last incomplete line in the buffer
+        textBuffer = lines.pop() || "";
 
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || trimmedLine.startsWith(":")) continue;
+          if (!trimmedLine.startsWith("data: ")) continue;
 
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") {
-            streamDone = true;
-            break;
-          }
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) onDelta(content);
-          } catch {
-            textBuffer = line + "\n" + textBuffer;
-            break;
-          }
-        }
-      }
-
-      // Final flush
-      if (textBuffer.trim()) {
-        for (let raw of textBuffer.split("\n")) {
-          if (!raw) continue;
-          if (raw.endsWith("\r")) raw = raw.slice(0, -1);
-          if (raw.startsWith(":") || raw.trim() === "") continue;
-          if (!raw.startsWith("data: ")) continue;
-          const jsonStr = raw.slice(6).trim();
+          const jsonStr = trimmedLine.slice(6).trim();
           if (jsonStr === "[DONE]") continue;
+
           try {
             const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+            const content = parsed.choices?.[0]?.delta?.content;
             if (content) onDelta(content);
-          } catch { /* ignore */ }
+          } catch (e) {
+            console.warn("Fragmento de JSON ignorado no stream:", jsonStr);
+            // If parse fails, we wait for more context (already captured by textBuffer)
+          }
         }
       }
 
       onDone();
-    } catch (error) {
-      console.error("AI Specialist error:", error);
-      throw error;
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log("Geração interrompida pelo usuário");
+      } else {
+        console.error("AI Specialist error:", error);
+        throw error;
+      }
     } finally {
       setIsLoading(false);
+      setAbortController(null);
     }
   }, [profile, products]);
 
@@ -140,8 +139,7 @@ export function useAISpecialist() {
     const prompt = `Tipo: ${subtipo}\nDados: ${JSON.stringify(inputData, null, 2)}`;
     
     setStreamedContent("");
-    setIsLoading(true);
-
+    
     let fullContent = "";
     
     await streamResponse(
@@ -152,9 +150,7 @@ export function useAISpecialist() {
         fullContent += delta;
         setStreamedContent(fullContent);
       },
-      () => {
-        setIsLoading(false);
-      }
+      () => {}
     );
 
     return fullContent;
@@ -163,7 +159,6 @@ export function useAISpecialist() {
   const routeToSpecialist = useCallback(async (query: string): Promise<{ content: string; specialist: string }> => {
     setIsLoading(true);
     try {
-      // First, get the right specialist
       const routerResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mentor-router`, {
         method: "POST",
         headers: {
@@ -179,7 +174,6 @@ export function useAISpecialist() {
         specialist = data.specialist || "MENTOR_ORCHESTRATOR";
       }
 
-      // Then get the response from that specialist
       let fullContent = "";
       
       await streamResponse(
@@ -211,6 +205,7 @@ export function useAISpecialist() {
     streamResponse, 
     generateContent, 
     routeToSpecialist, 
+    stopStreaming,
     isLoading, 
     streamedContent 
   };
