@@ -45,3 +45,15 @@ verify_jwt = false
 [functions.mentor-router]
 enabled = true
 verify_jwt = false
+
+[functions.generate-photo]
+enabled = true
+verify_jwt = false
+
+[functions.generate-design]
+enabled = true
+verify_jwt = false
+
+[functions.generate-carousel]
+enabled = true
+verify_jwt = false
