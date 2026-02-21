@@ -13,10 +13,10 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const { basePhotoUrl, pack } = body;
-    
+
     console.log(`[Generate-Photo] Request received for pack: ${pack}`);
     console.log(`[Generate-Photo] Base Photo URL: ${basePhotoUrl}`);
-    
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       console.error("[Generate-Photo] LOVABLE_API_KEY is missing in environment variables");
@@ -24,19 +24,26 @@ serve(async (req) => {
     }
 
     const packDescriptions: Record<string, string> = {
-      headshot: "Professional editorial headshot, neutral studio background, high-end lighting, corporate but approachable style.",
-      consultorio: "Nutritionist in a modern clean office/clinic setting, sitting at a desk or standing near a bookshelf, professional healthcare environment.",
-      conteudo: "Dynamic content creator style, holding a tablet or pointing to a side space (for text overlay), bright natural lighting, engaging expression."
+      headshot: "Professional high-end editorial headshot. 85mm lens, f/1.8 aperture, softbox studio lighting, neutral grey/beige textured background. Clean skin texture, sharp focus on eyes, corporate but warm and approachable. Magazine cover quality.",
+      consultorio: "Nutritionist in a bright modern clinical setting. Professional white coat or smart business attire. Desk with a laptop and some healthy elements (like a green plant or bowl of fruit) in soft focus in the background. Natural window light mixed with professional indoor lighting.",
+      conteudo: "Dynamic content creator/educator style. Candid moment, professional yet energetic expression. Soft natural lighting, urban or modern interior background with depth (bokeh). Person is gesturing naturally. High-end lifestyle photography.",
+      palestra: "Expert speaker on a stage. Professional public speaking moment, slight low-angle shot for authority. Blurred audience in the foreground/background, warm stage lighting, holding a microphone or near a podium. Conference atmosphere.",
+      lifestyle: "Casual professional lifestyle. Natural morning light, sophisticated cafe or modern home kitchen background. Relaxed but sharp appearance, holding a ceramic mug or organic juice. Clean, airy 'Instagram editorial' aesthetic."
     };
 
-    const prompt = `Task: Create a professional high-quality photo of a person based on the provided reference image.
+    const prompt = `Task: Create an ultra-realistic, high-end professional photo based on the person in the provided reference image.
 
 STYLE: ${packDescriptions[pack] || packDescriptions.headshot}
-PERSON: Maintain the exact facial features, hair color, and ethnicity of the person in the reference photo.
-CLOTHING: Professional attire suitable for a nutritionist (e.g., clean white coat, smart casual, or professional blouse).
-QUALITY: Photorealistic, 8k resolution, professional photography lighting, sharp focus.
 
-CRITICAL: The person's face must be clearly recognizable as the same person from the reference photo. Do not change their identity.`;
+TECHNICAL SPECS: Photorealistic, 8k, highly detailed skin texture, professional color grading, cinematic lighting, sharp focus, no distortion.
+
+IDENTITY PRESERVATION (CRITICAL): 
+1. Maintain the EXACT facial features, bone structure, eye color, and unique marks of the person.
+2. Maintain hair color and texture.
+3. The person should be 100% recognizable as the same individual from the reference photo. 
+4. DO NOT change their ethnicity or basic identity.
+
+CLOTHING: Professional and sophisticated attire suitable for a top-tier nutritionist (e.g., silk blouse, tailored blazer, or a very clean modern medical coat).`;
 
     console.log(`[Generate-Photo] Creating ${pack} photo for user...`);
 
@@ -49,12 +56,12 @@ CRITICAL: The person's face must be clearly recognizable as the same person from
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-image",
         messages: [
-          { 
-            role: "user", 
+          {
+            role: "user",
             content: [
               { type: "text", text: prompt },
               { type: "image_url", image_url: { url: basePhotoUrl } }
-            ] 
+            ]
           }
         ],
         modalities: ["image", "text"]
@@ -69,7 +76,7 @@ CRITICAL: The person's face must be clearly recognizable as the same person from
 
     const data = await response.json();
     const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    
+
     if (!imageUrl) {
       throw new Error("Imagem não gerada");
     }

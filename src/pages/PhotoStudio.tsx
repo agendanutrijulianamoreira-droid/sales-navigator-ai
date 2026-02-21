@@ -7,35 +7,52 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useAssets } from "@/hooks/useAssets";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  Camera, Upload, Sparkles, Image as ImageIcon, 
+import {
+  Camera, Upload, Sparkles, Image as ImageIcon,
   CheckCircle2, AlertCircle, Loader2, Trash2, Download,
   User, Briefcase, GraduationCap
 } from "lucide-react";
 import { toast } from "sonner";
 
 const PHOTO_PACKS = [
-  { 
-    id: "headshot", 
-    label: "Perfil Profissional", 
-    description: "Fotos de rosto com fundo neutro para perfil e autoridade.",
+  {
+    id: "headshot",
+    label: "Perfil Editorial",
+    description: "Foco no rosto, fundo neutro, iluminação de estúdio. Ideal para LinkedIn e perfis.",
     icon: User,
-    prompts: ["Fundo cinza editorial", "Fundo escritório moderno", "Fundo degradê da marca"]
   },
-  { 
-    id: "consultorio", 
-    label: "No Consultório", 
-    description: "Você em um ambiente de atendimento, transmitindo confiança.",
+  {
+    id: "consultorio",
+    label: "No Consultório",
+    description: "Ambiente clínico moderno, transmitindo autoridade e acolhimento.",
     icon: Briefcase,
-    prompts: ["Mesa de atendimento", "Estante de livros", "Ambiente clean e iluminado"]
   },
-  { 
-    id: "conteudo", 
-    label: "Ensinando", 
-    description: "Fotos dinâmicas para usar em posts educativos e carrosséis.",
+  {
+    id: "palestra",
+    label: "Palestrante",
+    description: "Você no palco, transmitindo máximo de autoridade e conhecimento.",
     icon: GraduationCap,
-    prompts: ["Segurando tablet", "Apontando para o lado", "Expressão explicativa"]
   },
+  {
+    id: "conteudo",
+    label: "Criação de Conteúdo",
+    description: "Fotos dinâmicas e expressivas, perfeitas para sobrepor textos em posts.",
+    icon: Sparkles,
+  },
+  {
+    id: "lifestyle",
+    label: "Lifestyle Profissional",
+    description: "Momentos naturais em cafés ou ambientes modernos. Estética clean.",
+    icon: ImageIcon,
+  },
+];
+
+const SUCCESS_TIPS = [
+  "Use uma foto com o rosto bem iluminado",
+  "Evite sombras fortes ou contra-luz",
+  "Olhe diretamente para a câmera",
+  "Evite acessórios que cubram o rosto (óculos, chapéus)",
+  "O fundo da foto original deve ser o mais simples possível"
 ];
 
 export default function PhotoStudio() {
@@ -58,7 +75,7 @@ export default function PhotoStudio() {
   const handleUpload = async () => {
     if (!selectedFile) return;
     setIsUploading(true);
-    
+
     try {
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
@@ -99,6 +116,12 @@ export default function PhotoStudio() {
 
     setIsGenerating(true);
     try {
+      if (!basePhoto) {
+        toast.error("Nenhuma foto base encontrada. Faça upload e confirme antes.");
+        return;
+      }
+
+      console.log("[PhotoStudio] Invoking generate-photo on URL:", import.meta.env.VITE_SUPABASE_URL);
       const { data, error: functionError } = await supabase.functions.invoke('generate-photo', {
         body: {
           basePhotoUrl: basePhoto.url,
@@ -106,10 +129,20 @@ export default function PhotoStudio() {
         },
       });
 
-      if (functionError) throw functionError;
+      if (functionError) {
+        console.error("[PhotoStudio] generate-photo error detail:", functionError);
+        // supabase.functions.invoke returns an object with "message" when failure occurs
+        toast.error(functionError.message || "Erro ao gerar foto profissional. Veja os logs da função.");
+        throw functionError;
+      }
 
       const { imageUrl } = data;
-      
+
+      if (!imageUrl) {
+        toast.error("A função não retornou URL da imagem");
+        return;
+      }
+
       await addAsset({
         tipo: 'foto_profissional',
         subtipo: selectedPack,
@@ -118,9 +151,16 @@ export default function PhotoStudio() {
       });
 
       toast.success("Foto profissional gerada com sucesso!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Generation error:", error);
-      toast.error("Erro ao gerar foto profissional. Tente novamente.");
+      // supabase-js returns a generic message when network fails
+      if (error?.message?.includes("Failed to send a request")) {
+        toast.error(
+          "Não foi possível alcançar a função. Verifique se ela está implantada e se o SUPABASE_URL está correto."
+        );
+      } else {
+        toast.error("Erro ao gerar foto profissional. Tente novamente.");
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -129,8 +169,8 @@ export default function PhotoStudio() {
   const generatedPhotos = assets.filter(a => a.tipo === 'foto_profissional');
 
   return (
-    <AppLayout 
-      title="Estúdio de Fotos IA" 
+    <AppLayout
+      title="Estúdio de Fotos IA"
       description="Transforme uma foto simples em um ensaio profissional para sua marca"
     >
       <div className="grid lg:grid-cols-3 gap-6">
@@ -147,17 +187,16 @@ export default function PhotoStudio() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div 
-                className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center transition-all ${
-                  previewUrl ? "border-primary/50 bg-primary/5" : "border-muted"
-                }`}
+              <div
+                className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center transition-all ${previewUrl ? "border-primary/50 bg-primary/5" : "border-muted"
+                  }`}
               >
                 {previewUrl ? (
                   <div className="relative w-full aspect-square rounded-lg overflow-hidden">
                     <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                    <Button 
-                      variant="destructive" 
-                      size="icon" 
+                    <Button
+                      variant="destructive"
+                      size="icon"
                       className="absolute top-2 right-2 h-8 w-8"
                       onClick={() => {
                         setSelectedFile(null);
@@ -176,38 +215,36 @@ export default function PhotoStudio() {
                     <p className="text-xs text-muted-foreground text-center mt-1">
                       JPG ou PNG até 5MB
                     </p>
-                    <Input 
-                      type="file" 
-                      className="hidden" 
-                      id="photo-upload" 
+                    <Input
+                      type="file"
+                      className="hidden"
+                      id="photo-upload"
                       accept="image/*"
                       onChange={handleFileChange}
                     />
-                    <Label 
-                      htmlFor="photo-upload" 
+                    <Label
+                      htmlFor="photo-upload"
                       className="absolute inset-0 cursor-pointer"
                     />
                   </>
                 )}
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <CheckCircle2 className="h-3 w-3 text-green-500" />
-                  Boa iluminação
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <CheckCircle2 className="h-3 w-3 text-green-500" />
-                  Rosto centralizado
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <AlertCircle className="h-3 w-3 text-amber-500" />
-                  Evite óculos escuros ou chapéus
-                </div>
+              <div className="space-y-3 bg-muted/30 p-4 rounded-xl">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <Sparkles className="h-3 w-3" />
+                  Dicas para o sucesso
+                </p>
+                {SUCCESS_TIPS.map((tip, i) => (
+                  <div key={i} className="flex items-start gap-2 text-[11px] text-muted-foreground leading-tight">
+                    <CheckCircle2 className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
+                    {tip}
+                  </div>
+                ))}
               </div>
 
-              <Button 
-                className="w-full" 
+              <Button
+                className="w-full"
                 disabled={!selectedFile || isUploading}
                 onClick={handleUpload}
               >
@@ -230,11 +267,10 @@ export default function PhotoStudio() {
                   <button
                     key={pack.id}
                     onClick={() => setSelectedPack(pack.id)}
-                    className={`flex items-start gap-3 p-3 rounded-lg border text-left transition-all ${
-                      selectedPack === pack.id 
-                        ? "border-primary bg-primary/5 ring-1 ring-primary" 
-                        : "hover:bg-muted"
-                    }`}
+                    className={`flex items-start gap-3 p-3 rounded-lg border text-left transition-all ${selectedPack === pack.id
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "hover:bg-muted"
+                      }`}
                   >
                     <div className={`p-2 rounded-md ${selectedPack === pack.id ? "bg-primary text-white" : "bg-muted text-muted-foreground"}`}>
                       <pack.icon className="h-4 w-4" />
@@ -249,18 +285,23 @@ export default function PhotoStudio() {
                 ))}
               </div>
 
-              <Button 
-                className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90" 
+              <Button
+                className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 py-6"
                 size="lg"
                 disabled={!selectedFile || isGenerating}
                 onClick={handleGenerate}
               >
                 {isGenerating ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <div className="flex flex-col items-center">
+                    <Loader2 className="h-5 w-5 animate-spin mb-1" />
+                    <span className="text-[10px] animate-pulse">Revelando foto...</span>
+                  </div>
                 ) : (
-                  <Sparkles className="h-4 w-4 mr-2" />
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5" />
+                    <span>Gerar Ensaio Profissional</span>
+                  </div>
                 )}
-                Gerar Fotos Profissionais
               </Button>
               <p className="text-[10px] text-center text-muted-foreground">
                 Consome 5 créditos de IA por geração
@@ -292,10 +333,10 @@ export default function PhotoStudio() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {generatedPhotos.map((photo) => (
                     <div key={photo.id} className="group relative aspect-[3/4] rounded-xl overflow-hidden border bg-muted">
-                      <img 
-                        src={photo.url} 
-                        alt="Gerada" 
-                        className="w-full h-full object-cover transition-transform group-hover:scale-105" 
+                      <img
+                        src={photo.url}
+                        alt="Gerada"
+                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                         <Button size="icon" variant="secondary" className="h-9 w-9" asChild>
@@ -303,9 +344,9 @@ export default function PhotoStudio() {
                             <Download className="h-4 w-4" />
                           </a>
                         </Button>
-                        <Button 
-                          size="icon" 
-                          variant="destructive" 
+                        <Button
+                          size="icon"
+                          variant="destructive"
                           className="h-9 w-9"
                           onClick={() => deleteAsset(photo.id)}
                         >

@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { useProfile } from "./useProfile";
 import { useProducts } from "./useProducts";
 
-export type Specialist = 
+export type Specialist =
   | "COMMAND_CENTER"
   | "BRAND_ARCHITECT"
   | "SOCIAL_MEDIA_MANAGER"
@@ -58,11 +58,15 @@ export function useAISpecialist() {
     setAbortController(controller);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-specialist`, {
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-specialist`;
+      console.log("[AI-Specialist] Calling function:", functionUrl);
+
+      const response = await fetch(functionUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         signal: controller.signal,
         body: JSON.stringify({
@@ -137,11 +141,11 @@ export function useAISpecialist() {
   ) => {
     const specialist = specialistMap[specialistKey] || "MENTOR_ORCHESTRATOR";
     const prompt = `Tipo: ${subtipo}\nDados: ${JSON.stringify(inputData, null, 2)}`;
-    
+
     setStreamedContent("");
-    
+
     let fullContent = "";
-    
+
     await streamResponse(
       specialist,
       prompt,
@@ -150,7 +154,7 @@ export function useAISpecialist() {
         fullContent += delta;
         setStreamedContent(fullContent);
       },
-      () => {}
+      () => { }
     );
 
     return fullContent;
@@ -159,11 +163,15 @@ export function useAISpecialist() {
   const routeToSpecialist = useCallback(async (query: string): Promise<{ content: string; specialist: string }> => {
     setIsLoading(true);
     try {
-      const routerResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mentor-router`, {
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mentor-router`;
+      console.log("[AI-Specialist] Calling router:", functionUrl);
+
+      const routerResponse = await fetch(functionUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({ query }),
       });
@@ -175,7 +183,7 @@ export function useAISpecialist() {
       }
 
       let fullContent = "";
-      
+
       await streamResponse(
         specialist,
         query,
@@ -183,30 +191,30 @@ export function useAISpecialist() {
         (delta) => {
           fullContent += delta;
         },
-        () => {}
+        () => { }
       );
 
-      return { 
-        content: fullContent, 
-        specialist: specialist.toLowerCase() 
+      return {
+        content: fullContent,
+        specialist: specialist.toLowerCase()
       };
     } catch (error) {
       console.error("Route to specialist error:", error);
-      return { 
-        content: "Desculpe, ocorreu um erro. Por favor, tente novamente.", 
-        specialist: "mentor_orchestrator" 
+      return {
+        content: "Desculpe, ocorreu um erro. Por favor, tente novamente.",
+        specialist: "mentor_orchestrator"
       };
     } finally {
       setIsLoading(false);
     }
   }, [streamResponse]);
 
-  return { 
-    streamResponse, 
-    generateContent, 
-    routeToSpecialist, 
+  return {
+    streamResponse,
+    generateContent,
+    routeToSpecialist,
     stopStreaming,
-    isLoading, 
-    streamedContent 
+    isLoading,
+    streamedContent
   };
 }

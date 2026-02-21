@@ -37,6 +37,10 @@ const CONTENT_TYPES = [
 ];
 
 export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post }: EditPostDialogProps) {
+  // safety: we expect a post when the dialog is shown
+  if (open && !post) {
+    return null;
+  }
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [titulo, setTitulo] = useState("");
   const [tipo, setTipo] = useState("carrossel");
@@ -63,6 +67,12 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
       setSelectedDate(new Date(original.date));
       setHasChanges(false);
       setShowCalendar(false);
+
+      // focus title input when dialog opens
+      setTimeout(() => {
+        const el = document.getElementById("titulo");
+        el?.focus();
+      }, 0);
     }
   }, [post, open, originalData]);
 
@@ -91,6 +101,7 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
         titulo: titulo.trim(),
         notas: notas.trim() || undefined,
       });
+      toast.success("Post atualizado com sucesso");
       onOpenChange(false);
       setHasChanges(false);
     } finally {
@@ -103,6 +114,7 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
     setIsDuplicating(true);
     try {
       await onDuplicate?.(post);
+      toast.success("Post duplicado");
     } finally {
       setIsDuplicating(false);
     }
@@ -118,9 +130,24 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // quick save (ctrl+enter)
     if (e.key === "Enter" && e.ctrlKey && !isUpdating) {
       e.preventDefault();
       handleUpdate();
+      return;
+    }
+
+    // escape to close
+    if (e.key === "Escape") {
+      e.preventDefault();
+      handleClose();
+      return;
+    }
+
+    // open calendar with 'd' key when focused anywhere inside dialog
+    if (e.key.toLowerCase() === "d" && !showCalendar && !isUpdating) {
+      e.preventDefault();
+      setShowCalendar(true);
     }
   };
 
@@ -156,13 +183,15 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
               placeholder="Nome do post"
               maxLength={100}
               autoFocus
+              required
+              disabled={isUpdating || isDuplicating}
             />
             <p className="text-xs text-muted-foreground">{titulo.length}/100</p>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="tipo">Tipo de Conteúdo</Label>
-            <Select value={tipo} onValueChange={setTipo}>
+            <Select value={tipo} onValueChange={setTipo} disabled={isUpdating || isDuplicating}>
               <SelectTrigger id="tipo">
                 <SelectValue />
               </SelectTrigger>
@@ -186,20 +215,38 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
               rows={4}
               maxLength={500}
               className="resize-none font-sm"
+              disabled={isUpdating || isDuplicating}
             />
             <p className="text-xs text-muted-foreground">{notas.length}/500</p>
           </div>
 
           <div className="space-y-2">
             <Label>Data</Label>
-            <Button
-              variant="outline"
-              className="w-full justify-start text-left"
-              onClick={() => setShowCalendar(!showCalendar)}
-            >
-              {selectedDate ? format(selectedDate, "dd/MM/yyyy") : "Selecione uma data"}
-            </Button>
-            
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                className="flex-1 justify-start text-left"
+                onClick={() => setShowCalendar(!showCalendar)}
+                disabled={isUpdating || isDuplicating}
+              >
+                {selectedDate ? format(selectedDate, "dd/MM/yyyy") : "Selecione uma data"}
+              </Button>
+              {selectedDate && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setSelectedDate(undefined)}
+                  disabled={isUpdating || isDuplicating}
+                  title="Limpar data"
+                >
+                  ✖
+                </Button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Pressione <kbd>D</kbd> para abrir/fechar o calendário
+            </p>
+
             {showCalendar && (
               <div className="border rounded-lg p-4 bg-muted/30 overflow-x-auto">
                 <Calendar
@@ -214,7 +261,7 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
                 />
               </div>
             )}
-            
+
             {selectedDate && (
               <p className="text-sm font-medium text-primary">
                 📅 {format(selectedDate, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
