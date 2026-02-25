@@ -13,7 +13,7 @@ serve(async (req) => {
     }
 
     try {
-        const { topic, tone, format, mode, currentText } = await req.json()
+        const { topic, tone, format, mode, currentText, strategyContext } = await req.json()
 
         // Pegar a chave das variáveis de ambiente do Supabase
         const openAiKey = Deno.env.get('OPENAI_API_KEY')
@@ -29,6 +29,10 @@ serve(async (req) => {
           Modo: ${mode}.
           Texto original: "${currentText}".
           
+          CONTEXTO DA MARCA (Opcional):
+          - Persona: ${strategyContext?.persona || 'Público Geral'}
+          - Tom de Voz: ${strategyContext?.brandVoice || 'Profissional'}
+          
           Regras:
           - Se mode for 'shorter', resuma mantendo a essência.
           - Se mode for 'punchy', torne-o impactante e use emojis estrategicamente.
@@ -37,13 +41,27 @@ serve(async (req) => {
           Retorne APENAS o texto reescrito.
         `;
         } else {
-            // Geração Completa de Carrossel
+            // Geração Completa de Carrossel (Maestro v2 Strategy Injection)
             prompt = `
-          Atue como um estrategista de conteúdo para nutricionistas.
-          Crie um roteiro de carrossel Instagram (slide a slide) sobre: "${topic}".
-          Tom de voz: ${tone || 'Profissional'}.
-          Formato: ${format || 'Educativo'}.
+          Você é o Gerente de Social Media do "Brain Trust" de nutricionistas.
+          Sua missão é criar um carrossel baseado na ESTRATÉGIA MESTRE do nutricionista.
+
+          ESTRATÉGIA ATIVA (Siga isso à risca):
+          - Persona: ${strategyContext?.persona || 'Nutrição Geral'}
+          - Voz: ${strategyContext?.brandVoice || 'Profissional'}
+          - Inimigo Comum: ${strategyContext?.commonEnemy || 'Desinformação'}
+          - Promessa Principal (CTA): ${strategyContext?.promise || 'Consulta Personalizada'}
+          - Objeções (Quebre estas dores): ${strategyContext?.objections || 'Falta de tempo'}
+
+          TÓPICO DO POST: "${topic}"
+          TOM DE VOZ: ${tone || strategyContext?.brandVoice || 'Profissional'}.
+          FORMATO: ${format || 'Educativo'}.
           
+          DIRETRIZES:
+          1. O conteúdo deve ser 100% alinhado com a Persona acima.
+          2. Use o tom de voz definido. Fuja do óbvio.
+          3. No slide de CTA, use a Promessa Principal do nutricionista.
+
           Retorne APENAS um JSON válido no formato:
           {
             "titulo": "...",

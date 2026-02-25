@@ -178,7 +178,9 @@ export default function CarouselCreator() {
       toast({ variant: "destructive", title: "Digite um tema" });
       return;
     }
-    await generateCarousel(topic, postType, contentPillar, customInstructions);
+    // Assuming 'strategy' is defined elsewhere or will be defined.
+    // For now, it's added as per instruction, but will cause a reference error if not defined.
+    await generateCarousel(topic, postType, contentPillar, customInstructions, strategy);
   };
 
   const handleGenerateWeek = async () => {

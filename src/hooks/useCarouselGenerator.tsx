@@ -142,7 +142,8 @@ export function useCarouselGenerator() {
     topic: string,
     postType: PostType,
     contentPillar: string,
-    customInstructions?: string
+    customInstructions?: string,
+    strategyContext?: any
   ) => {
     // 1. Verificar Créditos
     const hasCredit = await consumeCredit(1);
@@ -159,7 +160,8 @@ export function useCarouselGenerator() {
           contentPillar,
           customInstructions,
           profile,
-          products
+          products,
+          strategyContext
         }
       });
 
