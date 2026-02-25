@@ -50,11 +50,11 @@ export default function Strategy() {
       dor_principal: data.mainPain,
       desejo_principal: data.mainDesire,
       objecoes: data.objections.map(o => `• ${o}`).join('\n'),
-      tom_voz: data.brandVoice.toLowerCase(),
+      tom_voz: data.brandVoice ? data.brandVoice.toLowerCase() : profile?.tom_voz,
       inimigo_comum: data.commonEnemy,
       promessa_principal: data.promises[2] || data.promises[0], // 90-day promise preferred
       mecanismo_unico: "Sua Metodologia de Elite",
-      problema_90_dias: data.promises.map(p => `• ${p}`).join('\n'),
+      problema_90_dias: data.promises.map(p => `• ${p}`).join('\n')
     });
 
     if (data.maestroVerdict) {

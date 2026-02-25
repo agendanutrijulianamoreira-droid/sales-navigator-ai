@@ -14,7 +14,7 @@ export interface StrategyProfile {
     objections: string[];
     brandVoice: string;
     bigIdea: string;
-    maestroVerdict?: string;
+    maestroVerdict: string;
     productLadder?: {
         tripwire: string;
         coreOffer: string;
