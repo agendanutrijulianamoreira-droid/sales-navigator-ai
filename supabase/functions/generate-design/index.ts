@@ -12,7 +12,7 @@ serve(async (req) => {
 
   try {
     const { slide, style, profileName, brandColors, fontFamily } = await req.json();
-    
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -36,7 +36,7 @@ serve(async (req) => {
 
     const styleDesc = styleDescriptions[style] || styleDescriptions.minimalist;
     const fontDesc = fontDescriptions[fontFamily] || fontDescriptions.inter;
-    
+
     // Layout logic based on slide type
     let layoutInstructions = "";
     if (slide.tipo === 'capa') {
@@ -69,6 +69,13 @@ ${brandColors ? `COLOR PALETTE: ${brandColors}` : "COLOR PALETTE: Professional a
 
 ${layoutInstructions}
 
+${slide.backgroundImageUrl ? `
+BACKGROUND IMAGE (CRITICAL): 
+- Use the person from this URL as the main visual subject: ${slide.backgroundImageUrl}
+- Integrate the person naturally into the design style (${style}).
+- ENSURE TEXT LEGIBILITY: Position the person so they don't overlap with the main text, or add a subtle semi-transparent overlay/gradient behind the text.
+` : "BACKGROUND: Use only graphic design, typography, and vector elements."}
+
 CONTENT TO INCLUDE:
 1. MAIN HEADLINE: "${slide.headline}" (Make this the primary focus)
 2. SUBTEXT: "${slide.subtexto || ""}" (Secondary focus)
@@ -77,7 +84,6 @@ CONTENT TO INCLUDE:
 
 CRITICAL RULES:
 - FORMAT: 1080x1080 pixels (Square).
-- NO PHOTOS: Use only graphic design, typography, and vector elements.
 - READABILITY: Text must be perfectly legible with high contrast against the background.
 - CONSISTENCY: Do not add random elements. Keep it clean and professional.
 - LANGUAGE: All text must be exactly as provided in Portuguese.
@@ -121,7 +127,7 @@ Generate a stunning, high-quality graphic design for this slide.`;
 
     const data = await response.json();
     const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    
+
     if (!imageUrl) {
       throw new Error("Imagem não gerada");
     }

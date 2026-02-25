@@ -9,7 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProfile } from "@/hooks/useProfile";
 import { useAISpecialist } from "@/hooks/useAISpecialist";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, Target, Crown, Sword, Lightbulb } from "lucide-react";
+import { Loader2, Sparkles, Target, Crown, Sword, Lightbulb, ShieldAlert, BarChart3 } from "lucide-react";
+import { StrategyGenerator } from "@/components/strategy/StrategyGenerator";
+import { StrategyProfile } from "@/hooks/useStrategyAI";
+import { PricingCalculator } from "@/components/business/PricingCalculator";
 
 export default function Strategy() {
   const { profile, updateProfile } = useProfile();
@@ -35,6 +38,17 @@ export default function Strategy() {
     });
   };
 
+  const handleAutoFill = (data: StrategyProfile) => {
+    updateProfile({
+      persona_ideal: data.targetAudience,
+      dor_principal: data.painPoints.map(p => `• ${p}`).join('\n'),
+      desejo_principal: data.desires.map(d => `• ${d}`).join('\n'),
+      objecoes: data.objections.map(o => `• ${o}`).join('\n'),
+      tom_voz: data.brandVoice.toLowerCase(),
+      promessa_principal: data.bigIdea
+    });
+  };
+
   return (
     <AppLayout title="Estratégia" description="Brand Hub & Business Lab">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -44,6 +58,8 @@ export default function Strategy() {
         </TabsList>
 
         <TabsContent value="brand" className="space-y-6">
+          <StrategyGenerator onProfileGenerated={handleAutoFill} />
+
           {/* Nicho & Persona */}
           <Card>
             <CardHeader>
@@ -57,25 +73,25 @@ export default function Strategy() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Nicho Principal</Label>
-                  <Input 
-                    value={profile?.nicho || ""} 
+                  <Input
+                    value={profile?.nicho || ""}
                     onChange={(e) => updateProfile({ nicho: e.target.value })}
-                    placeholder="Ex: Emagrecimento Feminino" 
+                    placeholder="Ex: Emagrecimento Feminino"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Sub-nicho</Label>
-                  <Input 
-                    value={profile?.sub_nicho || ""} 
+                  <Input
+                    value={profile?.sub_nicho || ""}
                     onChange={(e) => updateProfile({ sub_nicho: e.target.value })}
-                    placeholder="Ex: Mães que trabalham fora" 
+                    placeholder="Ex: Mães que trabalham fora"
                   />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Persona Ideal (Cliente dos Sonhos)</Label>
-                <Textarea 
-                  value={profile?.persona_ideal || ""} 
+                <Textarea
+                  value={profile?.persona_ideal || ""}
                   onChange={(e) => updateProfile({ persona_ideal: e.target.value })}
                   placeholder="Descreva em detalhes: idade, rotina, frustrações, desejos..."
                   rows={4}
@@ -84,8 +100,8 @@ export default function Strategy() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Dor Principal</Label>
-                  <Textarea 
-                    value={profile?.dor_principal || ""} 
+                  <Textarea
+                    value={profile?.dor_principal || ""}
                     onChange={(e) => updateProfile({ dor_principal: e.target.value })}
                     placeholder="O que mais incomoda sua persona?"
                     rows={2}
@@ -93,13 +109,25 @@ export default function Strategy() {
                 </div>
                 <div className="space-y-2">
                   <Label>Desejo Principal</Label>
-                  <Textarea 
-                    value={profile?.desejo_principal || ""} 
+                  <Textarea
+                    value={profile?.desejo_principal || ""}
                     onChange={(e) => updateProfile({ desejo_principal: e.target.value })}
                     placeholder="O que ela mais quer conquistar?"
                     rows={2}
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <ShieldAlert className="h-4 w-4" />
+                  Objeções Comuns (O que impede a compra?)
+                </Label>
+                <Textarea
+                  value={profile?.objecoes || ""}
+                  onChange={(e) => updateProfile({ objecoes: e.target.value })}
+                  placeholder="Quais motivos fariam ela NÃO comprar de você? (Ex: Falta de tempo, medo de dieta restritiva)"
+                  rows={2}
+                />
               </div>
             </CardContent>
           </Card>
@@ -116,8 +144,8 @@ export default function Strategy() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Promessa Principal</Label>
-                <Textarea 
-                  value={profile?.promessa_principal || ""} 
+                <Textarea
+                  value={profile?.promessa_principal || ""}
                   onChange={(e) => updateProfile({ promessa_principal: e.target.value })}
                   placeholder="Qual transformação você entrega? (Ex: Emagrecer 10kg em 90 dias sem passar fome)"
                   rows={2}
@@ -128,8 +156,8 @@ export default function Strategy() {
                   <Sword className="h-4 w-4" />
                   Inimigo Comum
                 </Label>
-                <Textarea 
-                  value={profile?.inimigo_comum || ""} 
+                <Textarea
+                  value={profile?.inimigo_comum || ""}
                   onChange={(e) => updateProfile({ inimigo_comum: e.target.value })}
                   placeholder="O que você combate? (Ex: Dietas restritivas, indústria do efeito sanfona)"
                   rows={2}
@@ -144,6 +172,9 @@ export default function Strategy() {
         </TabsContent>
 
         <TabsContent value="lab" className="space-y-6">
+          {/* Calculadora de Preços - NOVO */}
+          <PricingCalculator />
+
           {/* Método */}
           <Card>
             <CardHeader>
@@ -156,16 +187,16 @@ export default function Strategy() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Nome do Método</Label>
-                <Input 
-                  value={profile?.nome_metodo || ""} 
+                <Input
+                  value={profile?.nome_metodo || ""}
                   onChange={(e) => updateProfile({ nome_metodo: e.target.value })}
-                  placeholder="Ex: Método Nutri Leve, Protocolo Renascer" 
+                  placeholder="Ex: Método Nutri Leve, Protocolo Renascer"
                 />
               </div>
               <div className="space-y-2">
                 <Label>Mecanismo Único</Label>
-                <Textarea 
-                  value={profile?.mecanismo_unico || ""} 
+                <Textarea
+                  value={profile?.mecanismo_unico || ""}
                   onChange={(e) => updateProfile({ mecanismo_unico: e.target.value })}
                   placeholder="O que torna seu método diferente? (Ex: Abordagem hormonal + comportamental)"
                   rows={3}
@@ -173,8 +204,8 @@ export default function Strategy() {
               </div>
               <div className="space-y-2">
                 <Label>Problema que resolve em 90 dias</Label>
-                <Textarea 
-                  value={profile?.problema_90_dias || ""} 
+                <Textarea
+                  value={profile?.problema_90_dias || ""}
                   onChange={(e) => updateProfile({ problema_90_dias: e.target.value })}
                   placeholder="Qual transformação concreta entrega nos primeiros 90 dias?"
                   rows={2}
@@ -198,7 +229,7 @@ export default function Strategy() {
                 <Label>Arquétipo de Marca</Label>
                 <div className="flex flex-wrap gap-2">
                   {["Sábia", "Cuidadora", "Heroína", "Rebelde", "Amiga", "Criadora"].map((arq) => (
-                    <Badge 
+                    <Badge
                       key={arq}
                       variant={profile?.arquetipo === arq ? "default" : "outline"}
                       className="cursor-pointer"
@@ -213,7 +244,7 @@ export default function Strategy() {
                 <Label>Tom de Voz</Label>
                 <div className="flex flex-wrap gap-2">
                   {["Empático", "Técnico", "Motivador", "Direto", "Acolhedor", "Inspirador"].map((tom) => (
-                    <Badge 
+                    <Badge
                       key={tom}
                       variant={profile?.tom_voz === tom.toLowerCase() ? "default" : "outline"}
                       className="cursor-pointer"

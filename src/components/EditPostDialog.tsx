@@ -18,6 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { CalendarIcon, Loader2, Copy, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CalendarItem } from "@/hooks/useCalendarItems";
+import { useGenerations } from "@/hooks/useGenerations";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 interface EditPostDialogProps {
@@ -41,6 +43,8 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
   if (open && !post) {
     return null;
   }
+  const navigate = useNavigate();
+  const { getGeneration } = useGenerations();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [titulo, setTitulo] = useState("");
   const [tipo, setTipo] = useState("carrossel");
@@ -79,7 +83,7 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
   // Rastreia mudanças em tempo real
   useEffect(() => {
     const original = originalData();
-    const changed = 
+    const changed =
       titulo !== original.titulo ||
       tipo !== original.tipo ||
       notas !== original.notas ||
@@ -127,6 +131,31 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
       }
     }
     onOpenChange(false);
+  };
+
+  const handleEditVisuals = async () => {
+    if (!post?.generation_id) return;
+
+    setIsUpdating(true);
+    const { data, error } = await getGeneration(post.generation_id);
+    setIsUpdating(false);
+
+    if (error || !data) {
+      toast.error("Não foi possível carregar os dados visuais deste post.");
+      return;
+    }
+
+    try {
+      const carouselData = JSON.parse(data.output_content);
+      navigate("/carousel-creator", {
+        state: {
+          initialData: carouselData,
+          metadata: data.input_data
+        }
+      });
+    } catch (e) {
+      toast.error("Erro ao processar dados do carrossel.");
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -203,6 +232,18 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
                 ))}
               </SelectContent>
             </Select>
+            {tipo === "carrossel" && post?.generation_id && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full mt-2"
+                onClick={handleEditVisuals}
+                disabled={isUpdating}
+              >
+                <AlertCircle className="h-4 w-4 mr-2 text-primary" />
+                Editar Design do Carrossel
+              </Button>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -297,8 +338,8 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
             <Button variant="outline" onClick={handleClose} className="flex-1 sm:flex-none">
               Cancelar
             </Button>
-            <Button 
-              onClick={handleUpdate} 
+            <Button
+              onClick={handleUpdate}
               disabled={!selectedDate || isUpdating || !titulo.trim()}
               className="flex-1 sm:flex-none"
             >

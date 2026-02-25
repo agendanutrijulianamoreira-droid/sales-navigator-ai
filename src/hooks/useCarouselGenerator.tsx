@@ -2,6 +2,9 @@ import { useState, useCallback, useEffect } from "react";
 import { useProfile } from "./useProfile";
 import { useProducts } from "./useProducts";
 import { useToast } from "./use-toast";
+import { useBrand } from "@/contexts/BrandContext";
+import { useCredits } from "./useCredits";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface CarouselSlide {
   numero: number;
@@ -10,9 +13,11 @@ export interface CarouselSlide {
   subtexto?: string;
   destaque?: string;
   imageUrl?: string;
+  backgroundImageUrl?: string; // New field for user-selected background photo
 }
 
 export interface CarouselData {
+  id?: string;
   titulo: string;
   slides: CarouselSlide[];
   legenda: string;
@@ -36,7 +41,7 @@ export interface DesignSettings {
   fontFamily: string;
 }
 
-export type PostType = 
+export type PostType =
   | "PROMESSA"
   | "COMO_FIZ"
   | "NAO_SOBRE"
@@ -97,7 +102,8 @@ export function useCarouselGenerator() {
   const { profile } = useProfile();
   const { products } = useProducts();
   const { toast } = useToast();
-  
+  const { brand } = useBrand();
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGeneratingDesign, setIsGeneratingDesign] = useState(false);
   const [isGeneratingWeek, setIsGeneratingWeek] = useState(false);
@@ -106,31 +112,31 @@ export function useCarouselGenerator() {
   const [carousel, setCarousel] = useState<CarouselData | null>(null);
   const [weekContent, setWeekContent] = useState<WeekContent[]>([]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  
-  // Initialize design settings from profile's brand kit
+
+  // Initialize design settings from BrandContext
   const [designSettings, setDesignSettings] = useState<DesignSettings>({
     style: "minimalist",
-    primaryColor: "#1a1a1a",
-    secondaryColor: "#6b7280",
-    fontFamily: "inter",
+    primaryColor: brand.primary,
+    secondaryColor: brand.secondary,
+    fontFamily: brand.fontHeading.toLowerCase(),
   });
 
-  // Update design settings when profile loads/changes
-  const syncBrandFromProfile = useCallback(() => {
-    if (profile) {
-      setDesignSettings({
-        style: profile.brand_style || "minimalist",
-        primaryColor: profile.brand_primary_color || "#1a1a1a",
-        secondaryColor: profile.brand_secondary_color || "#6b7280",
-        fontFamily: profile.brand_font_title || "inter",
-      });
-    }
-  }, [profile]);
+  // Update design settings when brand context changes
+  const syncBrandFromContext = useCallback(() => {
+    setDesignSettings({
+      style: "minimalist",
+      primaryColor: brand.primary,
+      secondaryColor: brand.secondary,
+      fontFamily: brand.fontHeading.toLowerCase(),
+    });
+  }, [brand]);
 
-  // Sync on profile change
+  // Sync on brand change
   useEffect(() => {
-    syncBrandFromProfile();
-  }, [profile, syncBrandFromProfile]);
+    syncBrandFromContext();
+  }, [brand, syncBrandFromContext]);
+
+  const { consumeCredit } = useCredits();
 
   const generateCarousel = useCallback(async (
     topic: string,
@@ -138,35 +144,30 @@ export function useCarouselGenerator() {
     contentPillar: string,
     customInstructions?: string
   ) => {
+    // 1. Verificar Créditos
+    const hasCredit = await consumeCredit(1);
+    if (!hasCredit) return;
+
     setIsGenerating(true);
     setCarousel(null);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-carousel`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('generate-carousel-text', {
+        body: {
           topic,
           postType,
           contentPillar,
-          profile,
-          products,
           customInstructions,
-        }),
+          profile,
+          products
+        }
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Erro ao gerar carrossel");
-      }
+      if (error) throw error;
 
-      const data: CarouselData = await response.json();
       setCarousel(data);
       setCurrentSlideIndex(0);
-      
+
       toast({
         title: "Carrossel gerado!",
         description: `${data.slides.length} slides criados`,
@@ -190,21 +191,31 @@ export function useCarouselGenerator() {
     slideIndex: number,
     style: string = "minimalist",
     brandColors?: { primary: string; secondary: string },
-    fontFamily?: string
+    fontFamily?: string,
+    backgroundImageUrl?: string
   ) => {
     if (!carousel || !carousel.slides[slideIndex]) return null;
 
     setIsGeneratingDesign(true);
 
     try {
+      // Update the slide locally with the background image before calling the server
+      if (backgroundImageUrl) {
+        updateSlide(slideIndex, { backgroundImageUrl });
+      }
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-design`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({
-          slide: carousel.slides[slideIndex],
+          slide: {
+            ...carousel.slides[slideIndex],
+            backgroundImageUrl: backgroundImageUrl || carousel.slides[slideIndex].backgroundImageUrl
+          },
           style,
           profileName: profile?.nome,
           brandColors: brandColors ? `Primary: ${brandColors.primary}, Secondary: ${brandColors.secondary}` : undefined,
@@ -218,7 +229,7 @@ export function useCarouselGenerator() {
       }
 
       const data = await response.json();
-      
+
       // Update the slide with the generated image
       setCarousel(prev => {
         if (!prev) return null;
@@ -256,7 +267,7 @@ export function useCarouselGenerator() {
     try {
       for (let i = 0; i < carousel.slides.length; i++) {
         setDesignProgress({ current: i + 1, total: carousel.slides.length });
-        
+
         const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-design`, {
           method: "POST",
           headers: {
@@ -264,7 +275,10 @@ export function useCarouselGenerator() {
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
-            slide: carousel.slides[i],
+            slide: {
+              ...carousel.slides[i],
+              backgroundImageUrl: carousel.slides[i].backgroundImageUrl
+            },
             style: designSettings.style,
             profileName: profile?.nome,
             brandColors: `Primary: ${designSettings.primaryColor}, Secondary: ${designSettings.secondaryColor}`,
@@ -278,7 +292,7 @@ export function useCarouselGenerator() {
         }
 
         const data = await response.json();
-        
+
         setCarousel(prev => {
           if (!prev) return null;
           const newSlides = [...prev.slides];
@@ -312,7 +326,7 @@ export function useCarouselGenerator() {
     try {
       for (let i = 0; i < topics.length; i++) {
         const { topic, postType, contentPillar } = topics[i];
-        
+
         const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-carousel`, {
           method: "POST",
           headers: {
@@ -334,7 +348,7 @@ export function useCarouselGenerator() {
         }
 
         const data: CarouselData = await response.json();
-        
+
         generated.push({
           id: crypto.randomUUID(),
           dayOfWeek: i,
@@ -347,7 +361,7 @@ export function useCarouselGenerator() {
       }
 
       setWeekContent(generated);
-      
+
       toast({
         title: "Semana gerada!",
         description: `${generated.length} posts criados`,
@@ -378,7 +392,7 @@ export function useCarouselGenerator() {
 
   // Update week content after editing
   const updateWeekContent = useCallback((id: string, newCarousel: CarouselData) => {
-    setWeekContent(prev => prev.map(w => 
+    setWeekContent(prev => prev.map(w =>
       w.id === id ? { ...w, carousel: newCarousel, status: "edited" } : w
     ));
   }, []);
@@ -459,7 +473,7 @@ export function useCarouselGenerator() {
     removeSlide,
     resetCarousel,
     resetWeekContent,
-    syncBrandFromProfile,
+    syncBrandFromProfile: syncBrandFromContext,
     setCarousel,
   };
 }

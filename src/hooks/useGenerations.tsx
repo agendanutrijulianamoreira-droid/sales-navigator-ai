@@ -93,5 +93,30 @@ export function useGenerations() {
     }
   };
 
-  return { generations, loading, error, saveGeneration, toggleFavorite, deleteGeneration, refetch: fetchGenerations };
+  const getGeneration = useCallback(async (id: string) => {
+    if (!user) return { error: new Error("Usuário não autenticado"), data: null };
+    try {
+      const { data, error } = await supabase
+        .from("generations")
+        .select("*")
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .single();
+      if (error) throw error;
+      return { error: null, data: data as Generation };
+    } catch (err) {
+      return { error: err instanceof Error ? err : new Error("Erro ao carregar geração"), data: null };
+    }
+  }, [user]);
+
+  return {
+    generations,
+    loading,
+    error,
+    saveGeneration,
+    getGeneration,
+    toggleFavorite,
+    deleteGeneration,
+    refetch: fetchGenerations
+  };
 }
