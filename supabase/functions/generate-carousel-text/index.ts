@@ -3,30 +3,32 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+<<<<<<< HEAD
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
 serve(async (req) => {
-  // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { topic, tone, format, mode, currentText, strategyContext, postType, contentPillar, customInstructions, profile, products } = await req.json()
+    const {
+      topic, tone, format, mode, currentText, strategyContext,
+      postType, contentPillar, customInstructions, profile, products
+    } = await req.json()
 
-    // Pegar a chave das variáveis de ambiente do Supabase
-    const openAiKey = Deno.env.get('OPENAI_API_KEY')
-    if (!openAiKey) throw new Error('OpenAI Key not configured')
+    const apiKey = Deno.env.get('LOVABLE_API_KEY') || Deno.env.get('OPENAI_API_KEY')
+    if (!apiKey) throw new Error('API Key (LOVABLE or OPENAI) not configured')
 
-    // System prompt context based on Profile Elite
-    const niche = profile?.nicho || 'Saúde/Nutrição';
+    const niche = strategyContext?.niche || profile?.nicho || 'Saúde/Nutrição';
+    const persona = strategyContext?.persona || 'Público Geral';
+    const voice = tone || strategyContext?.brandVoice || 'Profissional';
     const brandColors = profile?.primary_color ? `Cores: ${profile.primary_color}, ${profile.secondary_color}` : '';
     const brandFonts = profile?.font_heading ? `Fontes: ${profile.font_heading}, ${profile.font_body}` : '';
 
     let prompt = '';
     if (mode === 'shorter' || mode === 'punchy' || mode === 'professional') {
-      // Reescrita Mágica
       prompt = `
           Atue como um estrategista de conteúdo para nutricionistas.
           Reescreva o seguinte texto para um slide de carrossel no Instagram.
@@ -34,8 +36,8 @@ serve(async (req) => {
           Texto original: "${currentText}".
           
           CONTEXTO DA MARCA (Opcional):
-          - Persona: ${strategyContext?.persona || 'Público Geral'}
-          - Tom de Voz: ${strategyContext?.brandVoice || 'Profissional'}
+          - Persona: ${persona}
+          - Tom de Voz: ${voice}
           
           Regras:
           - Se mode for 'shorter', resuma mantendo a essência.
@@ -45,20 +47,19 @@ serve(async (req) => {
           Retorne APENAS o texto reescrito.
         `;
     } else {
-      // Geração Completa de Carrossel (Maestro v2 Strategy Injection)
       prompt = `
           Você é um Estrategista de Conteúdo de Elite especializado em Marketing para Nutricionistas.
           Sua missão é criar um carrossel de alto impacto e conversão sobre: "${topic}".
           
           ESTRATÉGIA ATIVA (Siga isso à risca):
-          - Persona: ${strategyContext?.persona || 'Nutrição Geral'}
-          - Voz: ${strategyContext?.brandVoice || 'Profissional'}
+          - Persona: ${persona}
+          - Voz: ${voice}
           - Inimigo Comum: ${strategyContext?.commonEnemy || 'Desinformação'}
           - Promessa Principal (CTA): ${strategyContext?.promise || 'Consulta Personalizada'}
           - Objeções (Quebre estas dores): ${strategyContext?.objections || 'Falta de tempo'}
 
           ESTRATÉGIA DO POST:
-          - Tipo: ${postType || 'Educativo'} (os tipos elite são: Storytelling de Resultado, Contra-intuitivo, Quebra de Objeção, Lista de Autoridade, Comparativo de Elite, Antes e Depois Conceitual, CTA Direto)
+          - Tipo: ${postType || format || 'Educativo'} (os tipos elite são: Storytelling de Resultado, Contra-intuitivo, Quebra de Objeção, Lista de Autoridade, Comparativo de Elite, Antes e Depois Conceitual, CTA Direto)
           - Pilar: ${contentPillar || 'Autoridade'}
           - Público: Pacientes/Clientes de Nutrição no nicho "${niche}"
           
@@ -69,13 +70,15 @@ serve(async (req) => {
           4. Cada slide DEVE ter um campo "layout" que pode ser: "capa", "topicos" ou "cta".
           5. Limite o texto para ser legível em dispositivos móveis.
           6. No slide de CTA, use a Promessa Principal do nutricionista.
-          7. ${customInstructions || ''}
+          7. ${mode === 'shorter' ? 'Resuma o conteúdo mantendo a essência.' : ''}
+          8. ${mode === 'punchy' ? 'Torne-o extremamente impactante e use emojis estrategicamente.' : ''}
+          9. ${customInstructions || ''}
 
           IDENTIDADE VISUAL (Siga estas diretrizes de copy):
           - ${brandColors}
           - ${brandFonts}
 
-          RETORNE UM JSON VÁLIDO:
+          RETORNE APENAS UM JSON VÁLIDO NO FORMATO:
           {
             "titulo": "Título Interno da Estratégia",
             "slides": [
@@ -110,7 +113,7 @@ serve(async (req) => {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAiKey}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -120,16 +123,13 @@ serve(async (req) => {
       }),
     })
 
-    const data = await response.json()
+    const rawText = await response.text()
+    if (!response.ok) throw new Error(`API error ${response.status}: ${rawText.substring(0, 200)}`)
 
-    if (data.error) {
-      throw new Error(data.error.message || "Erro na OpenAI");
-    }
-
+    const data = JSON.parse(rawText)
     const content = data.choices[0].message.content.trim();
 
-    // Se for reescrita, retorna texto puro, se for geração completa tenta extrair JSON
-    if (mode) {
+    if (mode === 'shorter' || mode === 'punchy' || mode === 'professional') {
       return new Response(JSON.stringify({ text: content }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
@@ -137,14 +137,15 @@ serve(async (req) => {
 
     const jsonMatch = content.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error("Resposta da IA não contém JSON válido")
-    const jsonStr = jsonMatch[0]
+    const parsed = JSON.parse(jsonMatch[0])
 
-    return new Response(jsonStr, {
+    return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Erro desconhecido"
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

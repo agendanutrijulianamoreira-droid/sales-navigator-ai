@@ -39,6 +39,7 @@ export function PricingCalculator() {
     const { products, addProduct, updateProduct, deleteProduct } = useProducts();
     const { generateContent, isLoading: isGeneratingAI, streamedContent } = useAISpecialist();
 
+
     const [hourlyRate, setHourlyRate] = useState(0);
     const [suggestedPrice, setSuggestedPrice] = useState(0);
     const [breakEvenPrice, setBreakEvenPrice] = useState(0);
@@ -79,6 +80,7 @@ export function PricingCalculator() {
             desiredMargin: 30
         }
     });
+
 
     // Ajustar margem baseado no Contexto Estratégico (Command Center)
     useEffect(() => {
@@ -157,7 +159,6 @@ export function PricingCalculator() {
                 ticket: Number(suggestedPrice.toFixed(2)),
                 descricao: '',
                 tipo_cliente: 'inconformado' as any,
-                // Custom simulation fields (casted because types are not yet updated)
                 hours_spent: Number(vals.hoursSpent),
                 material_cost: Number(vals.materialCost),
                 desired_margin: Number(vals.desiredMargin),
@@ -301,7 +302,6 @@ export function PricingCalculator() {
                         <Button variant="outline" className="w-full gap-2 border-primary/20 hover:bg-primary/5" onClick={handleSaveFoundation}>
                             <Save className="h-4 w-4" /> Salvar Fundação
                         </Button>
-
                     </CardContent>
                     <CardFooter className="bg-primary/5 flex flex-col items-center justify-center p-6 border-t border-primary/10">
                         <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-black">Custo da sua Hora</span>
@@ -506,7 +506,9 @@ export function PricingCalculator() {
                         </Tabs>
 
                         {/* Product Ladder Section */}
-                        <ProductLadder corePrice={suggestedPrice} />
+                        <div className="mt-8">
+                            <ProductLadder corePrice={suggestedPrice} />
+                        </div>
                     </CardContent>
                 </Card>
 
