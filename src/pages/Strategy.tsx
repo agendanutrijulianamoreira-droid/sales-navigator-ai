@@ -18,6 +18,7 @@ export default function Strategy() {
   const { profile, updateProfile } = useProfile();
   const { generateContent, isLoading, streamedContent } = useAISpecialist();
   const [activeTab, setActiveTab] = useState("brand");
+  const [maestroVerdict, setMaestroVerdict] = useState<string | null>(null);
 
   const handleGenerateBrand = async () => {
     await generateContent("brand_architect", "posicionamento", {
@@ -47,6 +48,9 @@ export default function Strategy() {
       tom_voz: data.brandVoice.toLowerCase(),
       promessa_principal: data.bigIdea
     });
+    if (data.maestroVerdict) {
+      setMaestroVerdict(data.maestroVerdict);
+    }
   };
 
   return (
@@ -59,6 +63,16 @@ export default function Strategy() {
 
         <TabsContent value="brand" className="space-y-6">
           <StrategyGenerator onProfileGenerated={handleAutoFill} />
+
+          {maestroVerdict && (
+            <div className="mt-4 p-5 bg-amber-50/50 border-l-4 border-amber-500 italic text-amber-900 shadow-sm rounded-r-2xl animate-in slide-in-from-left duration-500">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">🧠</span>
+                <span className="font-black uppercase text-[10px] tracking-widest text-amber-700">Veredito do Maestro</span>
+              </div>
+              <p className="text-sm leading-relaxed">"{maestroVerdict}"</p>
+            </div>
+          )}
 
           {/* Nicho & Persona */}
           <Card>

@@ -9,6 +9,12 @@ export interface StrategyProfile {
     objections: string[];
     brandVoice: string;
     bigIdea: string;
+    maestroVerdict?: string;
+    productLadder?: {
+        tripwire: string;
+        coreOffer: string;
+        highTicket: string;
+    };
 }
 
 export function useStrategyAI() {
