@@ -52,7 +52,9 @@ export default function Strategy() {
       objecoes: data.objections.map(o => `• ${o}`).join('\n'),
       tom_voz: data.brandVoice.toLowerCase(),
       inimigo_comum: data.commonEnemy,
-      promessa_principal: data.promises[0] // Default to first
+      promessa_principal: data.promises[2] || data.promises[0], // 90-day promise preferred
+      mecanismo_unico: "Sua Metodologia de Elite",
+      problema_90_dias: data.promises.map(p => `• ${p}`).join('\n'),
     });
 
     if (data.maestroVerdict) {
@@ -61,7 +63,7 @@ export default function Strategy() {
 
     if (data.promises && data.promises.length > 0) {
       setGeneratedPromises(data.promises);
-      setSelectedPromise(data.promises[0]);
+      setSelectedPromise(data.promises[2] || data.promises[0]);
     }
   };
 
@@ -246,7 +248,7 @@ export default function Strategy() {
         </TabsContent>
 
         <TabsContent value="lab" className="space-y-6">
-          {/* Calculadora de Preços - NOVO */}
+          {/* Calculadora de Preços */}
           <PricingCalculator />
 
           {/* Método */}

@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Calculator, DollarSign, Clock, TrendingUp, AlertCircle, Save, Loader2, Lightbulb } from 'lucide-react';
+import { Calculator, DollarSign, Clock, TrendingUp, AlertCircle, Save, Loader2, Lightbulb, Target, Sparkles, PieChart, Crown } from 'lucide-react';
 import { useFinancialSettings } from '@/hooks/useFinancialSettings';
 import { useStrategyContext } from '@/hooks/useStrategyContext';
 import { useMaestroPricing, PricingAdvice } from '@/hooks/useMaestroPricing';
+import { useAISpecialist } from '@/hooks/useAISpecialist';
+import { useProducts } from '@/hooks/useProducts';
 import { ProductLadder } from './ProductLadder';
 
 // Tipos
@@ -34,9 +36,14 @@ export function PricingCalculator() {
     const { settings, loading: loadingSettings, updateSettings } = useFinancialSettings();
     const { strategy } = useStrategyContext();
     const { advice } = useMaestroPricing();
+    const { products, addProduct, updateProduct, deleteProduct } = useProducts();
+    const { generateContent, isLoading: isGeneratingAI, streamedContent } = useAISpecialist();
+
     const [hourlyRate, setHourlyRate] = useState(0);
     const [suggestedPrice, setSuggestedPrice] = useState(0);
     const [breakEvenPrice, setBreakEvenPrice] = useState(0);
+    const [isSaving, setIsSaving] = useState(false);
+    const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
     // Form de Configurações Globais
     const financialForm = useForm<FinancialData>({
@@ -90,7 +97,7 @@ export function PricingCalculator() {
     // 1. Calcular Custo da Hora Clínica
     useEffect(() => {
         const { incomeGoal, fixedCosts, daysPerWeek, hoursPerDay } = financials;
-        const monthlyHours = daysPerWeek * hoursPerDay * 4.2;
+        const monthlyHours = Number(daysPerWeek) * Number(hoursPerDay) * 4.33; // 4.33 semanas por mês (média anual)
         const totalNeeded = Number(incomeGoal) + Number(fixedCosts);
         const rate = totalNeeded / (monthlyHours || 1);
         setHourlyRate(rate);
@@ -105,11 +112,12 @@ export function PricingCalculator() {
         const taxDecimal = Number(taxRate) / 100;
         const marginDecimal = Number(desiredMargin) / 100;
 
-        // Markup: Preço = Custo / (1 - (Imposto + Margem))
+        // Formula correta: Preço = Custo / (1 - Imposto - Margem)
         const divisor = 1 - (taxDecimal + marginDecimal);
-        const finalPrice = divisor > 0 ? serviceBaseCost / divisor : serviceBaseCost * 2; // Fallback seguro
+        const finalPrice = divisor > 0 ? serviceBaseCost / divisor : serviceBaseCost * 2;
 
-        const breakEven = taxDecimal < 1 ? serviceBaseCost / (1 - taxDecimal) : serviceBaseCost;
+        // Ponto de Equilíbrio: Preço que cobre apenas custo + impostos sobre esse preço
+        const breakEven = 1 - taxDecimal > 0 ? serviceBaseCost / (1 - taxDecimal) : serviceBaseCost;
 
         setBreakEvenPrice(breakEven);
         setSuggestedPrice(finalPrice > 0 ? finalPrice : 0);
@@ -137,6 +145,61 @@ export function PricingCalculator() {
             // financialForm.setValue('incomeGoal', 15000); // Opcional: sugestão proativa
         }
     };
+
+    const handleSaveProduct = async () => {
+        setIsSaving(true);
+        const vals = productForm.getValues();
+
+        try {
+            const productData = {
+                nome: vals.name,
+                tipo_produto: vals.type as any,
+                ticket: Number(suggestedPrice.toFixed(2)),
+                descricao: '',
+                tipo_cliente: 'inconformado' as any,
+                // Custom simulation fields (casted because types are not yet updated)
+                hours_spent: Number(vals.hoursSpent),
+                material_cost: Number(vals.materialCost),
+                desired_margin: Number(vals.desiredMargin),
+                ativo: true,
+                ordem: 0
+            } as any;
+
+            if (selectedProductId) {
+                await updateProduct(selectedProductId, productData);
+            } else {
+                await addProduct(productData);
+            }
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const loadProduct = (p: any) => {
+        setSelectedProductId(p.id);
+        productForm.reset({
+            name: p.nome,
+            type: p.tipo_produto,
+            hoursSpent: p.hours_spent || 1,
+            materialCost: p.material_cost || 0,
+            desiredMargin: p.desired_margin || 30
+        });
+    };
+
+    const handleGenerateProductStrategy = async () => {
+        const vals = productForm.getValues();
+        await generateContent("cfo_strategist", "estrategia_produto", {
+            produto: vals.name,
+            preco: suggestedPrice,
+            margem: vals.desiredMargin,
+            custo_hora: hourlyRate,
+            meta_mensal: financials.incomeGoal,
+            custos_fixos: financials.fixedCosts
+        });
+    };
+
+    const netContribution = suggestedPrice * (1 - (financials.taxRate / 100)) - product.materialCost;
+    const unitsNeeded = netContribution > 0 ? Math.ceil((Number(financials.incomeGoal) + Number(financials.fixedCosts)) / netContribution) : 0;
 
     const formatCurrency = (val: number) =>
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -350,8 +413,8 @@ export function PricingCalculator() {
                                                 <span className="font-bold">{formatCurrency(suggestedPrice * (financials.taxRate / 100))}</span>
                                             </div>
                                             <div className="flex justify-between items-center bg-green-600/10 p-3 rounded-xl">
-                                                <span className="font-bold text-green-700 text-sm">Seu Lucro Real:</span>
-                                                <span className="font-black text-green-700 text-lg">{formatCurrency(suggestedPrice - breakEvenPrice)}</span>
+                                                <span className="font-bold text-green-700 text-sm">Seu Lucro Real ({product.desiredMargin}%):</span>
+                                                <span className="font-black text-green-700 text-lg">{formatCurrency(suggestedPrice * (product.desiredMargin / 100))}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -371,17 +434,128 @@ export function PricingCalculator() {
                                             )}
                                         </div>
 
-                                        <Button className="w-full mt-8 h-14 rounded-2xl font-black text-lg gap-2 shadow-lg shadow-primary/20 hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]">
-                                            Salvar no Meu Catálogo
+                                        <Button
+                                            onClick={handleSaveProduct}
+                                            disabled={isSaving}
+                                            className="w-full mt-8 h-14 rounded-2xl font-black text-lg gap-2 shadow-lg shadow-primary/20 hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                        >
+                                            {isSaving ? <Loader2 className="animate-spin h-5 w-5" /> : (selectedProductId ? 'Atualizar no Catálogo' : 'Salvar no Meu Catálogo')}
                                         </Button>
                                     </div>
                                 </div>
                             </div>
 
+                            {/* ENGENHARIA REVERSA */}
+                            <div className="mt-12 pt-8 border-t border-dashed grid md:grid-cols-2 gap-8 items-center">
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2 text-primary">
+                                        <Target className="w-5 h-5 font-bold" />
+                                        <h3 className="font-black text-sm uppercase tracking-wider">Engenharia Reversa de Metas</h3>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                        Para atingir sua meta de <span className="font-bold text-foreground">{formatCurrency(Number(financials.incomeGoal) + Number(financials.fixedCosts))}</span> (Pro-Labore + Custos),
+                                        considerando o ticket de <span className="font-bold text-foreground">{formatCurrency(suggestedPrice)}</span>:
+                                    </p>
+                                    <div className="bg-amber-500/10 border border-amber-500/20 p-6 rounded-3xl text-center">
+                                        <span className="text-[10px] font-black uppercase text-amber-700 tracking-widest block mb-1">Volume de Vendas Necessário</span>
+                                        <div className="text-5xl font-black text-amber-600">
+                                            {unitsNeeded} <span className="text-sm font-bold opacity-70">unidades/mês</span>
+                                        </div>
+                                        <p className="text-[10px] text-amber-700/70 mt-3 italic">
+                                            Isso representa {formatCurrency(unitsNeeded * suggestedPrice)} em faturamento bruto mensal.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-2xl relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                                            <Sparkles className="w-16 h-16" />
+                                        </div>
+                                        <div className="relative z-10">
+                                            <h4 className="font-black text-xs uppercase tracking-widest text-amber-400 mb-2">Estratégia de Escala</h4>
+                                            <p className="text-xs text-slate-300 mb-6 leading-relaxed">
+                                                Vender {unitsNeeded} unidades sozinho pode ser desafiador. Clique abaixo para que a IA crie um funil de escala para este produto.
+                                            </p>
+                                            <Button
+                                                variant="secondary"
+                                                className="w-full bg-white text-slate-900 hover:bg-amber-400 hover:text-slate-900 font-bold gap-2"
+                                                onClick={handleGenerateProductStrategy}
+                                                disabled={isGeneratingAI}
+                                            >
+                                                {isGeneratingAI ? <Loader2 className="animate-spin h-4 w-4" /> : <PieChart className="h-4 w-4" />}
+                                                {isGeneratingAI ? 'Gerando Análise...' : 'Ver Insight do CFO IA'}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* AI Insight Area */}
+                            {streamedContent && (
+                                <div className="mt-8 p-6 bg-slate-50 rounded-3xl border-2 border-slate-200 animate-in slide-in-from-bottom duration-500">
+                                    <div className="flex items-center gap-2 mb-4 text-slate-900">
+                                        <Sparkles className="h-4 w-4" />
+                                        <span className="font-black uppercase text-[10px] tracking-widest">Plano de Escala Sugerido</span>
+                                    </div>
+                                    <div className="prose prose-sm max-w-none whitespace-pre-wrap text-slate-700">
+                                        {streamedContent}
+                                    </div>
+                                </div>
+                            )}
                         </Tabs>
 
                         {/* Product Ladder Section */}
                         <ProductLadder corePrice={suggestedPrice} />
+                    </CardContent>
+                </Card>
+
+                {/* MEU CATÁLOGO */}
+                <Card className="lg:col-span-12 border-t-4 border-t-amber-500 bg-card/80 backdrop-blur-sm">
+                    <CardHeader>
+                        <CardTitle className="text-xl flex items-center gap-2">
+                            <Crown className="w-6 h-6 text-amber-500" />
+                            Seu Catálogo & Estimativas
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">Clique em um produto para carregar os valores e comparar.</p>
+                    </CardHeader>
+                    <CardContent>
+                        {products.length === 0 ? (
+                            <div className="text-center py-10 text-muted-foreground italic bg-muted/20 rounded-2xl border-2 border-dashed">
+                                Nenhum produto salvo ainda.
+                            </div>
+                        ) : (
+                            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                {products.map((p: any) => (
+                                    <div
+                                        key={p.id}
+                                        onClick={() => loadProduct(p)}
+                                        className={`p-5 rounded-2xl border-2 cursor-pointer transition-all hover:border-primary/50 group relative ${selectedProductId === p.id ? 'border-primary bg-primary/5 shadow-md' : 'border-border bg-card'}`}
+                                    >
+                                        <div className="flex justify-between items-start mb-2">
+                                            <Badge variant="outline" className="text-[10px] uppercase">{p.tipo_produto}</Badge>
+                                            <div className="text-xs font-black text-primary">{formatCurrency(p.ticket)}</div>
+                                        </div>
+                                        <h4 className="font-bold text-sm mb-3 group-hover:text-primary transition-colors">{p.nome}</h4>
+                                        <div className="flex gap-4 text-[10px] text-muted-foreground font-medium">
+                                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {p.hours_spent}h</span>
+                                            <span className="flex items-center gap-1"><TrendingUp className="w-3 h-3" /> {p.desired_margin}%</span>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-destructive text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive shadow-sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                deleteProduct(p.id);
+                                            }}
+                                        >
+                                            ×
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>

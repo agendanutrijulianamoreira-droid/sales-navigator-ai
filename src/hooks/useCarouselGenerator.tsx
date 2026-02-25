@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface CarouselSlide {
   numero: number;
   tipo: string;
+  layout?: 'capa' | 'topicos' | 'cta'; // Novo campo de layout
   headline: string;
   subtexto?: string;
   destaque?: string;
@@ -42,28 +43,24 @@ export interface DesignSettings {
 }
 
 export type PostType =
-  | "PROMESSA"
-  | "COMO_FIZ"
-  | "NAO_SOBRE"
-  | "SUPERACAO"
-  | "PIOR_EXPERIENCIA"
-  | "CONTRA_MERCADO"
-  | "ESTRATEGIA_UTIL"
-  | "LEVANTADA_MAO"
-  | "DOR_EVENTO"
-  | "ALCANCE";
+  | "STORYTELLING_RESULTADO"
+  | "CONTRA_INTUITIVO"
+  | "QUEBRA_OBJECAO"
+  | "LISTA_AUTORIDADE"
+  | "COMPARATIVO_ELITE"
+  | "ANTES_DEPOIS_CONCEITUAL"
+  | "CTA_DIRETO"
+  | "ESTRATEGIA_UTIL";
 
 export const POST_TYPE_LABELS: Record<PostType, string> = {
-  PROMESSA: "Promessa objetiva",
-  COMO_FIZ: "Como eu fiz isso",
-  NAO_SOBRE: "Isso não é sobre apenas...",
-  SUPERACAO: "História de superação",
-  PIOR_EXPERIENCIA: "Pior experiência/cliente",
-  CONTRA_MERCADO: "Contra o mercado",
-  ESTRATEGIA_UTIL: "Estratégia útil",
-  LEVANTADA_MAO: "Levantada de mão",
-  DOR_EVENTO: "Dor/Evento",
-  ALCANCE: "Alcance viral",
+  STORYTELLING_RESULTADO: "Storytelling de Resultado",
+  CONTRA_INTUITIVO: "Contra-intuitivo",
+  QUEBRA_OBJECAO: "Quebra de Objeção",
+  LISTA_AUTORIDADE: "Lista de Autoridade",
+  COMPARATIVO_ELITE: "Comparativo de Elite",
+  ANTES_DEPOIS_CONCEITUAL: "Antes e Depois Conceitual",
+  CTA_DIRETO: "CTA Direto",
+  ESTRATEGIA_UTIL: "Estratégia Útil",
 };
 
 export const CONTENT_PILLARS = [

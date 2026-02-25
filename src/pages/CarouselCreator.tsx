@@ -30,10 +30,12 @@ import { Progress } from "@/components/ui/progress";
 import {
   Loader2, Sparkles, Copy, Save, ChevronLeft, ChevronRight,
   Plus, Trash2, Image, RefreshCw, Wand2, Edit3, Check, ArrowLeft, CalendarPlus,
-  Calendar, Palette, Type, Images, Download, ArrowRight, Lightbulb
+  Calendar, Palette, Type, Images, Download, ArrowRight, Lightbulb, Target
 } from "lucide-react";
-import { CarouselPreviewStage } from "@/components/carousel/CarouselPreviewStage";
+import { Label } from "@/components/ui/label";
+import { CarouselSlideEditor } from "@/components/carousel/CarouselSlideEditor";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import { SlideToolbar } from "@/components/carousel/SlideToolbar";
 import { exportSlideAsImage } from "@/utils/exportCarousel";
 import { useAuth } from "@/hooks/useAuth";
@@ -139,12 +141,6 @@ export default function CarouselCreator() {
     }
   };
 
-  const scrollToEditor = () => {
-    const editorPanel = document.getElementById("editor-panel");
-    if (editorPanel) {
-      editorPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
 
   // Load initial data from navigation state
   useEffect(() => {
@@ -166,11 +162,11 @@ export default function CarouselCreator() {
 
   // Week content form
   const [weekTopics, setWeekTopics] = useState<{ topic: string; postType: PostType; contentPillar: string }[]>([
-    { topic: "", postType: "ESTRATEGIA_UTIL", contentPillar: "Educativo" },
-    { topic: "", postType: "PROMESSA", contentPillar: "Autoridade" },
-    { topic: "", postType: "COMO_FIZ", contentPillar: "Conexão/Bastidores" },
-    { topic: "", postType: "DOR_EVENTO", contentPillar: "Conversão/Venda" },
-    { topic: "", postType: "ALCANCE", contentPillar: "Entretenimento" },
+    { topic: "", postType: "STORYTELLING_RESULTADO", contentPillar: "Autoridade" },
+    { topic: "", postType: "CONTRA_INTUITIVO", contentPillar: "Educativo" },
+    { topic: "", postType: "QUEBRA_OBJECAO", contentPillar: "Conexão" },
+    { topic: "", postType: "LISTA_AUTORIDADE", contentPillar: "Autoridade" },
+    { topic: "", postType: "CTA_DIRETO", contentPillar: "Conversão" },
   ]);
 
   const handleGenerate = async () => {
@@ -468,440 +464,220 @@ export default function CarouselCreator() {
           /* Carousel Editor */
           <div className="space-y-6">
             {carousel && (
-              <div className="const-container">
-                {(() => {
-                  const currentSlide = carousel.slides[currentSlideIndex];
-                  const totalSlides = carousel.slides.length;
+              <div className="max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
+                {/* Estratégia Ativa Indicator */}
+                <div className="mb-8 flex flex-col md:flex-row items-center justify-between p-6 bg-white/40 backdrop-blur-md border border-primary/20 rounded-[32px] shadow-sm gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary/10 rounded-2xl">
+                      <Target className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60">Estratégia Ativa</p>
+                      <h2 className="font-extrabold text-xl tracking-tight">{carousel.titulo}</h2>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Badge variant="secondary" className="bg-primary/10 text-primary border-none px-4 py-1.5 rounded-xl font-bold">{POST_TYPE_LABELS[postType] || 'Estratégia'}</Badge>
+                    <Badge variant="outline" className="border-primary/20 px-4 py-1.5 rounded-xl font-medium">{contentPillar}</Badge>
+                  </div>
+                </div>
 
-                  return (
-                    <div className="grid lg:grid-cols-2 gap-6">
-                      {/* Column 1: Preview & Navigation */}
-                      <div className="space-y-4">
-                        <div className="flex flex-col w-full max-w-lg mx-auto">
-                          <SlideToolbar
-                            onEditContent={scrollToEditor}
-                            onEditStyle={scrollToDesign}
-                            onDelete={() => removeSlide(currentSlideIndex)}
-                            onDuplicate={() => duplicateSlide(currentSlideIndex)}
-                            onMoveLeft={() => moveSlide(currentSlideIndex, -1)}
-                            onMoveRight={() => moveSlide(currentSlideIndex, 1)}
-                            canMoveLeft={currentSlideIndex > 0}
-                            canMoveRight={currentSlideIndex < totalSlides - 1}
-                            currentSlideText={currentSlide?.headline || ""}
-                            onUpdateText={(newText) => updateSlide(currentSlideIndex, { headline: newText })}
-                          />
+                <div className="grid lg:grid-cols-[1fr_320px] gap-10 items-start">
+                  {/* Column 1: Canva-style Editor */}
+                  <div className="space-y-8">
+                    <div className="flex flex-col w-full">
+                      <div className="mb-4">
+                        <SlideToolbar
+                          onEditContent={() => { }} // Direct editing is now always on
+                          onEditStyle={scrollToDesign}
+                          onDelete={() => removeSlide(currentSlideIndex)}
+                          onDuplicate={() => duplicateSlide(currentSlideIndex)}
+                          onMoveLeft={() => moveSlide(currentSlideIndex, -1)}
+                          onMoveRight={() => moveSlide(currentSlideIndex, 1)}
+                          canMoveLeft={currentSlideIndex > 0}
+                          canMoveRight={currentSlideIndex < (carousel?.slides?.length || 0) - 1}
+                          currentSlideText={carousel?.slides[currentSlideIndex]?.headline || ""}
+                          onUpdateText={(newText) => updateSlide(currentSlideIndex, { headline: newText })}
+                        />
+                      </div>
 
-                          <CarouselPreviewStage
-                            currentIndex={currentSlideIndex}
-                            totalSlides={totalSlides}
-                          >
-                            <div id="active-slide-container" className="w-full h-full relative overflow-hidden">
-                              {currentSlide?.imageUrl ? (
-                                <img
-                                  src={currentSlide.imageUrl}
-                                  alt={`Slide ${currentSlideIndex + 1}`}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center p-8 bg-gradient-to-br from-muted/50 to-muted relative">
-                                  {currentSlide?.backgroundImageUrl && (
-                                    <img
-                                      src={currentSlide.backgroundImageUrl}
-                                      alt="Background"
-                                      className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay"
-                                    />
+                      {/* Direct Editor Stage */}
+                      <div className="relative group transition-all duration-700 ease-in-out bg-slate-50/50 dark:bg-slate-900/10 p-4 md:p-16 rounded-[48px] border border-slate-200/40 flex justify-center shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] min-h-[500px]">
+                        <div className="relative">
+                          {/* Realistic Sombra */}
+                          <div className="absolute -inset-4 bg-gradient-to-tr from-primary/10 via-transparent to-primary/5 blur-3xl opacity-50" />
+
+                          <div id="active-slide-container" className="relative w-[340px] aspect-[4/5] bg-white rounded-xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] overflow-hidden ring-1 ring-black/5 transform hover:scale-[1.01] transition-all duration-500">
+                            <CarouselSlideEditor
+                              slide={carousel.slides[currentSlideIndex]}
+                              index={currentSlideIndex}
+                              onUpdate={updateSlide}
+                              onSelectBackground={() => handleSelectPhoto(currentSlideIndex)}
+                            />
+
+                            {/* Carousel Indicator Bolinhas */}
+                            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 z-20 pointer-events-none">
+                              {carousel.slides.map((_, i) => (
+                                <div
+                                  key={i}
+                                  className={cn(
+                                    "w-1.5 h-1.5 rounded-full transition-all duration-300",
+                                    i === currentSlideIndex ? "bg-primary w-4 scale-110" : "bg-slate-200"
                                   )}
-                                  <Badge className="mb-4 relative z-10" variant="outline">
-                                    Slide {currentSlideIndex + 1}/{totalSlides}
-                                  </Badge>
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
-                                  <div className="text-center max-w-sm relative z-10">
-                                    {currentSlide?.destaque && (
-                                      <p className="text-sm text-primary font-medium mb-2">{currentSlide.destaque}</p>
-                                    )}
-                                    <h3 className="text-xl font-bold mb-3 leading-tight">{currentSlide?.headline}</h3>
-                                    {currentSlide?.subtexto && (
-                                      <p className="text-muted-foreground text-sm whitespace-pre-line">{currentSlide.subtexto}</p>
-                                    )}
-                                  </div>
+                      <div className="mt-8 flex flex-wrap justify-center gap-4">
+                        <Button
+                          onClick={() => exportSlideAsImage('active-slide-container', `slide-${currentSlideIndex + 1}`)}
+                          className="h-14 px-8 gap-3 rounded-[20px] shadow-lg hover:shadow-xl transition-all border-slate-200 bg-white"
+                          variant="outline"
+                        >
+                          <Download className="h-5 w-5 text-primary" /> Exportar Slide HD
+                        </Button>
+
+                        <Button
+                          onClick={handleCloudSave}
+                          disabled={isSavingCloud}
+                          className="h-14 px-8 gap-3 rounded-[20px] shadow-xl hover:shadow-2xl transition-all bg-gradient-to-r from-primary to-primary/80 border-none"
+                        >
+                          {isSavingCloud ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+                          {isSavingCloud ? "Salvando..." : "Salvar na Estratégia"}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Slide Selector Strip */}
+                    <div className="flex items-center justify-between gap-4 p-5 bg-white/90 backdrop-blur-xl rounded-[32px] border border-slate-200/50 shadow-xl overflow-hidden animate-in slide-in-from-bottom-8 duration-1000">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full h-12 w-12 hover:bg-primary/5 transition-colors"
+                        onClick={() => setCurrentSlideIndex(Math.max(0, currentSlideIndex - 1))}
+                        disabled={currentSlideIndex === 0}
+                      >
+                        <ChevronLeft className="h-8 w-8 text-slate-400" />
+                      </Button>
+
+                      <ScrollArea className="flex-1 w-full max-w-lg">
+                        <div className="flex gap-4 justify-center py-2 px-6">
+                          {carousel.slides.map((slide, i) => (
+                            <button
+                              key={i}
+                              onClick={() => setCurrentSlideIndex(i)}
+                              className={cn(
+                                "min-w-[64px] h-20 rounded-2xl text-xs font-black transition-all border-4 relative overflow-hidden group/btn",
+                                i === currentSlideIndex
+                                  ? "border-primary bg-primary text-primary-foreground scale-110 shadow-xl"
+                                  : "bg-white border-slate-50 text-slate-400 hover:border-slate-100 hover:text-slate-600"
+                              )}
+                            >
+                              {i + 1}
+                              {slide.imageUrl && (
+                                <div className="absolute top-1 right-1">
+                                  <div className="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
                                 </div>
                               )}
-                            </div>
-                          </CarouselPreviewStage>
+                              <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+                            </button>
+                          ))}
+                          <Button
+                            variant="ghost"
+                            onClick={() => addSlide(carousel.slides.length - 1)}
+                            className="min-w-[64px] h-20 rounded-2xl border-4 border-dashed border-slate-100 text-slate-300 hover:text-primary hover:border-primary/30 transition-all p-0 bg-slate-50/50"
+                          >
+                            <Plus className="h-8 w-8" />
+                          </Button>
+                        </div>
+                      </ScrollArea>
 
-                          <div className="mt-6 flex justify-center gap-3">
-                            <Button
-                              onClick={() => exportSlideAsImage('active-slide-container', `slide-${currentSlideIndex + 1}`)}
-                              className="gap-2 shadow-lg hover:shadow-xl transition-all"
-                              variant="outline"
-                            >
-                              <Download className="h-4 w-4" /> Baixar HD
-                            </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full h-12 w-12 hover:bg-primary/5 transition-colors"
+                        onClick={() => setCurrentSlideIndex(Math.min(carousel.slides.length - 1, currentSlideIndex + 1))}
+                        disabled={currentSlideIndex === carousel.slides.length - 1}
+                      >
+                        <ChevronRight className="h-8 w-8 text-slate-400" />
+                      </Button>
+                    </div>
+                  </div>
 
-                            <Button
-                              onClick={handleCloudSave}
-                              disabled={isSavingCloud || !carousel}
-                              className="gap-2 shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-indigo-600 to-purple-600"
-                            >
-                              {isSavingCloud ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                              {isSavingCloud ? "Salvando..." : "Salvar na Nuvem"}
-                            </Button>
+                  {/* Column 2: Brand & Copy */}
+                  <div className="space-y-8 animate-in slide-in-from-right-8 duration-700">
+                    <Card className="border-none shadow-2xl bg-white/95 backdrop-blur-xl overflow-hidden rounded-[32px] border border-white/20">
+                      <CardHeader className="bg-primary/5 pb-4 border-b border-primary/10">
+                        <CardTitle className="text-sm font-black flex items-center gap-2 uppercase tracking-widest text-primary/80">
+                          <Palette className="h-4 w-4" /> Kit de Marca
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-8 space-y-8">
+                        <div className="space-y-4">
+                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Tipografia</Label>
+                          <div className="p-4 bg-slate-50/50 border border-slate-100 rounded-2xl flex items-center justify-between group cursor-default">
+                            <span className="font-extrabold tracking-tight text-slate-800">{brand.fontHeading}</span>
+                            <Badge variant="secondary" className="bg-primary/10 text-primary border-none text-[9px] font-black uppercase">Ativo</Badge>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between gap-2 p-2 bg-muted/30 rounded-lg">
-                          <Button variant="outline" size="sm" onClick={() => handleSelectPhoto(currentSlideIndex)}>
-                            <Image className="h-4 w-4 mr-2" /> Alterar Fundo
-                          </Button>
-                          {currentSlide?.imageUrl && (
-                            <Button variant="outline" size="sm" onClick={() => handleGenerateDesign(currentSlideIndex)}>
-                              <RefreshCw className="h-4 w-4 mr-2" /> Regenerar
-                            </Button>
-                          )}
+                        <div className="space-y-4">
+                          <Label className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Paleta Cromática</Label>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="p-5 bg-white border border-slate-100 rounded-[24px] space-y-3 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="h-14 rounded-2xl shadow-inner relative group" style={{ backgroundColor: brand.primary }}>
+                                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
+                              </div>
+                              <span className="text-[10px] font-black font-mono text-center block opacity-40 group-hover:opacity-100 transition-opacity">{brand.primary}</span>
+                            </div>
+                            <div className="p-5 bg-white border border-slate-100 rounded-[24px] space-y-3 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="h-14 rounded-2xl shadow-inner relative group" style={{ backgroundColor: brand.secondary }}>
+                                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
+                              </div>
+                              <span className="text-[10px] font-black font-mono text-center block opacity-40 group-hover:opacity-100 transition-opacity">{brand.secondary}</span>
+                            </div>
+                          </div>
                         </div>
 
-                        {/* Slide Navigation */}
-                        <div className="flex items-center justify-between">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setCurrentSlideIndex(Math.max(0, currentSlideIndex - 1))}
-                            disabled={currentSlideIndex === 0}
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full h-14 rounded-2xl font-bold gap-4 border-slate-200 hover:bg-primary hover:text-white hover:border-primary transition-all shadow-sm group"
+                          onClick={() => handleSelectPhoto(currentSlideIndex)}
+                        >
+                          <Images className="h-5 w-5 text-primary group-hover:text-white transition-colors" /> Personalizar Fundo
+                        </Button>
+                      </CardContent>
+                    </Card>
 
-                          <ScrollArea className="flex-1 mx-4">
-                            <div className="flex gap-2 justify-center">
-                              {carousel.slides.map((slide, i) => (
-                                <button
-                                  key={i}
-                                  onClick={() => setCurrentSlideIndex(i)}
-                                  className={`w-10 h-10 rounded-lg text-xs font-medium transition-all ${i === currentSlideIndex
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-muted hover:bg-muted/80"
-                                    } ${slide.imageUrl ? "ring-2 ring-green-500" : ""}`}
-                                >
-                                  {i + 1}
-                                </button>
-                              ))}
-                              <button
-                                onClick={() => addSlide(carousel.slides.length - 1)}
-                                className="w-10 h-10 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center hover:border-primary transition-colors"
-                              >
-                                <Plus className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </ScrollArea>
-
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => setCurrentSlideIndex(Math.min(carousel.slides.length - 1, currentSlideIndex + 1))}
-                            disabled={currentSlideIndex === carousel.slides.length - 1}
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
+                    <Card className="border-none shadow-2xl bg-white/95 backdrop-blur-xl rounded-[32px] overflow-hidden border border-white/20">
+                      <CardHeader className="pb-4 border-b bg-primary/5 border-primary/10">
+                        <CardTitle className="text-sm font-black flex items-center gap-2 uppercase tracking-widest text-primary/80">
+                          <Edit3 className="h-4 w-4" /> Copy de Elite
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-8 space-y-6">
+                        <div className="bg-slate-50/80 rounded-3xl p-6 border border-slate-100 shadow-inner">
+                          <Textarea
+                            value={carousel.legenda}
+                            onChange={(e) => updateLegenda(e.target.value)}
+                            className="min-h-[300px] text-sm leading-relaxed border-none bg-transparent resize-none p-0 focus-visible:ring-0 scrollbar-hide"
+                            placeholder="Editando a copy persuasiva..."
+                          />
                         </div>
-
-                        {/* Design Settings Card */}
-                        <Card id="design-settings-card" className="overflow-hidden bg-card/50 backdrop-blur-xl border-primary/10 shadow-xl">
-                          <CardHeader className="pb-3 bg-primary/5">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Palette className="h-4 w-4 text-primary animate-pulse" />
-                                <CardTitle className="text-sm font-bold tracking-tight">Personalização Visual</CardTitle>
-                              </div>
-                              {isBrandLocked && (
-                                <Badge variant="secondary" className="text-[10px] px-2 py-0 h-5">Marca Travada</Badge>
-                              )}
-                            </div>
-                          </CardHeader>
-                          <CardContent className="p-5 space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                  <Sparkles className="h-3 w-3" /> Estilo
-                                </label>
-                                <Select value={designSettings.style} onValueChange={(v) => setDesignSettings({ ...designSettings, style: v })} disabled={isBrandLocked}>
-                                  <SelectTrigger className="bg-background/40 border-primary/20 hover:border-primary/50 transition-all">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {DESIGN_STYLES.map((s) => (
-                                      <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              <div className="space-y-2">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                  <Type className="h-3 w-3" /> Fonte
-                                </label>
-                                <Select value={designSettings.fontFamily} onValueChange={(v) => setDesignSettings({ ...designSettings, fontFamily: v })} disabled={isBrandLocked}>
-                                  <SelectTrigger className="bg-background/40 border-primary/20 hover:border-primary/50 transition-all">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {FONT_OPTIONS.map((f) => (
-                                      <SelectItem key={f.id} value={f.id}>{f.label}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-
-                            {!isBrandLocked && (
-                              <div className="space-y-4">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                                  <Palette className="h-3 w-3" /> Identidade Cromática
-                                </label>
-
-                                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                                  {COLOR_PALETTES.map((p) => (
-                                    <button
-                                      key={p.id}
-                                      onClick={() => setDesignSettings({ ...designSettings, primaryColor: p.primary, secondaryColor: p.secondary })}
-                                      className={`group relative p-1 rounded-xl border-2 transition-all hover:scale-105 active:scale-95 ${designSettings.primaryColor === p.primary ? "border-primary shadow-lg shadow-primary/20" : "border-transparent hover:border-muted-foreground/30"
-                                        }`}
-                                      title={p.label}
-                                    >
-                                      <div className="flex h-10 w-full rounded-lg overflow-hidden shadow-inner">
-                                        <div className="w-1/2 h-full" style={{ backgroundColor: p.primary }} />
-                                        <div className="w-1/2 h-full" style={{ backgroundColor: p.secondary }} />
-                                      </div>
-                                      {designSettings.primaryColor === p.primary && (
-                                        <div className="absolute -top-1 -right-1 bg-primary text-white rounded-full p-0.5 shadow-md">
-                                          <Check className="h-2 w-2" />
-                                        </div>
-                                      )}
-                                    </button>
-                                  ))}
-                                </div>
-
-                                <div className="relative flex items-center gap-3 py-2">
-                                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-muted to-transparent" />
-                                  <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-[0.2em]">Ou Customizar</span>
-                                  <div className="flex-1 h-px bg-gradient-to-r from-transparent via-muted to-transparent" />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div className="space-y-2">
-                                    <div className="flex gap-2">
-                                      <ColorPicker
-                                        color={designSettings.primaryColor}
-                                        onChange={(c) => setDesignSettings({ ...designSettings, primaryColor: c })}
-                                      />
-                                      <Input
-                                        value={designSettings.primaryColor}
-                                        onChange={(e) => setDesignSettings({ ...designSettings, primaryColor: e.target.value })}
-                                        className="h-9 text-[10px] font-mono uppercase bg-background/40 border-primary/20"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <div className="flex gap-2">
-                                      <ColorPicker
-                                        color={designSettings.secondaryColor}
-                                        onChange={(c) => setDesignSettings({ ...designSettings, secondaryColor: c })}
-                                      />
-                                      <Input
-                                        value={designSettings.secondaryColor}
-                                        onChange={(e) => setDesignSettings({ ...designSettings, secondaryColor: e.target.value })}
-                                        className="h-9 text-[10px] font-mono uppercase bg-background/40 border-primary/20"
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="grid grid-cols-2 gap-3 pt-2">
-                              <Button
-                                onClick={() => handleGenerateDesign(currentSlideIndex)}
-                                disabled={isGeneratingDesign || isGeneratingAllDesigns}
-                                className="relative overflow-hidden group shadow-lg shadow-primary/20 hover:shadow-primary/40 active:scale-95 transition-all"
-                              >
-                                <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary-foreground opacity-0 group-hover:opacity-10 transition-opacity" />
-                                {isGeneratingDesign ? (
-                                  <>
-                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                    Gerando...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Wand2 className="h-4 w-4 mr-2 group-hover:rotate-12 transition-transform" />
-                                    Design Atual
-                                  </>
-                                )}
-                              </Button>
-                              <Button
-                                onClick={handleGenerateAllDesigns}
-                                disabled={isGeneratingDesign || isGeneratingAllDesigns}
-                                variant="secondary"
-                                className="group shadow-md hover:shadow-lg active:scale-95 transition-all border border-primary/10"
-                              >
-                                {isGeneratingAllDesigns ? (
-                                  <>
-                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                    {designProgress.current}/{designProgress.total}
-                                  </>
-                                ) : (
-                                  <>
-                                    <Images className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" />
-                                    Toda Visual
-                                  </>
-                                )}
-                              </Button>
-                            </div>
-
-                            {isGeneratingAllDesigns && (
-                              <div className="space-y-1">
-                                <div className="flex justify-between text-[10px] text-muted-foreground uppercase font-bold tracking-widest">
-                                  <span>Progresso</span>
-                                  <span>{Math.round((designProgress.current / designProgress.total) * 100)}%</span>
-                                </div>
-                                <Progress value={(designProgress.current / designProgress.total) * 100} className="h-1.5 bg-primary/10" />
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </div>
-
-                      {/* Column 2: Editor Panel */}
-                      <div id="editor-panel" className="space-y-4">
-                        <Tabs defaultValue="slides">
-                          <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="slides">Slides</TabsTrigger>
-                            <TabsTrigger value="legenda">Legenda</TabsTrigger>
-                          </TabsList>
-
-                          <TabsContent value="slides" className="space-y-4">
-                            {/* Current Slide Editor */}
-                            <Card>
-                              <CardHeader className="pb-3">
-                                <div className="flex items-center justify-between">
-                                  <CardTitle className="text-sm">Slide {currentSlideIndex + 1}</CardTitle>
-                                  <div className="flex gap-2">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => setEditingSlide(editingSlide === currentSlideIndex ? null : currentSlideIndex)}
-                                    >
-                                      <Edit3 className="h-4 w-4" />
-                                    </Button>
-                                    {carousel.slides.length > 2 && (
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => removeSlide(currentSlideIndex)}
-                                      >
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                      </Button>
-                                    )}
-                                  </div>
-                                </div>
-                              </CardHeader>
-                              <CardContent className="space-y-3">
-                                <div className="space-y-2">
-                                  <label className="text-xs text-muted-foreground">Destaque</label>
-                                  <Input
-                                    value={currentSlide?.destaque || ""}
-                                    onChange={(e) => updateSlide(currentSlideIndex, { destaque: e.target.value })}
-                                    placeholder="Palavra ou frase de destaque"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <label className="text-xs text-muted-foreground">Headline</label>
-                                  <Textarea
-                                    value={currentSlide?.headline || ""}
-                                    onChange={(e) => updateSlide(currentSlideIndex, { headline: e.target.value })}
-                                    placeholder="Texto principal do slide"
-                                    rows={3}
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <label className="text-xs text-muted-foreground">Subtexto</label>
-                                  <Textarea
-                                    value={currentSlide?.subtexto || ""}
-                                    onChange={(e) => updateSlide(currentSlideIndex, { subtexto: e.target.value })}
-                                    placeholder="Texto de apoio (opcional)"
-                                    rows={4}
-                                  />
-                                </div>
-                              </CardContent>
-                            </Card>
-
-                            {/* All Slides Overview */}
-                            <Card>
-                              <CardHeader className="pb-3">
-                                <CardTitle className="text-sm">Todos os Slides</CardTitle>
-                              </CardHeader>
-                              <CardContent>
-                                <ScrollArea className="h-[200px]">
-                                  <div className="space-y-2">
-                                    {carousel.slides.map((slide, i) => (
-                                      <div
-                                        key={i}
-                                        className={`p-3 rounded-lg border cursor-pointer transition-all ${i === currentSlideIndex ? "border-primary bg-primary/5" : "hover:bg-muted/50"
-                                          }`}
-                                        onClick={() => setCurrentSlideIndex(i)}
-                                      >
-                                        <div className="flex items-center justify-between">
-                                          <Badge variant="outline" className="text-xs">
-                                            {slide.tipo}
-                                          </Badge>
-                                          {slide.imageUrl && (
-                                            <Check className="h-3 w-3 text-green-500" />
-                                          )}
-                                        </div>
-                                        <p className="text-sm mt-1 line-clamp-2">{slide.headline}</p>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </ScrollArea>
-                              </CardContent>
-                            </Card>
-                          </TabsContent>
-
-                          <TabsContent value="legenda" className="space-y-4">
-                            <Card>
-                              <CardHeader className="pb-3">
-                                <div className="flex items-center justify-between">
-                                  <CardTitle className="text-sm">Legenda do Post</CardTitle>
-                                  <Button variant="ghost" size="sm" onClick={handleCopyLegenda}>
-                                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                                  </Button>
-                                </div>
-                              </CardHeader>
-                              <CardContent>
-                                <Textarea
-                                  value={carousel.legenda}
-                                  onChange={(e) => updateLegenda(e.target.value)}
-                                  placeholder="Legenda para o Instagram..."
-                                  rows={12}
-                                  className="resize-none"
-                                />
-                              </CardContent>
-                            </Card>
-
-                            {carousel.cta_stories && (
-                              <Card>
-                                <CardHeader className="pb-3">
-                                  <CardTitle className="text-sm">Sugestão para Stories</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                  <p className="text-sm text-muted-foreground">{carousel.cta_stories}</p>
-                                </CardContent>
-                              </Card>
-                            )}
-                          </TabsContent>
-                        </Tabs>
-                      </div>
-                    </div>
-                  );
-                })()}
+                        <Button
+                          variant="default"
+                          className="w-full h-14 rounded-2xl font-black gap-4 shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform"
+                          onClick={handleCopyLegenda}
+                        >
+                          <Copy className="h-5 w-5" /> Copiar Legenda
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
               </div>
             )}
           </div>
