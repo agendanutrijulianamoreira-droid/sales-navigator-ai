@@ -14,54 +14,36 @@ serve(async (req) => {
         if (!nicheInput) throw new Error('Nicho não informado')
 
         const openAiKey = Deno.env.get('OPENAI_API_KEY')
-        // Se estiver no Lovable Cloud, ele pode injetar a chave automaticamente ou via secret
-
-        const examples = `
-  EXEMPLO DE QUALIDADE ESPERADA:
-  Input: "Nutricionista para gestantes"
-  Output: {
-    "targetAudience": "Gestantes de Alta Performance (Carreiristas)",
-    "painPoints": ["Medo de perder o cargo por 'brain fog' gestacional", "Insegurança com a mudança estética do corpo vs imagem profissional", "Falta de tempo para rotinas de autocuidado complexas"],
-    "desires": ["Manter a clareza mental para decisões executivas", "Ter uma recuperação pós-parto 'atleta'", "Sentir-se no controle da biologia"],
-    "objections": ["Acha que o acompanhamento vai tomar muito tempo", "Medo de restrições que afetem a produtividade"],
-    "brandVoice": "O Mentor Científico e Provocador",
-    "bigIdea": "O Protocolo Gestação Lucrativa: Como manter a clareza mental e a energia de execução enquanto nutre o desenvolvimento épico do seu bebê.",
-    "maestroVerdict": "Seu nicho é ouro líquido. Gaste menos tempo falando de vitaminas e mais tempo falando de performance cognitiva. Essas mulheres não querem apenas um bebê saudável, elas querem o bebê saudável E a promoção no trabalho simultaneamente.",
-    "productLadder": {
-      "tripwire": "Guia de Nutrição Produtiva para o Primeiro Trimestre",
-      "coreOffer": "Acompanhamento Gestação de Elite 40 Semanas",
-      "highTicket": "Programa Mentoria VIP Pós-Parto Redux"
-    }
-  }
-`;
 
         const prompt = `
-          Você é o "Maestro", o Mentor Chefe do "Brain Trust" de uma elite de nutricionistas empresárias. 
-          Sua especialidade é transformar nutricionistas clínicos em donos de negócios lucrativos através do framework "Funil Infinito".
+      Você é o "MAESTRO", o mentor estratégico mais caro do mercado para nutricionistas. 
+      Sua especialidade é criar o "Brand Hub & Business Lab" para profissionais que querem sair do amadorismo e aplicar o "Funil Infinito".
 
-          DIRETRIZES DE PENSAMENTO:
-          1. BRAND HUB: Foque em diferenciação. Não aceite o comum. Se o nicho é "Emagrecimento", busque o ângulo clínico específico (ex: resistência à insulina, inflamação subclínica).
-          2. BUSINESS LAB: Pense em "Escada de Produtos". Não sugira apenas consulta; sugira o "Produto de Entrada", o "Oferta Principal" e o "High-Ticket".
-          3. COPY CLÍNICO: Use terminologia que misture autoridade científica com desejo comercial.
+      CONTEXTO DO USUÁRIO: "${nicheInput}"
 
-          ${examples}
+      SUA MISSÃO: Gerar uma estratégia de elite EXATAMENTE neste nível de profundidade e estrutura:
 
-          ENTRADA DO USUÁRIO: "${nicheInput}"
+      DIRETRIZES DE OURO:
+      1. NUNCA use termos genéricos como "ter mais saúde" ou "comer melhor". Use "intestino previsível", "redução de inchaço inflamatório", "clareza mental", "biologia sob controle".
+      2. FOCO CLÍNICO + ROTINA: Misture sintomas clínicos (ex: resistência à insulina, ferritina, acne tardia) com dores de rotina (ex: empreendedora sem tempo, mãe cansada).
+      3. OBJEÇÕES REAIS: Não foque apenas em "dinheiro". Foque em "medo de falhar de novo", "medo de dieta engessada", "medo de nutrição não resolver caso médico complexo".
 
-          Gere um perfil estratégico em JSON com os campos:
-          - targetAudience: Nome magnético para o segmento.
-          - painPoints: 3 dores latentes.
-          - desires: 3 desejos aspiracionais.
-          - objections: 2 objeções à compra.
-          - brandVoice: "O Mentor [Adjetivo] + [Adjetivo]".
-          - bigIdea: Uma promessa única (USP).
-          - maestroVerdict: Um parágrafo de 3 linhas dando um conselho "tapa na cara" e motivador ao nutricionista.
-          - productLadder: { "tripwire": string, "coreOffer": string, "highTicket": string }.
+      Gere um perfil estratégico em JSON com os campos:
+      - targetAudience: Nome magnético e específico para o segmento.
+      - subNiche: O ângulo clínico ou situacional específico.
+      - persona: Descrição detalhada da mulher real e seu conflito de rotina.
+      - mainPain: Dor aguda que a impede de dormir.
+      - mainDesire: O resultado aspiracional final menos o sacrifício.
+      - promises: Lista com exatamente 3 opções de Promessas Fortes (USPs) com prazo ou mecanismo (ex: "Em 90 dias...", "Através do Protocolo X...").
+      - commonEnemy: O que você combate (ex: Indústria de suplementos inúteis, dietas de gaveta).
+      - objections: Lista de 3 maiores travas mentais específicas.
+      - brandVoice: "O Mentor [Adjetivo] + [Adjetivo]".
+      - maestroVerdict: Conselho direto, tático e motivador do mentor sobre este nicho. "Tapa na cara" necessário.
+      - productLadder: { "tripwire": string, "coreOffer": string, "highTicket": string }.
 
-          RESPOSTA APENAS EM JSON, SEM TEXTO ADICIONAL.
-        `;
+      RESPOSTA APENAS UM JSON (SEM MARKDOWN).
+    `;
 
-        // Usando o Lovable AI Gateway conforme solicitado pelo usuário
         const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -69,12 +51,12 @@ serve(async (req) => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                model: 'gpt-4o', // Maestro merece o GPT-4o
+                model: 'gpt-4o',
                 messages: [
-                    { role: 'system', content: 'Você é o Maestro, mentor estrategista de negócios para nutricionistas elite.' },
+                    { role: 'system', content: 'Você é o Maestro, mentor estrategista de elite. Responda apenas em JSON.' },
                     { role: 'user', content: prompt }
                 ],
-                temperature: 0.8,
+                temperature: 0.6,
             }),
         })
 

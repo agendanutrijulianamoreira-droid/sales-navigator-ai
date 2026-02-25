@@ -3,9 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export interface StrategyProfile {
+    niche: string;
     targetAudience: string;
-    painPoints: string[];
-    desires: string[];
+    subNiche: string;
+    persona: string;
+    mainPain: string;
+    mainDesire: string;
+    promises: string[];
+    commonEnemy: string;
     objections: string[];
     brandVoice: string;
     bigIdea: string;

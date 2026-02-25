@@ -9,16 +9,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProfile } from "@/hooks/useProfile";
 import { useAISpecialist } from "@/hooks/useAISpecialist";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, Target, Crown, Sword, Lightbulb, ShieldAlert, BarChart3 } from "lucide-react";
+import { Loader2, Sparkles, Target, Crown, Sword, Lightbulb, ShieldAlert, BarChart3, BrainCircuit, Trophy } from "lucide-react";
 import { StrategyGenerator } from "@/components/strategy/StrategyGenerator";
 import { StrategyProfile } from "@/hooks/useStrategyAI";
 import { PricingCalculator } from "@/components/business/PricingCalculator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function Strategy() {
   const { profile, updateProfile } = useProfile();
   const { generateContent, isLoading, streamedContent } = useAISpecialist();
   const [activeTab, setActiveTab] = useState("brand");
   const [maestroVerdict, setMaestroVerdict] = useState<string | null>(null);
+  const [generatedPromises, setGeneratedPromises] = useState<string[]>([]);
+  const [selectedPromise, setSelectedPromise] = useState<string>("");
 
   const handleGenerateBrand = async () => {
     await generateContent("brand_architect", "posicionamento", {
@@ -41,15 +44,24 @@ export default function Strategy() {
 
   const handleAutoFill = (data: StrategyProfile) => {
     updateProfile({
-      persona_ideal: data.targetAudience,
-      dor_principal: data.painPoints.map(p => `• ${p}`).join('\n'),
-      desejo_principal: data.desires.map(d => `• ${d}`).join('\n'),
+      nicho: data.niche,
+      sub_nicho: data.subNiche,
+      persona_ideal: data.persona,
+      dor_principal: data.mainPain,
+      desejo_principal: data.mainDesire,
       objecoes: data.objections.map(o => `• ${o}`).join('\n'),
       tom_voz: data.brandVoice.toLowerCase(),
-      promessa_principal: data.bigIdea
+      inimigo_comum: data.commonEnemy,
+      promessa_principal: data.promises[0] // Default to first
     });
+
     if (data.maestroVerdict) {
       setMaestroVerdict(data.maestroVerdict);
+    }
+
+    if (data.promises && data.promises.length > 0) {
+      setGeneratedPromises(data.promises);
+      setSelectedPromise(data.promises[0]);
     }
   };
 
@@ -65,13 +77,61 @@ export default function Strategy() {
           <StrategyGenerator onProfileGenerated={handleAutoFill} />
 
           {maestroVerdict && (
-            <div className="mt-4 p-5 bg-amber-50/50 border-l-4 border-amber-500 italic text-amber-900 shadow-sm rounded-r-2xl animate-in slide-in-from-left duration-500">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xl">🧠</span>
-                <span className="font-black uppercase text-[10px] tracking-widest text-amber-700">Veredito do Maestro</span>
+            <div className="mt-4 p-6 bg-indigo-900 text-white rounded-2xl shadow-xl border-t-4 border-indigo-400 animate-in slide-in-from-top duration-700">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-indigo-400 p-2 rounded-full animate-pulse">
+                  <BrainCircuit className="w-6 h-6 text-indigo-900" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg tracking-tight leading-none">O MAESTRO ANALISOU</h3>
+                  <p className="text-[10px] text-indigo-300 uppercase tracking-widest font-bold mt-1">Veredito do Mentor Estrategista</p>
+                </div>
               </div>
-              <p className="text-sm leading-relaxed">"{maestroVerdict}"</p>
+
+              <p className="text-indigo-100 text-sm leading-relaxed mb-6 italic">
+                "{maestroVerdict}"
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Button variant="outline" className="bg-transparent border-indigo-400 text-white hover:bg-indigo-800 h-11">
+                  Gerar Conteúdo de Objeção
+                </Button>
+                <Button className="bg-white text-indigo-900 hover:bg-indigo-100 h-11 font-bold">
+                  Aplicar ao Funil de Vendas
+                </Button>
+              </div>
             </div>
+          )}
+
+          {generatedPromises.length > 0 && (
+            <Card className="border-2 border-yellow-500/20 bg-yellow-500/5 overflow-hidden">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-yellow-600" />
+                  Escolha sua Promessa de Elite
+                </CardTitle>
+                <CardDescription>O Maestro gerou 3 ângulos de escala. Qual você prefere?</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup
+                  value={selectedPromise}
+                  onValueChange={(val) => {
+                    setSelectedPromise(val);
+                    updateProfile({ promessa_principal: val });
+                  }}
+                  className="grid gap-3"
+                >
+                  {generatedPromises.map((promise, index) => (
+                    <div key={index} className={`flex items-start space-x-3 p-4 border rounded-xl transition-all cursor-pointer ${selectedPromise === promise ? 'bg-white border-yellow-500 shadow-md ring-1 ring-yellow-500' : 'bg-background hover:bg-muted/50'}`}>
+                      <RadioGroupItem value={promise} id={`p-${index}`} className="mt-1" />
+                      <Label htmlFor={`p-${index}`} className="leading-relaxed cursor-pointer font-medium text-sm">
+                        {promise}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </CardContent>
+            </Card>
           )}
 
           {/* Nicho & Persona */}
