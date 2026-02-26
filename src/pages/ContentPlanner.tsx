@@ -3,6 +3,7 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { useProfile } from "@/hooks/useProfile";
 import { useCalendarItems, CalendarItem } from "@/hooks/useCalendarItems";
+import { useAISpecialist } from "@/hooks/useAISpecialist";
 import { ScheduleDialog } from "@/components/ScheduleDialog";
 import { EditPostDialog } from "@/components/EditPostDialog";
 import { SmartAlerts } from "@/components/SmartAlerts";
@@ -15,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { 
+import {
   Calendar, Grid3X3, Plus, ChevronLeft, ChevronRight,
   FileText, ArrowLeft, Trash2, Loader2, Sparkles,
   Copy, Download, Search
@@ -66,7 +67,7 @@ export default function ContentPlanner() {
   const weekDates = getWeekDates();
 
   const filteredItems = items.filter(item => {
-    const matchesSearch = !searchQuery || 
+    const matchesSearch = !searchQuery ||
       item.titulo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.notas?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = !filterType || item.tipo === filterType;
@@ -90,7 +91,7 @@ export default function ContentPlanner() {
   const handleDuplicatePost = async (post: CalendarItem) => {
     const newDate = new Date(post.data);
     newDate.setDate(newDate.getDate() + 7);
-    await addItem({ data:newDate.toISOString().split('T')[0], tipo: post.tipo, titulo: `${post.titulo} (Cópia)`, notas: post.notas || undefined });
+    await addItem({ data: newDate.toISOString().split('T')[0], tipo: post.tipo, titulo: `${post.titulo} (Cópia)`, notas: post.notas || undefined });
     toast.success("Post duplicado!");
   };
 
@@ -103,6 +104,64 @@ export default function ContentPlanner() {
     a.download = `planejamento-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     toast.success("Exportado!");
+  };
+
+  const { generateContent, isLoading: isAISpecialistLoading } = useAISpecialist();
+  const [isGeneratingMonth, setIsGeneratingMonth] = useState(false);
+  const { addBatchItems } = useCalendarItems();
+
+  const isAdmin = (profile as any)?.role === 'admin';
+  const isElite = (profile as any)?.membership_tier === 'elite' || isAdmin;
+
+  const handleGenerateMonth = async () => {
+    if (!isElite) {
+      toast.error("Funcionalidade exclusiva para usuários Elite!");
+      return;
+    }
+
+    if (items.length > 5) {
+      const confirm = window.confirm("Isso irá gerar 30 novos itens no seu calendário. Deseja continuar?");
+      if (!confirm) return;
+    }
+
+    setIsGeneratingMonth(true);
+    try {
+      // Get next 30 days starting from tomorrow
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() + 1);
+
+      const prompt = `Gere um planejamento estratégico de conteúdo para os próximos 30 dias para o meu perfil (detalhes no contexto).
+      Regras:
+      1. Equilibre entre: Conteúdo Educativo (10), Autoridade (7), Conexão (7) e Venda/Oferta (6).
+      2. Tipos permitidos: "carrossel", "post_unico", "reels", "stories", "levantada".
+      3. Retorne APENAS um JSON array de objetos, sem texto antes ou depois, seguindo este formato:
+      [
+        {"data": "YYYY-MM-DD", "tipo": "tipo_escolhido", "titulo": "Título Criativo", "notas": "Orientação curta do que postar"}
+      ]
+      4. O planejamento deve começar em ${startDate.toISOString().split('T')[0]}.`;
+
+      const response = await generateContent("social_media_manager", "PLANEJAMENTO_MENSAL", { prompt });
+
+      // Extract JSON from response (handling potential markdown)
+      const jsonMatch = response.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) {
+        throw new Error("Não foi possível gerar um formato válido. Tente novamente.");
+      }
+
+      const suggestedItems = JSON.parse(jsonMatch[0]);
+
+      if (Array.isArray(suggestedItems)) {
+        await addBatchItems(suggestedItems);
+        toast.success("Planejamento mensal gerado com sucesso!");
+      } else {
+        throw new Error("A IA retornou um formato inesperado.");
+      }
+    } catch (error) {
+      console.error("Erro ao gerar mês:", error);
+      toast.error(error instanceof Error ? error.message : "Erro ao gerar planejamento");
+    } finally {
+      setIsGeneratingMonth(false);
+    }
   };
 
   const handleDropPost = async (postId: string, newDate: string) => {
@@ -145,6 +204,21 @@ export default function ContentPlanner() {
               </div>
             </div>
             <div className="flex gap-2">
+              {isElite && (
+                <Button
+                  variant="outline"
+                  className="bg-primary/10 border-primary/20 hover:bg-primary/20 text-primary-foreground font-bold"
+                  onClick={handleGenerateMonth}
+                  disabled={isGeneratingMonth}
+                >
+                  {isGeneratingMonth ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 mr-2" />
+                  )}
+                  Gerar Mês com IA
+                </Button>
+              )}
               <Button variant="outline" onClick={() => setShowScheduleDialog(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Agendar
@@ -190,10 +264,10 @@ export default function ContentPlanner() {
 
           {view === "week" && (
             <div className="mb-6">
-              <DateSuggestions 
-                items={items} 
-                weekDates={weekDates} 
-                onSelectDate={(date) => { setSelectedDate(date); setShowScheduleDialog(true); }} 
+              <DateSuggestions
+                items={items}
+                weekDates={weekDates}
+                onSelectDate={(date) => { setSelectedDate(date); setShowScheduleDialog(true); }}
               />
             </div>
           )}

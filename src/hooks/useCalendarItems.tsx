@@ -22,7 +22,7 @@ export function useCalendarItems() {
 
   const fetchItems = useCallback(async () => {
     if (!user?.id) return;
-    
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -44,6 +44,43 @@ export function useCalendarItems() {
     fetchItems();
   }, [fetchItems]);
 
+  const addBatchItems = useCallback(async (itemsList: {
+    data: string;
+    tipo: string;
+    titulo?: string;
+    notas?: string;
+    generation_id?: string;
+  }[]) => {
+    if (!user?.id) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from("calendar_items")
+        .insert(
+          itemsList.map(item => ({
+            user_id: user.id,
+            data: item.data,
+            tipo: item.tipo,
+            titulo: item.titulo || null,
+            notas: item.notas || null,
+            generation_id: item.generation_id || null,
+            status: "planejado",
+          }))
+        )
+        .select();
+
+      if (error) throw error;
+
+      setItems(prev => [...prev, ...data]);
+      toast({ title: `${data.length} itens adicionados ao calendário!` });
+      return data;
+    } catch (error) {
+      console.error("Error adding batch calendar items:", error);
+      toast({ variant: "destructive", title: "Erro ao agendar itens" });
+      return null;
+    }
+  }, [user?.id, toast]);
+
   const addItem = useCallback(async (item: {
     data: string;
     tipo: string;
@@ -51,34 +88,8 @@ export function useCalendarItems() {
     notas?: string;
     generation_id?: string;
   }) => {
-    if (!user?.id) return null;
-
-    try {
-      const { data, error } = await supabase
-        .from("calendar_items")
-        .insert({
-          user_id: user.id,
-          data: item.data,
-          tipo: item.tipo,
-          titulo: item.titulo || null,
-          notas: item.notas || null,
-          generation_id: item.generation_id || null,
-          status: "planejado",
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      setItems(prev => [...prev, data]);
-      toast({ title: "Agendado no calendário!" });
-      return data;
-    } catch (error) {
-      console.error("Error adding calendar item:", error);
-      toast({ variant: "destructive", title: "Erro ao agendar" });
-      return null;
-    }
-  }, [user?.id, toast]);
+    return addBatchItems([item]).then(res => res ? res[0] : null);
+  }, [addBatchItems]);
 
   const updateItem = useCallback(async (id: string, updates: Partial<CalendarItem>) => {
     try {
@@ -88,8 +99,8 @@ export function useCalendarItems() {
         .eq("id", id);
 
       if (error) throw error;
-      
-      setItems(prev => prev.map(item => 
+
+      setItems(prev => prev.map(item =>
         item.id === id ? { ...item, ...updates } : item
       ));
       return true;
@@ -108,7 +119,7 @@ export function useCalendarItems() {
         .eq("id", id);
 
       if (error) throw error;
-      
+
       setItems(prev => prev.filter(item => item.id !== id));
       toast({ title: "Removido do calendário" });
       return true;
@@ -135,6 +146,7 @@ export function useCalendarItems() {
     items,
     isLoading,
     addItem,
+    addBatchItems,
     updateItem,
     deleteItem,
     getItemsForDate,

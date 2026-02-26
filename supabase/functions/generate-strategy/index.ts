@@ -13,8 +13,19 @@ serve(async (req) => {
                 const { nicheInput } = await req.json()
                 if (!nicheInput) throw new Error('Nicho não informado')
 
-                const apiKey = Deno.env.get('LOVABLE_API_KEY') || Deno.env.get('OPENAI_API_KEY')
-                if (!apiKey) throw new Error('API Key (LOVABLE or OPENAI) not configured')
+                const openAIKey = Deno.env.get('OPENAI_API_KEY');
+                const lovableKey = Deno.env.get('LOVABLE_API_KEY');
+
+                const apiKey = lovableKey || openAIKey;
+                if (!apiKey) throw new Error('API Key (LOVABLE or OPENAI) not configured in project secrets');
+
+                const apiUrl = lovableKey
+                        ? 'https://ai.gateway.lovable.dev/v1/chat/completions'
+                        : 'https://api.openai.com/v1/chat/completions';
+
+                const model = lovableKey ? 'google/gemini-2.0-flash-exp' : 'gpt-4o';
+
+                console.log(`[Generate-Strategy] Using ${lovableKey ? 'Lovable Gateway' : 'OpenAI'} with model ${model}`);
 
                 const prompt = `
       Você é o "MAESTRO", o mentor estratégico de elite para nutricionistas que desejam vender High-Ticket.
@@ -69,14 +80,14 @@ serve(async (req) => {
 
       RESPONDA APENAS O JSON. Sem explicações antes ou depois. Sem markdown.`;
 
-                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
                                 'Authorization': `Bearer ${apiKey}`,
                                 'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                                model: 'gpt-4o',
+                                model: model,
                                 messages: [
                                         { role: 'system', content: 'Você é o Maestro, mentor estrategista de elite. Responda apenas em JSON.' },
                                         { role: 'user', content: prompt }
@@ -85,9 +96,13 @@ serve(async (req) => {
                         }),
                 })
 
-                const rawText = await response.text()
-                if (!response.ok) throw new Error(`API error ${response.status}: ${rawText.substring(0, 200)}`)
+                if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error(`[Generate-Strategy] API Error: ${response.status}`, errorText);
+                        throw new Error(`AI API error ${response.status}: ${errorText.substring(0, 100)}`);
+                }
 
+                const rawText = await response.text()
                 const data = JSON.parse(rawText)
                 const content = data.choices[0].message.content
 

@@ -4,17 +4,17 @@ import { Button } from "@/components/ui/button";
 import {
   Sparkles, Target, Calendar, ShoppingBag, MessageSquare,
   BarChart3, BookOpen, LogOut, User, Zap, Home, ChevronLeft,
-  Camera
+  Camera, Crown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { title: "Command Center", icon: Home, href: "/" },
-  { title: "Estratégia", icon: Target, href: "/strategy" },
+  { title: "Brand Hub", icon: Crown, href: "/brand-hub" },
+  { title: "Business Lab", icon: ShoppingBag, href: "/business-lab" },
   { title: "Calendário", icon: Calendar, href: "/planner" },
-  { title: "Kit de Marca", icon: Zap, href: "/brand-kit" },
+  { title: "Conteúdo IA", icon: Sparkles, href: "/carousel-creator" },
   { title: "Estúdio de Fotos", icon: Camera, href: "/photo-studio" },
-  { title: "Produtos", icon: ShoppingBag, href: "/products" },
   { title: "Resultados", icon: BarChart3, href: "/results" },
   { title: "Mentor IA", icon: MessageSquare, href: "/mentor" },
 ];

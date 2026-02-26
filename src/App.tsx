@@ -22,12 +22,11 @@ const PageLoader = () => (
 // Lazy load das páginas pesadas
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
-const Strategy = lazy(() => import("./pages/Strategy"));
+const BrandHub = lazy(() => import("./pages/BrandHub"));
+const BusinessLab = lazy(() => import("./pages/BusinessLab"));
 const CalendarPage = lazy(() => import("./pages/CalendarPage"));
 const ContentPlanner = lazy(() => import("./pages/ContentPlanner"));
 const CarouselCreator = lazy(() => import("./pages/CarouselCreator"));
-const BrandKitPage = lazy(() => import("./pages/BrandKitPage"));
-const Products = lazy(() => import("./pages/Products"));
 const Conversion = lazy(() => import("./pages/Conversion"));
 const Results = lazy(() => import("./pages/Results"));
 const Mentor = lazy(() => import("./pages/Mentor"));
@@ -71,17 +70,21 @@ const App = () => (
                 }
               >
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/strategy" element={<Strategy />} />
-                <Route path="/calendar" element={<CalendarPage />} />
+                <Route path="/brand-hub" element={<BrandHub />} />
+                <Route path="/business-lab" element={<BusinessLab />} />
                 <Route path="/planner" element={<ContentPlanner />} />
                 <Route path="/carousel-creator" element={<CarouselCreator />} />
-                <Route path="/brand-kit" element={<BrandKitPage />} />
-                <Route path="/products" element={<Products />} />
                 <Route path="/conversion" element={<Conversion />} />
                 <Route path="/results" element={<Results />} />
                 <Route path="/mentor" element={<Mentor />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/photo-studio" element={<PhotoStudio />} />
+
+                {/* Fallbacks/Redirects for old routes */}
+                <Route path="/calendar" element={<ContentPlanner />} />
+                <Route path="/strategy" element={<BrandHub />} />
+                <Route path="/brand-kit" element={<BrandHub />} />
+                <Route path="/products" element={<BusinessLab />} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

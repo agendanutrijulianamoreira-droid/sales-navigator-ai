@@ -8,14 +8,13 @@ import { UnifiedComposer } from "@/components/UnifiedComposer";
 import {
   Sparkles, Target, Calendar, ShoppingBag,
   BarChart3, LogOut, User, Zap, Palette,
-  Camera, ArrowRight
+  Camera, ArrowRight, Crown
 } from "lucide-react";
 
 const MODULES = [
+  { title: "Brand Hub", description: "Design & Estratégia", icon: Crown, href: "/brand-hub", gradient: "from-primary/10 to-accent/10", iconColor: "text-primary" },
+  { title: "Business Lab", description: "Produtos & Finanças", icon: ShoppingBag, href: "/business-lab", gradient: "from-purple-500/10 to-pink-500/10", iconColor: "text-purple-500" },
   { title: "Planejador", description: "Calendário editorial", icon: Calendar, href: "/planner", gradient: "from-emerald-500/10 to-teal-500/10", iconColor: "text-emerald-500" },
-  { title: "Kit de Marca", description: "Identidade visual", icon: Palette, href: "/brand-kit", gradient: "from-primary/10 to-accent/10", iconColor: "text-primary" },
-  { title: "Estratégia", description: "Posicionamento", icon: Target, href: "/strategy", gradient: "from-blue-500/10 to-indigo-500/10", iconColor: "text-blue-500" },
-  { title: "Produtos", description: "Escada de ofertas", icon: ShoppingBag, href: "/products", gradient: "from-purple-500/10 to-pink-500/10", iconColor: "text-purple-500" },
   { title: "Resultados", description: "GPS Financeiro", icon: BarChart3, href: "/results", gradient: "from-emerald-500/10 to-green-500/10", iconColor: "text-emerald-500" },
   { title: "Estúdio Fotos", description: "Fotos Profissionais", icon: Camera, href: "/photo-studio", gradient: "from-orange-500/10 to-amber-500/10", iconColor: "text-orange-500" },
 ];
@@ -81,7 +80,7 @@ export default function Dashboard() {
                   Designs seguem sua identidade visual automaticamente
                 </p>
                 <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-primary" asChild>
-                  <Link to="/brand-kit">Editar Kit →</Link>
+                  <Link to="/brand-hub">Editar Hub →</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -96,7 +95,7 @@ export default function Dashboard() {
                   Defina cores, fontes e estilos para designs automáticos
                 </p>
                 <Button size="sm" className="mt-3 w-full rounded-xl" asChild>
-                  <Link to="/brand-kit">Configurar Kit</Link>
+                  <Link to="/brand-hub">Configurar Hub</Link>
                 </Button>
               </CardContent>
             </Card>

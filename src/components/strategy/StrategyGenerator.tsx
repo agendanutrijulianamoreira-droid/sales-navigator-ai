@@ -6,6 +6,7 @@ import { useStrategyAI, StrategyProfile } from '@/hooks/useStrategyAI';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Link } from 'react-router-dom';
 
 interface StrategyGeneratorProps {
     onProfileGenerated: (profile: StrategyProfile) => void;
@@ -226,8 +227,8 @@ export function StrategyGenerator({ onProfileGenerated }: StrategyGeneratorProps
                                     <h4 className="font-black text-xl tracking-tight">Estratégia Gerada com Sucesso</h4>
                                     <p className="text-slate-400 text-sm">Agora vamos injetar esses parâmetros no seu Business Lab e Criador de Carrosséis.</p>
                                 </div>
-                                <Button variant="secondary" className="bg-white text-slate-900 hover:bg-white/90 font-bold px-8 h-12 rounded-2xl relative z-10">
-                                    Acessar Business Lab
+                                <Button variant="secondary" className="bg-white text-slate-900 hover:bg-white/90 font-bold px-8 h-12 rounded-2xl relative z-10" asChild>
+                                    <Link to="/business-lab">Acessar Business Lab</Link>
                                 </Button>
                             </div>
                         </div>
