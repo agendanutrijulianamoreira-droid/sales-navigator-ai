@@ -1,159 +1,142 @@
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { UnifiedComposer } from "@/components/UnifiedComposer";
 import { 
   Sparkles, Target, Calendar, ShoppingBag, 
-  BarChart3, BookOpen, LogOut, User, Zap, Palette, Settings,
-  Camera
+  BarChart3, BookOpen, Zap, Palette, Camera, ArrowRight
 } from "lucide-react";
 
 const MODULES = [
-  { title: "Planejador", description: "Calendário editorial", icon: Calendar, href: "/planner", color: "text-green-500" },
-  { title: "Kit de Marca", description: "Sua identidade visual", icon: Palette, href: "/brand-kit", color: "text-primary" },
-  { title: "Estratégia", description: "Posicionamento", icon: Target, href: "/strategy", color: "text-blue-500" },
-  { title: "Produtos", description: "Escada de ofertas", icon: ShoppingBag, href: "/products", color: "text-purple-500" },
-  { title: "Resultados", description: "GPS Financeiro", icon: BarChart3, href: "/results", color: "text-emerald-500" },
-  { title: "Biblioteca", description: "Seus conteúdos", icon: BookOpen, href: "/library", color: "text-pink-500" },
-  { title: "Estúdio Fotos", description: "Fotos Profissionais", icon: Camera, href: "/photo-studio", color: "text-orange-500" },
+  { title: "Planejador", description: "Calendário editorial", icon: Calendar, href: "/planner", gradient: "from-emerald-500/10 to-teal-500/10", iconColor: "text-emerald-500" },
+  { title: "Kit de Marca", description: "Identidade visual", icon: Palette, href: "/brand-kit", gradient: "from-primary/10 to-accent/10", iconColor: "text-primary" },
+  { title: "Estratégia", description: "Posicionamento", icon: Target, href: "/strategy", gradient: "from-blue-500/10 to-indigo-500/10", iconColor: "text-blue-500" },
+  { title: "Produtos", description: "Escada de ofertas", icon: ShoppingBag, href: "/products", gradient: "from-purple-500/10 to-pink-500/10", iconColor: "text-purple-500" },
+  { title: "Resultados", description: "GPS Financeiro", icon: BarChart3, href: "/results", gradient: "from-emerald-500/10 to-green-500/10", iconColor: "text-emerald-500" },
+  { title: "Biblioteca", description: "Seus conteúdos", icon: BookOpen, href: "/library", gradient: "from-pink-500/10 to-rose-500/10", iconColor: "text-pink-500" },
+  { title: "Estúdio Fotos", description: "Fotos Profissionais", icon: Camera, href: "/photo-studio", gradient: "from-orange-500/10 to-amber-500/10", iconColor: "text-orange-500" },
 ];
 
 export default function Dashboard() {
   const { profile } = useProfile();
-  const { signOut } = useAuth();
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="container flex items-center justify-between h-16 px-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-              <Sparkles className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h1 className="font-bold text-lg tracking-tight">NutriSales OS</h1>
-              <p className="text-[10px] uppercase tracking-widest font-bold text-primary/60">Command Center</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/settings"><User className="h-4 w-4" /></Link>
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => signOut()}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
+    <div className="space-y-8">
+      {/* Welcome Hero */}
+      <div className="relative overflow-hidden rounded-3xl premium-gradient p-8 md:p-10">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
+        <div className="relative z-10">
+          <p className="text-primary-foreground/60 text-sm font-medium tracking-wide uppercase mb-2">Command Center</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-primary-foreground tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            Olá, {profile?.nome?.split(" ")[0] || "Nutri"}! ✨
+          </h1>
+          <p className="text-primary-foreground/70 text-base mt-2 max-w-lg">
+            Sua estratégia de elite está pronta para escalar.
+          </p>
         </div>
-      </header>
+      </div>
 
-      <main className="container px-4 py-8">
-        {/* Welcome */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-extrabold tracking-tight">Olá, {profile?.nome?.split(" ")[0] || "Nutri"}! 👋</h2>
-          <p className="text-muted-foreground text-lg">Sua estratégia está pronta para decolar.</p>
-        </div>
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Main */}
+        <div className="lg:col-span-2 space-y-6">
+          <UnifiedComposer />
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Main Content Area */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Unified Composer - The Star */}
-            <UnifiedComposer />
-
-            {/* Quick Action - Mentor */}
-            <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Zap className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">Mentor IA</h3>
-                    <p className="text-xs text-muted-foreground">Tire dúvidas ou peça estratégias</p>
-                  </div>
+          {/* Mentor CTA */}
+          <Card className="glass-card-elevated neon-border overflow-hidden group hover:shadow-lg transition-all duration-300">
+            <CardContent className="flex items-center justify-between p-5">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                  <Zap className="h-5 w-5 text-primary" />
                 </div>
-                <Button size="sm" asChild>
-                  <Link to="/mentor">Conversar</Link>
+                <div>
+                  <h3 className="font-semibold text-foreground">Mentor IA</h3>
+                  <p className="text-xs text-muted-foreground">Consultoria estratégica instantânea</p>
+                </div>
+              </div>
+              <Button size="sm" className="rounded-xl gap-2 group-hover:gap-3 transition-all" asChild>
+                <Link to="/mentor">
+                  Conversar
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="space-y-4">
+          {/* Brand Status */}
+          {profile?.brand_locked ? (
+            <Card className="glass-card neon-border">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Palette className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium text-foreground">Marca Configurada</span>
+                  <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-0">Travada</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Designs seguem sua identidade visual automaticamente
+                </p>
+                <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-primary" asChild>
+                  <Link to="/brand-kit">Editar Kit →</Link>
                 </Button>
               </CardContent>
             </Card>
-          </div>
+          ) : (
+            <Card className="glass-card border-accent/20">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Palette className="h-4 w-4 text-accent" />
+                  <span className="text-sm font-medium text-foreground">Configure sua Marca</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Defina cores, fontes e estilos para designs automáticos
+                </p>
+                <Button size="sm" className="mt-3 w-full rounded-xl" asChild>
+                  <Link to="/brand-kit">Configurar Kit</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
-          {/* Sidebar */}
-          <div className="space-y-4">
-            {/* Brand Status */}
-            {profile?.brand_locked ? (
-              <Card className="border-primary/30 bg-primary/5">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Palette className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium">Marca Configurada</span>
-                    <Badge variant="secondary" className="text-xs">Travada</Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Seus designs seguem automaticamente sua identidade visual
-                  </p>
-                  <Button variant="link" size="sm" className="p-0 h-auto mt-2" asChild>
-                    <Link to="/brand-kit">Editar Kit →</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="border-amber-500/30 bg-amber-500/5">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Palette className="h-4 w-4 text-amber-500" />
-                    <span className="text-sm font-medium">Configure sua Marca</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Defina cores, fontes e estilos para designs automáticos
-                  </p>
-                  <Button size="sm" className="mt-3 w-full" asChild>
-                    <Link to="/brand-kit">Configurar Kit</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Modules Grid */}
-            <div className="grid grid-cols-2 gap-2">
-              {MODULES.map((module) => (
-                <Link key={module.href} to={module.href}>
-                  <Card className="h-full hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer group p-3">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-lg bg-muted flex items-center justify-center ${module.color} group-hover:scale-110 transition-transform`}>
-                        <module.icon className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">{module.title}</p>
-                        <p className="text-[10px] text-muted-foreground">{module.description}</p>
-                      </div>
+          {/* Modules Grid */}
+          <div className="grid grid-cols-2 gap-2.5">
+            {MODULES.map((module) => (
+              <Link key={module.href} to={module.href}>
+                <Card className="h-full glass-card hover:glass-card-elevated hover:neon-border transition-all duration-300 cursor-pointer group p-3.5">
+                  <div className="flex flex-col gap-2.5">
+                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${module.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                      <module.icon className={`h-4 w-4 ${module.iconColor}`} />
                     </div>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-
-            {/* Profile Summary */}
-            {profile?.promessa_principal && (
-              <Card>
-                <CardContent className="p-4">
-                  <p className="text-xs text-muted-foreground mb-1">Sua Promessa</p>
-                  <p className="text-sm font-medium line-clamp-2">"{profile.promessa_principal}"</p>
-                  {profile.nicho && (
-                    <Badge variant="outline" className="mt-2 text-xs">
-                      {profile.nicho}
-                    </Badge>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{module.title}</p>
+                      <p className="text-[10px] text-muted-foreground">{module.description}</p>
+                    </div>
+                  </div>
+                </Card>
+              </Link>
+            ))}
           </div>
+
+          {/* Profile Summary */}
+          {profile?.promessa_principal && (
+            <Card className="glass-card">
+              <CardContent className="p-4">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">Sua Promessa</p>
+                <p className="text-sm font-medium text-foreground line-clamp-2 italic">"{profile.promessa_principal}"</p>
+                {profile.nicho && (
+                  <Badge variant="outline" className="mt-2.5 text-[10px] border-primary/20 text-primary">
+                    {profile.nicho}
+                  </Badge>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

@@ -31,89 +31,101 @@ export default function DashboardLayout({ children }: { children?: React.ReactNo
     const location = useLocation();
 
     return (
-        <div className="flex h-screen overflow-hidden bg-background">
-            {/* Sidebar - Área Esquerda */}
-            <aside className="hidden w-64 border-r bg-card md:block relative overflow-y-auto">
-                <div className="p-6 flex items-center gap-2 font-bold text-xl text-primary">
-                    <Sparkles className="h-6 w-6" />
-                    Nutri.AI
+        <div className="flex h-screen overflow-hidden mesh-background">
+            {/* Sidebar */}
+            <aside className="hidden w-64 glass-sidebar md:flex flex-col relative">
+                {/* Logo */}
+                <div className="p-6 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl premium-gradient flex items-center justify-center neon-glow-sm">
+                        <Sparkles className="h-5 w-5 text-primary-foreground" />
+                    </div>
+                    <div>
+                        <span className="font-bold text-lg tracking-tight text-foreground" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                            Nutri.AI
+                        </span>
+                        <p className="text-[9px] uppercase tracking-[0.2em] font-semibold text-muted-foreground">Elite System</p>
+                    </div>
                 </div>
-                <nav className="p-4 space-y-2">
-                    {NAV_ITEMS.map((item) => (
-                        <Link
-                            key={item.href}
-                            to={item.href}
-                            className={cn(
-                                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
-                                location.pathname === item.href
-                                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                            )}
-                        >
-                            <item.icon className="h-5 w-5" />
-                            {item.title}
-                        </Link>
-                    ))}
+
+                {/* Nav */}
+                <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
+                    {NAV_ITEMS.map((item) => {
+                        const isActive = location.pathname === item.href;
+                        return (
+                            <Link
+                                key={item.href}
+                                to={item.href}
+                                className={cn(
+                                    "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300",
+                                    isActive
+                                        ? "glass-card-elevated neon-border text-primary shadow-lg"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                )}
+                            >
+                                <item.icon className={cn("h-[18px] w-[18px] transition-colors", isActive && "text-primary")} />
+                                {item.title}
+                            </Link>
+                        );
+                    })}
                 </nav>
 
-                <div className="absolute bottom-0 w-64 p-4 border-t bg-card space-y-4">
-                    {/* Credit Status Card */}
-                    <div className="px-4 py-3 bg-primary/5 rounded-2xl border border-primary/10">
-                        <div className="flex items-center justify-between mb-1">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Seu Saldo</span>
-                            <Coins className="h-3 w-3 text-primary" />
+                {/* Bottom */}
+                <div className="p-3 space-y-3 border-t border-border/50">
+                    {/* Credits */}
+                    <div className="glass-card rounded-2xl px-4 py-3">
+                        <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Créditos</span>
+                            <Coins className="h-3.5 w-3.5 text-accent" />
                         </div>
                         <div className="flex items-center justify-between">
-                            <div className="flex items-baseline gap-1">
-                                <span className="text-xl font-bold text-primary">{loadingCredits ? "..." : credits}</span>
-                                <span className="text-[10px] text-muted-foreground">créditos</span>
+                            <div className="flex items-baseline gap-1.5">
+                                <span className="text-2xl font-bold text-foreground">{loadingCredits ? "..." : credits}</span>
+                                <span className="text-[10px] text-muted-foreground">restantes</span>
                             </div>
                             <Button
                                 size="icon"
                                 variant="ghost"
-                                className="h-6 w-6 rounded-full hover:bg-primary hover:text-primary-foreground"
+                                className="h-7 w-7 rounded-full bg-accent/10 hover:bg-accent hover:text-accent-foreground transition-all"
                                 onClick={() => setIsTopUpOpen(true)}
                             >
-                                <Plus className="h-3 w-3" />
+                                <Plus className="h-3.5 w-3.5" />
                             </Button>
                         </div>
                     </div>
 
-                    <div className="space-y-1">
+                    {/* Settings & Logout */}
+                    <div className="space-y-0.5">
                         <Link
                             to="/settings"
                             className={cn(
-                                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all",
+                                "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all",
                                 location.pathname === "/settings"
-                                    ? "bg-primary text-primary-foreground"
-                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    ? "glass-card neon-border text-primary"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                             )}
                         >
-                            <Settings className="h-5 w-5" />
+                            <Settings className="h-[18px] w-[18px]" />
                             Configurações
                         </Link>
                         <Button
                             variant="ghost"
-                            className="w-full justify-start gap-3 px-4 py-3 h-auto font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl"
+                            className="w-full justify-start gap-3 px-4 py-2.5 h-auto font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-all"
                             onClick={() => signOut()}
                         >
-                            <LogOut className="h-5 w-5" />
+                            <LogOut className="h-[18px] w-[18px]" />
                             Sair
                         </Button>
                     </div>
                 </div>
             </aside>
 
-            {/* Conteúdo Principal - Área Direita */}
-            <main className="flex-1 overflow-y-auto relative scroll-smooth bg-muted/5">
-                <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-in fade-in duration-500">
+            {/* Main Content */}
+            <main className="flex-1 overflow-y-auto relative">
+                <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-fade-in">
                     {children || <Outlet />}
                 </div>
 
-                {/* Assistente Flutuante */}
                 <AIAssistantSidebar />
-
-                {/* Modal de Créditos */}
                 <CreditTopUpModal isOpen={isTopUpOpen} onClose={() => setIsTopUpOpen(false)} />
             </main>
         </div>
