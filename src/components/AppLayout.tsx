@@ -31,29 +31,29 @@ export function AppLayout({ children, title, description }: AppLayoutProps) {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen mesh-background">
       {/* Header */}
-      <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="glass-card-elevated sticky top-0 z-50 border-b border-border/50">
         <div className="container flex items-center justify-between h-16 px-4">
           <div className="flex items-center gap-3">
             {location.pathname !== "/" && (
-              <Button variant="ghost" size="icon" asChild className="mr-2">
+              <Button variant="ghost" size="icon" asChild className="mr-2 rounded-xl hover:bg-muted/50">
                 <Link to="/"><ChevronLeft className="h-5 w-5" /></Link>
               </Button>
             )}
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary/15 to-accent/15 flex items-center justify-center">
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="font-semibold text-lg">{title}</h1>
-              {description && <p className="text-xs text-muted-foreground">{description}</p>}
+              <h1 className="font-semibold text-lg text-foreground tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{title}</h1>
+              {description && <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{description}</p>}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" asChild className="rounded-xl hover:bg-muted/50">
               <Link to="/settings"><User className="h-4 w-4" /></Link>
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => signOut()}>
+            <Button variant="ghost" size="sm" onClick={() => signOut()} className="rounded-xl hover:bg-destructive/10 hover:text-destructive">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -61,7 +61,7 @@ export function AppLayout({ children, title, description }: AppLayoutProps) {
       </header>
 
       {/* Navigation */}
-      <nav className="border-b bg-background/50 overflow-x-auto">
+      <nav className="glass-card border-b border-border/50 overflow-x-auto">
         <div className="container px-4">
           <div className="flex gap-1 py-2">
             {NAV_ITEMS.map((item) => (
@@ -69,10 +69,10 @@ export function AppLayout({ children, title, description }: AppLayoutProps) {
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
+                  "flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-300 whitespace-nowrap",
                   location.pathname === item.href
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-primary text-primary-foreground shadow-lg neon-glow-sm"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 )}
               >
                 <item.icon className="h-4 w-4" />
@@ -84,7 +84,7 @@ export function AppLayout({ children, title, description }: AppLayoutProps) {
       </nav>
 
       {/* Content */}
-      <main className="container px-4 py-8">
+      <main className="container px-4 py-8 animate-fade-in">
         {children}
       </main>
     </div>
