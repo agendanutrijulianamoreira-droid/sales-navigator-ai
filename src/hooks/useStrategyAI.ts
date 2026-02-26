@@ -4,18 +4,31 @@ import { toast } from 'sonner';
 
 export interface StrategyProfile {
     niche: string;
-    targetAudience: string;
     subNiche: string;
     persona: string;
+    personaProfile?: {
+        name: string;
+        age: string;
+        soulPain: string;
+        routineConflict: string;
+    };
     mainPain: string;
     mainDesire: string;
     promises: string[];
+    uniqueMechanism: string;
+    mainPromise90D: string;
     commonEnemy: string;
     objections: string[];
+    eliteObjections?: string[];
     brandVoice: string;
-    bigIdea: string;
+    bigIdea?: string;
     maestroVerdict: string;
-    productLadder?: {
+    clientSegments?: {
+        inconformados: string;
+        frustrados: string;
+        desenvolvidos: string;
+    };
+    productLadder: {
         tripwire: string;
         coreOffer: string;
         highTicket: string;

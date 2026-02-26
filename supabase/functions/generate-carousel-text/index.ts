@@ -3,7 +3,6 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-<<<<<<< HEAD
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
@@ -30,21 +29,17 @@ serve(async (req) => {
     let prompt = '';
     if (mode === 'shorter' || mode === 'punchy' || mode === 'professional') {
       prompt = `
-          Atue como um estrategista de conteúdo para nutricionistas.
-          Reescreva o seguinte texto para um slide de carrossel no Instagram.
-          Modo: ${mode}.
-          Texto original: "${currentText}".
+          Você é um redator publicitário de elite para nutricionistas.
+          Sua tarefa é refinar o seguinte texto: "${currentText}"
           
-          CONTEXTO DA MARCA (Opcional):
-          - Persona: ${persona}
-          - Tom de Voz: ${voice}
+          OBJETIVO: ${mode === 'shorter' ? 'Encurtar o texto mantendo o sentido central.' : mode === 'punchy' ? 'Tornar o texto extremamente impactante, visceral e persuasivo.' : 'Tornar o texto mais profissional, elegante e técnico.'}
           
-          Regras:
-          - Se mode for 'shorter', resuma mantendo a essência.
-          - Se mode for 'punchy', torne-o impactante e use emojis estrategicamente.
-          - Se mode for 'professional', mantenha um tom autoritário e técnico.
-          
-          Retorne APENAS o texto reescrito.
+          REGRAS:
+          1. Considere que o nicho é "${niche}" e a persona é "${persona}".
+          2. O tom deve ser "${voice}".
+          3. Retorne APENAS o texto refinado, sem aspas, explicações ou introduções.
+          4. Se for encurtar, seja direto ao ponto.
+          5. Mantenha a essência estratégica.
         `;
     } else {
       prompt = `
@@ -89,23 +84,10 @@ serve(async (req) => {
                 "subtexto": "Chamada de curiosidade",
                 "destaque": "Frase curta de impacto"
               },
-              {
-                "numero": 2,
-                "layout": "topicos",
-                "headline": "Título do Slide de Conteúdo",
-                "subtexto": "Item 1\\nItem 2\\nItem 3",
-                "destaque": ""
-              },
-              {
-                "numero": 3,
-                "layout": "cta",
-                "headline": "O Ponto de Virada",
-                "subtexto": "Instrução clara para o próximo passo",
-                "destaque": "CTA (ex: Comente 'EU QUERO')"
-              }
+              ... slides seguintes ...
             ],
-            "legenda": "Copy completa da legenda (com blocos, hashtags e CTAs)",
-            "cta_stories": "Sugestão de sequência de Stories para reforçar este post"
+            "legenda": "Copy completa da legenda",
+            "cta_stories": "Sugestão de sequência de Stories"
           }
         `;
     }

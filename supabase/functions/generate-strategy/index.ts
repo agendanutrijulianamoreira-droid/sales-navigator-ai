@@ -17,32 +17,57 @@ serve(async (req) => {
                 if (!apiKey) throw new Error('API Key (LOVABLE or OPENAI) not configured')
 
                 const prompt = `
-      Você é o "MAESTRO", o mentor estratégico mais caro do mercado para nutricionistas. 
-      Sua especialidade é criar o "Brand Hub & Business Lab" para profissionais que querem sair do amadorismo e aplicar o "Funil Infinito".
+      Você é o "MAESTRO", o mentor estratégico de elite para nutricionistas que desejam vender High-Ticket.
+      Sua missão é injetar a psicologia de alta conversão na geração desta estratégia para: "${nicheInput}".
 
-      CONTEXTO DO USUÁRIO: "${nicheInput}"
+      DIRETRIZES DE OURO DO MAESTRO V2:
+      1. DIFERENCIE 3 TIPOS DE CLIENTES:
+         - Inconformados: Querem o menor preço, focam no custo, são difíceis de satisfazer.
+         - Frustrados: Já tentaram de tudo, buscam ticket médio, estão cansados de promessas vazias.
+         - Desenvolvidos: Querem velocidade e exclusividade, buscam resultados rápidos e aceitam pagar High-Ticket pela solução definitiva.
+      
+      2. MECANISMO ÚNICO E PROMESSA:
+         - Foque em criar um 'Mecanismo Único' (Sua Metodologia com nome magnético).
+         - Crie uma 'Promessa de 90 dias' clara e visceral.
 
-      SUA MISSÃO: Gerar uma estratégia de elite EXATAMENTE neste nível de profundidade e estrutura:
+      3. LINGUAGEM ELITE: 
+         - Use termos como "metabolismo blindado", "inflamação silenciosa", "dominância hormonal", "clareza cognitiva".
 
-      DIRETRIZES DE OURO:
-      1. NUNCA use termos genéricos como "ter mais saúde" ou "comer melhor". Use "intestino previsível", "redução de inchaço inflamatório", "clareza mental", "biologia sob controle".
-      2. FOCO CLÍNICO + ROTINA: Misture sintomas clínicos (ex: resistência à insulina, ferritina, acne tardia) com dores de rotina (ex: empreendedora sem tempo, mãe cansada).
-      3. OBJEÇÕES REAIS: Não foque apenas em "dinheiro". Foque em "medo de falhar de novo", "medo de dieta engessada", "medo de nutrição não resolver caso médico complexo".
+      Gere um JSON com esta estrutura EXATA:
+      {
+        "niche": "O nicho refinado",
+        "subNiche": "O ângulo clínico específico",
+        "persona": "Descrição detalhada da mulher real e seu conflito de rotina",
+        "personaProfile": {
+          "name": "Nome da Persona",
+          "age": "Faixa etária",
+          "soulPain": "A dor aguda que a impede de dormir",
+          "routineConflict": "O conflito real do dia a dia (ex: trabalho vs marmita)"
+        },
+        "mainPain": "A dor aguda resumida",
+        "mainDesire": "O resultado aspiracional final menos o sacrifício",
+        "uniqueMechanism": "Nome e breve explicação da sua metodologia proprietária",
+        "mainPromise90D": "A grande promessa de 90 dias",
+        "promises": ["Opção 1", "Opção 2", "Opção 3"],
+        "commonEnemy": "O culpado pelo fracasso da persona (ex: 'A Indústria do Glúten Oculto')",
+        "objections": ["Objeção 1", "Objeção 2", "Objeção 3"],
+        "eliteObjections": ["Objeção de Elite 1", "Objeção de Elite 2", "Objeção de Elite 3"],
+        "brandVoice": "O Mentor [Adjetivo] + [Adjetivo]",
+        "bigIdea": "A Grande Ideia por trás da sua oferta",
+        "maestroVerdict": "Conselho direto, tático e motivador do mentor sobre este nicho",
+        "clientSegments": {
+          "inconformados": "O que eles buscam e por que ignorá-los",
+          "frustrados": "Como convertê-los em ticket médio",
+          "desenvolvidos": "Como atraí-los para o seu High-Ticket"
+        },
+        "productLadder": {
+          "tripwire": "Produto de entrada (R$ 47-197)",
+          "coreOffer": "Sua oferta principal (R$ 497-1500)",
+          "highTicket": "Seu programa de elite (R$ 3000+)"
+        }
+      }
 
-      Gere um perfil estratégico em JSON com os campos:
-      - targetAudience: Nome magnético e específico para o segmento.
-      - subNiche: O ângulo clínico ou situacional específico.
-      - persona: Descrição detalhada da mulher real e seu conflito de rotina.
-      - mainPain: Dor aguda que a impede de dormir.
-      - mainDesire: O resultado aspiracional final menos o sacrifício.
-      - promises: Lista com exatamente 3 opções de Promessas Fortes (USPs) com prazo ou mecanismo (ex: "Em 90 dias...", "Através do Protocolo X...").
-      - commonEnemy: O que você combate (ex: Indústria de suplementos inúteis, dietas de gaveta).
-      - objections: Lista de 3 maiores travas mentais específicas.
-      - brandVoice: "O Mentor [Adjetivo] + [Adjetivo]".
-      - maestroVerdict: Conselho direto, tático e motivador do mentor sobre este nicho. "Tapa na cara" necessário.
-      - productLadder: { "tripwire": string, "coreOffer": string, "highTicket": string }.
-
-      Responda APENAS o JSON. Sem explicações antes ou depois. Sem markdown.`
+      RESPONDA APENAS O JSON. Sem explicações antes ou depois. Sem markdown.`;
 
                 const response = await fetch('https://api.openai.com/v1/chat/completions', {
                         method: 'POST',
@@ -70,7 +95,9 @@ serve(async (req) => {
                 if (!jsonMatch) throw new Error("Resposta da IA não contém JSON válido")
                 const parsed = JSON.parse(jsonMatch[0])
 
-                return new Response(JSON.stringify(parsed), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+                return new Response(JSON.stringify(parsed), {
+                        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+                })
 
         } catch (error: unknown) {
                 const message = error instanceof Error ? error.message : "Erro desconhecido"

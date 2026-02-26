@@ -76,6 +76,7 @@ export default function CarouselCreator() {
     removeSlide,
     resetCarousel,
     resetWeekContent,
+    refineText,
   } = useCarouselGenerator();
 
   const [useCustomColors, setUseCustomColors] = useState(false);
@@ -176,7 +177,9 @@ export default function CarouselCreator() {
     }
     // Assuming 'strategy' is defined elsewhere or will be defined.
     // For now, it's added as per instruction, but will cause a reference error if not defined.
-    await generateCarousel(topic, postType, contentPillar, customInstructions, strategy);
+    // strategy Context is removed if not defined, or passed if available. 
+    // Usually it should come from the profile or a local state.
+    await generateCarousel(topic, postType, contentPillar, customInstructions);
   };
 
   const handleGenerateWeek = async () => {
@@ -513,6 +516,7 @@ export default function CarouselCreator() {
                               index={currentSlideIndex}
                               onUpdate={updateSlide}
                               onSelectBackground={() => handleSelectPhoto(currentSlideIndex)}
+                              onRefine={refineText}
                             />
 
                             {/* Carousel Indicator Bolinhas */}

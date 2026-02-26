@@ -447,6 +447,52 @@ export function useCarouselGenerator() {
     setWeekContent([]);
   }, []);
 
+  const refineText = useCallback(async (currentText: string, mode: 'shorter' | 'punchy' | 'professional', slideIndex: number, field: 'headline' | 'subtexto' | 'destaque') => {
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-carousel-text', {
+        body: {
+          mode,
+          currentText,
+          topic: carousel?.titulo || "Carousel Content",
+          strategyContext: {
+            persona: profile?.nicho,
+            brandVoice: profile?.tom_voz
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data) {
+        let refined = "";
+        if (typeof data === 'string') {
+          refined = data;
+        } else if (data.refinedText) {
+          refined = data.refinedText;
+        }
+
+        if (refined) {
+          refined = refined.replace(/^["']|["']$/g, '');
+          updateSlide(slideIndex, { [field]: refined });
+          return refined;
+        }
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Refine text error:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao refinar texto",
+        description: error instanceof Error ? error.message : "Tente novamente",
+      });
+      return null;
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [carousel, brand, updateSlide, toast, setIsGenerating]);
+
   return {
     carousel,
     weekContent,
@@ -474,5 +520,6 @@ export function useCarouselGenerator() {
     resetWeekContent,
     syncBrandFromProfile: syncBrandFromContext,
     setCarousel,
+    refineText,
   };
 }

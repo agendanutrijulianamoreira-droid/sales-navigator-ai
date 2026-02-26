@@ -43,18 +43,24 @@ export default function Strategy() {
   };
 
   const handleAutoFill = (data: StrategyProfile) => {
+    const personaText = data.persona || (data.personaProfile ? `${data.personaProfile.name} (${data.personaProfile.age})\nConflito: ${data.personaProfile.routineConflict}` : "");
+    const mainPainText = data.mainPain || (data.personaProfile?.soulPain ?? "");
+    const mainDesireText = data.mainDesire || data.mainPromise90D || (data.promises?.[0] ?? "");
+    const objectionsText = (data.objections || data.eliteObjections || []).map(o => `• ${o}`).join('\n');
+    const promessaText = data.mainPromise90D || data.promises?.[2] || data.promises?.[0] || "";
+
     updateProfile({
       nicho: data.niche,
       sub_nicho: data.subNiche,
-      persona_ideal: data.persona,
-      dor_principal: data.mainPain,
-      desejo_principal: data.mainDesire,
-      objecoes: data.objections.map(o => `• ${o}`).join('\n'),
+      persona_ideal: personaText,
+      dor_principal: mainPainText,
+      desejo_principal: mainDesireText,
+      objecoes: objectionsText,
       tom_voz: data.brandVoice ? data.brandVoice.toLowerCase() : profile?.tom_voz,
-      inimigo_comum: data.commonEnemy,
-      promessa_principal: data.promises[2] || data.promises[0], // 90-day promise preferred
-      mecanismo_unico: "Sua Metodologia de Elite",
-      problema_90_dias: data.promises.map(p => `• ${p}`).join('\n')
+      inimigo_comum: data.commonEnemy || '',
+      promessa_principal: promessaText,
+      mecanismo_unico: data.uniqueMechanism || "Sua Metodologia de Elite",
+      problema_90_dias: data.mainPromise90D ? `Promessa 90D: ${data.mainPromise90D}` : (data.promises?.map(p => `• ${p}`).join('\n') ?? "")
     });
 
     if (data.maestroVerdict) {
@@ -63,7 +69,10 @@ export default function Strategy() {
 
     if (data.promises && data.promises.length > 0) {
       setGeneratedPromises(data.promises);
-      setSelectedPromise(data.promises[2] || data.promises[0]);
+      setSelectedPromise(promessaText || data.promises[0]);
+    } else if (data.mainPromise90D) {
+      setGeneratedPromises([data.mainPromise90D]);
+      setSelectedPromise(data.mainPromise90D);
     }
   };
 
