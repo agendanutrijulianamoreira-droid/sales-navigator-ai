@@ -20,7 +20,7 @@ export default function Products() {
   const { saveGeneration } = useGenerations();
   const [activeTab, setActiveTab] = useState("ladder");
   const [copied, setCopied] = useState(false);
-  
+
   // New product form
   const [newProduct, setNewProduct] = useState({
     nome: "",
@@ -96,7 +96,7 @@ export default function Products() {
         favorito: false,
         tags: [],
       });
-      toast.success("Salvo na biblioteca!");
+      toast.success("Salvo com sucesso!");
     }
   };
 

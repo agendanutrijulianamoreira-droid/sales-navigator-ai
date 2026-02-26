@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { UnifiedComposer } from "@/components/UnifiedComposer";
-import { 
-  Sparkles, Target, Calendar, ShoppingBag, 
-  BarChart3, BookOpen, Zap, Palette, Camera, ArrowRight
+import {
+  Sparkles, Target, Calendar, ShoppingBag,
+  BarChart3, LogOut, User, Zap, Palette,
+  Camera, ArrowRight
 } from "lucide-react";
 
 const MODULES = [
@@ -16,7 +17,6 @@ const MODULES = [
   { title: "Estratégia", description: "Posicionamento", icon: Target, href: "/strategy", gradient: "from-blue-500/10 to-indigo-500/10", iconColor: "text-blue-500" },
   { title: "Produtos", description: "Escada de ofertas", icon: ShoppingBag, href: "/products", gradient: "from-purple-500/10 to-pink-500/10", iconColor: "text-purple-500" },
   { title: "Resultados", description: "GPS Financeiro", icon: BarChart3, href: "/results", gradient: "from-emerald-500/10 to-green-500/10", iconColor: "text-emerald-500" },
-  { title: "Biblioteca", description: "Seus conteúdos", icon: BookOpen, href: "/library", gradient: "from-pink-500/10 to-rose-500/10", iconColor: "text-pink-500" },
   { title: "Estúdio Fotos", description: "Fotos Profissionais", icon: Camera, href: "/photo-studio", gradient: "from-orange-500/10 to-amber-500/10", iconColor: "text-orange-500" },
 ];
 

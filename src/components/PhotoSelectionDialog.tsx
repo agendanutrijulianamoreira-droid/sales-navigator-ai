@@ -40,7 +40,7 @@ export function PhotoSelectionDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
                 <DialogHeader>
-                    <DialogTitle>Sua Biblioteca de Fotos</DialogTitle>
+                    <DialogTitle>Suas Fotos</DialogTitle>
                     <DialogDescription>
                         Escolha uma foto profissional ou base para usar no fundo do seu post.
                     </DialogDescription>

@@ -1,8 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { 
-  Sparkles, Target, Calendar, ShoppingBag, MessageSquare, 
+import {
+  Sparkles, Target, Calendar, ShoppingBag, MessageSquare,
   BarChart3, BookOpen, LogOut, User, Zap, Home, ChevronLeft,
   Camera
 } from "lucide-react";
@@ -17,7 +17,6 @@ const NAV_ITEMS = [
   { title: "Produtos", icon: ShoppingBag, href: "/products" },
   { title: "Resultados", icon: BarChart3, href: "/results" },
   { title: "Mentor IA", icon: MessageSquare, href: "/mentor" },
-  { title: "Biblioteca", icon: BookOpen, href: "/library" },
 ];
 
 interface AppLayoutProps {

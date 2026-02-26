@@ -21,7 +21,6 @@ const NAV_ITEMS = [
     { title: "Produtos", icon: ShoppingBag, href: "/products" },
     { title: "Resultados", icon: BarChart3, href: "/results" },
     { title: "Mentor IA", icon: MessageSquare, href: "/mentor" },
-    { title: "Biblioteca", icon: BookOpen, href: "/library" },
 ];
 
 export default function DashboardLayout({ children }: { children?: React.ReactNode }) {

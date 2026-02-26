@@ -20,7 +20,7 @@ const POST_TYPES = [
 ];
 
 const CONTENT_PILLARS = [
-  "Educativo", "Autoridade", "Bastidores", "Prova Social", 
+  "Educativo", "Autoridade", "Bastidores", "Prova Social",
   "Entretenimento", "Oferta", "Conexão"
 ];
 
@@ -37,7 +37,7 @@ export default function CalendarPage() {
       toast.error("Digite o tema do post");
       return;
     }
-    
+
     await generateContent("social_media_manager", postType, {
       tipo: postType,
       pilar: pillar,
@@ -66,7 +66,7 @@ export default function CalendarPage() {
         favorito: false,
         tags: [],
       });
-      toast.success("Salvo na biblioteca!");
+      toast.success("Salvo com sucesso!");
     }
   };
 
@@ -92,11 +92,10 @@ export default function CalendarPage() {
                     <div
                       key={type.value}
                       onClick={() => setPostType(type.value)}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                        postType === type.value 
-                          ? "border-primary bg-primary/5" 
+                      className={`p-3 rounded-lg border cursor-pointer transition-all ${postType === type.value
+                          ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/50"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2">
                         <type.icon className="h-4 w-4" />

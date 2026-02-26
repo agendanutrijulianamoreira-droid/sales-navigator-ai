@@ -31,7 +31,6 @@ const Products = lazy(() => import("./pages/Products"));
 const Conversion = lazy(() => import("./pages/Conversion"));
 const Results = lazy(() => import("./pages/Results"));
 const Mentor = lazy(() => import("./pages/Mentor"));
-const Library = lazy(() => import("./pages/Library"));
 const Settings = lazy(() => import("./pages/Settings"));
 const PhotoStudio = lazy(() => import("./pages/PhotoStudio"));
 
@@ -81,7 +80,6 @@ const App = () => (
                 <Route path="/conversion" element={<Conversion />} />
                 <Route path="/results" element={<Results />} />
                 <Route path="/mentor" element={<Mentor />} />
-                <Route path="/library" element={<Library />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/photo-studio" element={<PhotoStudio />} />
               </Route>

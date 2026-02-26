@@ -35,7 +35,7 @@ export default function Conversion() {
 
   const handleGenerate = async () => {
     const product = products?.find(p => p.id === selectedProduct);
-    
+
     await generateContent("vip_closer", messageType, {
       tipo: messageType,
       contexto: context,
@@ -64,7 +64,7 @@ export default function Conversion() {
         favorito: false,
         tags: [],
       });
-      toast.success("Salvo na biblioteca!");
+      toast.success("Salvo com sucesso!");
     }
   };
 
@@ -96,11 +96,10 @@ export default function Conversion() {
                         <div
                           key={type.value}
                           onClick={() => setMessageType(type.value)}
-                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                            messageType === type.value 
-                              ? "border-primary bg-primary/5" 
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${messageType === type.value
+                              ? "border-primary bg-primary/5"
                               : "border-border hover:border-primary/50"
-                          }`}
+                            }`}
                         >
                           <span className="font-medium text-sm">{type.label}</span>
                           <p className="text-xs text-muted-foreground">{type.description}</p>
@@ -160,7 +159,7 @@ export default function Conversion() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    A regra de ouro: <strong>3 mensagens de valor</strong> para cada <strong>1 de oferta</strong>. 
+                    A regra de ouro: <strong>3 mensagens de valor</strong> para cada <strong>1 de oferta</strong>.
                     Nutrir primeiro, colher depois. Sua lista VIP é um jardim, não uma máquina de vendas.
                   </p>
                 </CardContent>

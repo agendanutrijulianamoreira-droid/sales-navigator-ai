@@ -266,7 +266,7 @@ export default function CarouselCreator() {
       setSavedGenerationId(result.data.id);
     }
 
-    toast({ title: "Salvo na biblioteca!" });
+    toast({ title: "Salvo com sucesso!" });
   };
 
   const handleSchedule = async (data: { date: string; tipo: string; titulo: string }) => {
