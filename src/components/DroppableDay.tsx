@@ -1,7 +1,5 @@
 import { useDrop } from "react-dnd";
-import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { CalendarItem } from "@/hooks/useCalendarItems";
 import { ReactNode } from "react";
 
 interface DroppableDayProps {
@@ -9,10 +7,9 @@ interface DroppableDayProps {
   children?: ReactNode;
   onDrop?: (postId: string, newDate: string) => void;
   onAddClick?: (date: Date) => void;
-  isEmpty?: boolean;
 }
 
-export function DroppableDay({ date, children, onDrop, onAddClick, isEmpty }: DroppableDayProps) {
+export function DroppableDay({ date, children, onDrop, onAddClick }: DroppableDayProps) {
   const [{ isOver }, drop] = useDrop(
     () => ({
       accept: "post",
@@ -31,21 +28,27 @@ export function DroppableDay({ date, children, onDrop, onAddClick, isEmpty }: Dr
   return (
     <div
       ref={drop}
-      className={`p-2 rounded-lg border-2 transition-all ${
-        isOver ? "border-primary bg-primary/5 border-dashed" : "border-transparent"
-      }`}
+      className={`h-full min-h-[120px] relative transition-all group ${isOver ? "bg-primary/5 ring-2 ring-primary inset-0 z-10" : ""
+        }`}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onAddClick?.(date);
+        }
+      }}
     >
-      {!isEmpty && children}
-      {isEmpty && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full h-20 border-2 border-dashed"
-          onClick={() => onAddClick?.(date)}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
-      )}
+      <div className="p-1 space-y-1">
+        {children}
+      </div>
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onAddClick?.(date);
+        }}
+        className="absolute bottom-1 right-1 p-1 rounded-full bg-primary text-white opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110"
+      >
+        <Plus className="h-3 w-3" />
+      </button>
     </div>
   );
 }

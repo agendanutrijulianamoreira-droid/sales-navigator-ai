@@ -14,15 +14,24 @@ import { ContentStatistics } from "@/components/ContentStatistics";
 import { DateSuggestions } from "@/components/DateSuggestions";
 import { DraggablePostCard } from "@/components/DraggablePostCard";
 import { DroppableDay } from "@/components/DroppableDay";
+import { TrendsSidebar } from "@/components/TrendsSidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Link } from "react-router-dom";
 import {
   Calendar, Grid3X3, Plus, ChevronLeft, ChevronRight,
   FileText, ArrowLeft, Trash2, Loader2, Sparkles,
-  Copy, Download, Search
+  Copy, Download, Search, MoreHorizontal, Zap
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -37,18 +46,18 @@ const CONTENT_TYPES = {
 const DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const MONTHS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
-export default function ContentPlanner() {
+function ContentPlanner() {
   const { profile } = useProfile();
   const { items, isLoading, addItem, deleteItem, updateItem, getItemsForDate } = useCalendarItems();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"month" | "week">("month");
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [editingPost, setEditingPost] = useState<CalendarItem | null>(null);
+  const [selectedPost, setSelectedPost] = useState<CalendarItem | undefined>();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string | null>(null);
   const [showStatistics, setShowStatistics] = useState(false);
+  const [showTrends, setShowTrends] = useState(false);
 
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
@@ -82,13 +91,23 @@ export default function ContentPlanner() {
   };
 
   const handleEditPost = (post: CalendarItem) => {
-    setEditingPost(post);
-    setShowEditDialog(true);
+    setSelectedPost(post);
   };
 
   const handleUpdatePost = async (id: string, data: { date: string; tipo: string; titulo: string; notas?: string }) => {
     await updateItem(id, { data: data.date, tipo: data.tipo, titulo: data.titulo, notas: data.notas || null });
     toast.success("Post atualizado!");
+  };
+
+  const handleApplyIdea = (idea: any) => {
+    setSelectedDate(new Date()); // O usuário pode arrastar depois
+    addItem({
+      data: new Date().toISOString().split("T")[0],
+      tipo: idea.tipo,
+      titulo: idea.titulo,
+      notas: `Gancho sugerido: ${idea.hook}\n\nEstratégia: ${idea.descricao}`
+    });
+    toast.success("Ideia viral adicionada ao calendário! Arraste para o dia desejado.");
   };
 
   const handleDuplicatePost = async (post: CalendarItem) => {
@@ -165,6 +184,52 @@ export default function ContentPlanner() {
     }
   };
 
+  const handleGenerateManual = async () => {
+    const confirm = window.confirm("Isso irá criar uma sugestão base de posts para as próximas 4 semanas. Deseja continuar?");
+    if (!confirm) return;
+
+    setIsGeneratingMonth(true);
+    setMonthProgress("Criando planejamento manual...");
+
+    const suggestedItems = [];
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() + 1);
+
+    const template = [
+      { day: 1, tipo: "carrossel", titulo: "Dica Educativa", notas: "Resolva uma dor comum do seu público." },
+      { day: 3, tipo: "reels", titulo: "Post de Autoridade", notas: "Quebre um mito ou mostre um resultado." },
+      { day: 5, tipo: "post_unico", titulo: "Oferta Direta", notas: "Convide seu seguidor para uma ação." },
+      { day: 0, tipo: "stories", titulo: "Bastidores/Vlog", notas: "Humanize sua marca e mostre o dia a dia." }
+    ];
+
+    for (let week = 0; week < 4; week++) {
+      template.forEach(t => {
+        const date = new Date(startDate);
+        const currentDay = startDate.getDay();
+        const dayOffset = (t.day - currentDay + 7) % 7 + (week * 7);
+        date.setDate(startDate.getDate() + dayOffset);
+
+        suggestedItems.push({
+          data: date.toISOString().split('T')[0],
+          tipo: t.tipo,
+          titulo: t.titulo,
+          notas: t.notas
+        });
+      });
+    }
+
+    try {
+      await addBatchItems(suggestedItems);
+      toast.success("Plano manual criado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar plano manual:", error);
+      toast.error("Erro ao criar planejamento manual.");
+    } finally {
+      setIsGeneratingMonth(false);
+      setMonthProgress("");
+    }
+  };
+
   const handleDropPost = async (postId: string, newDate: string) => {
     const post = items.find(item => item.id === postId);
     if (post && post.data !== newDate) {
@@ -192,204 +257,246 @@ export default function ContentPlanner() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        <header className="border-b bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-          <div className="container flex items-center justify-between h-14 px-4">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" asChild>
-                <Link to="/"><ArrowLeft className="h-4 w-4" /></Link>
+      <div className="min-h-screen bg-white flex flex-col">
+        {/* Canva-style Minimalist Header */}
+        <header className="h-16 flex items-center justify-between px-6 border-b border-gray-100 sticky top-0 bg-white z-50">
+          <div className="flex items-center gap-6">
+            <h1 className="text-xl font-bold text-gray-900 leading-none">Planejador de Conteúdo</h1>
+
+            <div className="flex items-center bg-gray-50 rounded-lg p-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs font-semibold"
+                onClick={() => setCurrentDate(new Date())}
+              >
+                Hoje
               </Button>
-              <div>
-                <h1 className="font-semibold">Planejador de Conteúdo</h1>
-                <p className="text-xs text-muted-foreground">Organize seus posts</p>
+              <div className="flex items-center gap-1 border-l border-gray-200 ml-1 pl-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-gray-500"
+                  onClick={() => setCurrentDate(new Date(currentYear, currentMonth - 1, 1))}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-gray-500"
+                  onClick={() => setCurrentDate(new Date(currentYear, currentMonth + 1, 1))}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
             </div>
-            <div className="flex gap-2">
-              {isPremium && (
-                <Button
-                  variant="outline"
-                  className="bg-primary/10 border-primary/20 hover:bg-primary/20 font-bold gap-2"
-                  onClick={handleGenerateMonth}
-                  disabled={isGeneratingMonth}
-                >
-                  {isGeneratingMonth ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {monthProgress || "Gerando..."}
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4" />
-                      Gerar Mês com IA
-                    </>
-                  )}
-                </Button>
-              )}
-              <Button variant="outline" onClick={() => setShowScheduleDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Agendar
+
+            <span className="text-lg font-semibold text-gray-700 capitalize">
+              {MONTHS[currentMonth]} de {currentYear}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex bg-gray-50 rounded-lg p-1">
+              <Button
+                variant={view === "month" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-8 text-xs font-semibold px-3"
+                onClick={() => setView("month")}
+              >
+                Mês
               </Button>
-              <Button asChild>
-                <Link to="/carousel-creator">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Carrossel
-                </Link>
+              <Button
+                variant={view === "week" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-8 text-xs font-semibold px-3"
+                onClick={() => setView("week")}
+              >
+                Semana
+              </Button>
+            </div>
+
+            <Select value={filterType || "todos"} onValueChange={(v) => setFilterType(v === "todos" ? null : v)}>
+              <SelectTrigger className="w-[180px] h-9 bg-gray-50 border-none text-sm font-medium">
+                <SelectValue placeholder="Todos os eventos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os eventos</SelectItem>
+                {Object.entries(CONTENT_TYPES).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>{config.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              className="bg-primary hover:bg-primary/90 text-white font-bold h-9"
+              onClick={() => { setSelectedDate(new Date()); setShowScheduleDialog(true); }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar
+            </Button>
+
+            <div className="flex items-center gap-1 ml-2">
+              <Button
+                variant={showTrends ? "secondary" : "ghost"}
+                size="icon"
+                className={`h-9 w-9 ${showTrends ? "text-orange-600 bg-orange-50" : "text-gray-400"}`}
+                onClick={() => setShowTrends(!showTrends)}
+              >
+                <Zap className={`h-4 w-4 ${showTrends ? "fill-orange-600" : ""}`} />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-400">
+                <Search className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-400">
+                <MoreHorizontal className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </header>
 
-        <main className="container px-4 py-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              <Button variant={filterType === null ? "default" : "outline"} size="sm" onClick={() => setFilterType(null)}>Todos</Button>
-              {Object.entries(CONTENT_TYPES).map(([key, config]) => (
-                <Button key={key} variant={filterType === key ? "default" : "outline"} size="sm" onClick={() => setFilterType(key)}>
-                  {config.label}
-                </Button>
+        <div className="flex-1 flex overflow-hidden">
+          <main className="flex-1 overflow-hidden flex flex-col">
+            {/* Calendar Grid Header (Days Name) */}
+            <div className="grid grid-cols-7 border-b border-gray-100 bg-white">
+              {DAYS.map((day) => (
+                <div key={day} className="text-left px-4 py-2 text-xs font-semibold text-gray-500 border-r border-gray-50 last:border-r-0">
+                  {day}.
+                </div>
               ))}
             </div>
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" size="sm" onClick={() => setShowStatistics(!showStatistics)}>📊 Gráficos</Button>
-              <Button variant="outline" size="sm" onClick={handleExportCSV}><Download className="h-4 w-4 mr-2" />CSV</Button>
-            </div>
-          </div>
 
-          <div className="mb-6">
-            <SmartAlerts items={filteredItems.length > 0 ? filteredItems : items} currentDate={currentDate} />
-          </div>
+            <ScrollArea className="flex-1">
+              <div className="grid grid-cols-7 h-full">
+                {/* Empty spaces at start */}
+                {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                  <div key={`empty-${i}`} className="border-b border-r border-gray-50 min-h-[150px] bg-gray-50/20" />
+                ))}
 
-          {view === "week" && (
-            <div className="mb-6">
-              <DateSuggestions
-                items={items}
-                weekDates={weekDates}
-                onSelectDate={(date) => { setSelectedDate(date); setShowScheduleDialog(true); }}
-              />
-            </div>
-          )}
+                {/* Actual Days */}
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const dayNumber = i + 1;
+                  const d = new Date(currentYear, currentMonth, dayNumber);
+                  const posts = getItemsForDate(d);
+                  const isToday = dayNumber === new Date().getDate() &&
+                    currentMonth === new Date().getMonth() &&
+                    currentYear === new Date().getFullYear();
 
-          {showStatistics && (
-            <div className="mb-6">
-              <ContentStatistics items={filteredItems.length > 0 ? filteredItems : items} />
-            </div>
-          )}
-
-          <div className="flex items-center justify-between mb-6">
-            <Tabs value={view} onValueChange={(v) => setView(v as "month" | "week")}>
-              <TabsList>
-                <TabsTrigger value="month"><Calendar className="h-4 w-4 mr-2" />Mês</TabsTrigger>
-                <TabsTrigger value="week"><Grid3X3 className="h-4 w-4 mr-2" />Semana</TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" onClick={() => setCurrentDate(new Date(currentYear, currentMonth - 1, 1))}><ChevronLeft className="h-4 w-4" /></Button>
-              <span className="font-medium min-w-[140px] text-center">{view === "month" ? `${MONTHS[currentMonth]} ${currentYear}` : `${weekDates[0].getDate()}/${weekDates[0].getMonth() + 1} - ${weekDates[6].getDate()}/${weekDates[6].getMonth() + 1}`}</span>
-              <Button variant="outline" size="icon" onClick={() => setCurrentDate(new Date(currentYear, currentMonth + 1, 1))}><ChevronRight className="h-4 w-4" /></Button>
-            </div>
-          </div>
-
-          {view === "month" && (
-            <Card>
-              <CardContent className="p-4">
-                <div className="grid grid-cols-7 gap-1 mb-2">
-                  {DAYS.map((day) => <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">{day}</div>)}
-                </div>
-                <div className="grid grid-cols-7 gap-1">
-                  {Array.from({ length: firstDayOfMonth }).map((_, i) => <div key={`empty-${i}`} />)}
-                  {Array.from({ length: daysInMonth }).map((_, i) => {
-                    const dayNumber = i + 1;
-                    const date = new Date(currentYear, currentMonth, dayNumber);
-                    const posts = getItemsForDate(date);
-                    const isToday = dayNumber === new Date().getDate() && currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear();
-                    return (
-                      <div key={dayNumber} onClick={() => { setSelectedDate(date); setShowScheduleDialog(true); }} className={`aspect-square p-1 rounded-lg border transition-all cursor-pointer ${isToday ? "bg-primary/10 border-primary" : "border-transparent hover:bg-muted/50"}`}>
-                        <div className="text-xs font-medium mb-1">{dayNumber}</div>
-                        <div className="space-y-0.5">
-                          {posts.slice(0, 2).map((post, pi) => {
-                            const typeConfig = CONTENT_TYPES[post.tipo as keyof typeof CONTENT_TYPES];
-                            return <div key={pi} className={`h-1.5 rounded-full ${typeConfig?.color || "bg-gray-400"}`} title={post.titulo || post.tipo} />;
-                          })}
-                          {posts.length > 2 && <div className="text-[10px] text-muted-foreground">+{posts.length - 2}</div>}
-                        </div>
+                  return (
+                    <div
+                      key={dayNumber}
+                      className={`border-b border-r border-gray-50 min-h-[150px] flex flex-col group relative ${isToday ? "bg-primary/5" : ""
+                        }`}
+                    >
+                      <div className="p-2 flex items-center justify-between">
+                        <span className={`text-sm font-semibold flex items-center justify-center w-7 h-7 rounded-full transition-colors ${isToday ? "bg-primary text-white" : "text-gray-700 hover:bg-gray-100"
+                          }`}>
+                          {dayNumber}
+                        </span>
+                        {dayNumber === 1 && (
+                          <span className="text-xs font-medium text-gray-400 uppercase">
+                            {MONTHS[currentMonth]}
+                          </span>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
-          {view === "week" && (
-            <div className="grid grid-cols-7 gap-4">
-              {weekDates.map((date, i) => {
-                const posts = getItemsForDate(date);
-                const isToday = date.getDate() === new Date().getDate() && date.getMonth() === new Date().getMonth() && date.getFullYear() === new Date().getFullYear();
-                return (
-                  <Card key={i} className={isToday ? "border-primary" : ""}>
-                    <CardHeader className="pb-2">
-                      <CardTitle className={`text-sm ${isToday ? "text-primary" : ""}`}>{DAYS[i]}</CardTitle>
-                      <CardDescription>{date.getDate()}/{date.getMonth() + 1}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <DroppableDay date={date} isEmpty={posts.length === 0} onDrop={handleDropPost} onAddClick={() => { setSelectedDate(date); setShowScheduleDialog(true); }}>
-                        <div className="space-y-2">
+                      <DroppableDay
+                        date={d}
+                        onDrop={handleDropPost}
+                        onAddClick={() => { setSelectedDate(d); setShowScheduleDialog(true); }}
+                      >
+                        <div className="px-1 space-y-1">
                           {posts.map((post) => (
-                            <DraggablePostCard key={post.id} post={post} onEdit={handleEditPost} onDuplicate={handleDuplicatePost} onDelete={deleteItem} />
+                            <DraggablePostCard
+                              key={post.id}
+                              post={post}
+                              onEdit={setSelectedPost}
+                              onDelete={deleteItem}
+                            />
                           ))}
                         </div>
                       </DroppableDay>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
-            {Object.entries(CONTENT_TYPES).map(([key, config]) => {
-              const IconComponent = config.icon;
-              return (
-                <Card key={key}>
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg ${config.color} flex items-center justify-center`}><IconComponent className="h-4 w-4 text-white" /></div>
-                    <div><p className="text-xs text-muted-foreground">{config.label}</p><p className="font-medium">{typeCounts[key] || 0}</p></div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          <Card className="mt-6">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Tipos de Conteúdo</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-4">
-                {Object.entries(CONTENT_TYPES).map(([key, config]) => (
-                  <div key={key} className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${config.color}`} />
-                    <span className="text-sm">{config.label}</span>
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
-            </CardContent>
-          </Card>
-        </main>
 
-        <ScheduleDialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog} onSchedule={handleSchedule} defaultTitle="" defaultTipo="carrossel" defaultDate={selectedDate || undefined} />
-        <EditPostDialog open={showEditDialog} onOpenChange={setShowEditDialog} onUpdate={handleUpdatePost} post={editingPost || undefined} />
+              {/* Extra generation buttons floating or at bottom */}
+              <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-[60]">
+                <Button
+                  variant="outline"
+                  className="rounded-full shadow-lg bg-white border-primary/20 hover:bg-primary/5 text-primary font-bold pr-6 pl-4 py-6"
+                  onClick={handleGenerateManual}
+                  disabled={isGeneratingMonth}
+                >
+                  <Plus className="h-5 w-5 mr-3" />
+                  Sugestão Manual
+                </Button>
+                {isPremium && (
+                  <Button
+                    className="rounded-full shadow-lg bg-primary hover:bg-primary/90 text-white font-bold pr-6 pl-4 py-6"
+                    onClick={handleGenerateMonth}
+                    disabled={isGeneratingMonth}
+                  >
+                    {isGeneratingMonth ? (
+                      <Loader2 className="h-5 w-5 mr-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-5 w-5 mr-3" />
+                    )}
+                    {isGeneratingMonth ? (monthProgress || "Gerando...") : "Gerar Mês com IA"}
+                  </Button>
+                )}
+              </div>
+            </ScrollArea>
+          </main>
+
+          {showTrends && (
+            <aside className="animate-in slide-in-from-right duration-300">
+              <TrendsSidebar onApplyIdea={handleApplyIdea} />
+            </aside>
+          )}
+        </div>
+
+        <EditPostDialog
+          open={!!selectedPost}
+          onOpenChange={(open) => !open && setSelectedPost(undefined)}
+          post={selectedPost}
+          onUpdate={async (id, data) => {
+            await updateItem(id, {
+              titulo: data.titulo,
+              tipo: data.tipo,
+              notas: data.notas,
+              data: data.date
+            });
+            setSelectedPost(undefined);
+          }}
+          onDuplicate={async (post) => {
+            await addItem({
+              data: post.data,
+              tipo: post.tipo,
+              titulo: `${post.titulo} (Cópia)`,
+              notas: post.notas
+            });
+          }}
+        />
+
+        <ScheduleDialog
+          open={showScheduleDialog}
+          onOpenChange={setShowScheduleDialog}
+          defaultDate={selectedDate || undefined}
+          onSchedule={async (data) => {
+            await addItem({
+              data: data.date,
+              tipo: data.tipo,
+              titulo: data.titulo
+            });
+            setShowScheduleDialog(false);
+          }}
+        />
       </div>
     </DndProvider>
   );
-}
+};
+
+export default ContentPlanner;

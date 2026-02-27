@@ -1,14 +1,16 @@
 import { useDrag } from "react-dnd";
 import { Button } from "@/components/ui/button";
-import { Trash2, Copy } from "lucide-react";
+import { Trash2, Copy, Pencil, Instagram } from "lucide-react";
 import { CalendarItem } from "@/hooks/useCalendarItems";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const CONTENT_TYPES = {
-  carrossel: { label: "Carrossel", color: "bg-blue-500" },
-  post_unico: { label: "Post Único", color: "bg-green-500" },
-  reels: { label: "Reels", color: "bg-purple-500" },
-  stories: { label: "Stories", color: "bg-orange-500" },
-  levantada: { label: "Levantada de Mão", color: "bg-pink-500" },
+  carrossel: { label: "Carrossel", color: "bg-[#7c3aed]" },
+  post_unico: { label: "Post Único", color: "bg-[#10b981]" },
+  reels: { label: "Reels", color: "bg-[#ec4899]" },
+  stories: { label: "Stories", color: "bg-[#f59e0b]" },
+  levantada: { label: "Levantada de Mão", color: "bg-[#ef4444]" },
 };
 
 interface DraggablePostCardProps {
@@ -19,6 +21,8 @@ interface DraggablePostCardProps {
 }
 
 export function DraggablePostCard({ post, onEdit, onDuplicate, onDelete }: DraggablePostCardProps) {
+  const [thumbnail, setThumbnail] = useState<string | null>(null);
+
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "post",
     item: { id: post.id, data: post.data },
@@ -27,60 +31,72 @@ export function DraggablePostCard({ post, onEdit, onDuplicate, onDelete }: Dragg
     }),
   }));
 
+  useEffect(() => {
+    const fetchThumbnail = async () => {
+      if (post.generation_id) {
+        const { data, error } = await supabase
+          .from("generations")
+          .select("output_content")
+          .eq("id", post.generation_id)
+          .single();
+
+        if (data && !error) {
+          try {
+            const content = JSON.parse(data.output_content);
+            if (content.slides && content.slides[0]?.imageUrl) {
+              setThumbnail(content.slides[0].imageUrl);
+            }
+          } catch (e) {
+            console.error("Erro ao processar thumbnail", e);
+          }
+        }
+      }
+    };
+    fetchThumbnail();
+  }, [post.generation_id]);
+
   const typeConfig = CONTENT_TYPES[post.tipo as keyof typeof CONTENT_TYPES];
 
   return (
     <div
       ref={drag}
-      className={`p-2 rounded-lg text-xs group relative hover:bg-muted transition-colors cursor-grab active:cursor-grabbing ${
-        isDragging ? "opacity-50 bg-muted" : "bg-muted/50"
-      }`}
+      className={`relative group rounded-md border bg-white shadow-sm overflow-hidden mb-1 transition-all hover:ring-2 hover:ring-primary/20 ${isDragging ? "opacity-30" : "opacity-100"
+        }`}
     >
-      <div className="flex items-center gap-1 mb-1">
-        <div className={`w-2 h-2 rounded-full ${typeConfig?.color || "bg-gray-400"}`} />
-        <span className="font-medium flex-1">{typeConfig?.label || post.tipo}</span>
+      {thumbnail ? (
+        <div className="aspect-square relative overflow-hidden bg-muted">
+          <img src={thumbnail} alt={post.titulo || ""} className="w-full h-full object-cover" />
+          <div className="absolute top-1 right-1">
+            <Instagram className="h-3 w-3 text-white drop-shadow-md" />
+          </div>
+        </div>
+      ) : (
+        <div className={`h-1 w-full ${typeConfig?.color || "bg-gray-400"}`} />
+      )}
+
+      <div className="p-1.5 pt-1">
+        <p className="text-[10px] font-semibold leading-tight line-clamp-2 text-foreground/90">
+          {post.titulo || "Sem título"}
+        </p>
       </div>
-      <p className="text-muted-foreground line-clamp-2 mb-2">{post.titulo}</p>
-      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        {onEdit && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(post);
-            }}
-          >
-            ✏️
-          </Button>
-        )}
-        {onDuplicate && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDuplicate(post);
-            }}
-          >
-            <Copy className="h-3 w-3" />
-          </Button>
-        )}
-        {onDelete && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(post.id);
-            }}
-          >
-            <Trash2 className="h-3 w-3 text-destructive" />
-          </Button>
-        )}
+
+      <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-1 transition-opacity backdrop-blur-[1px]">
+        <Button
+          variant="secondary"
+          size="icon"
+          className="h-6 w-6 rounded-full shadow-lg"
+          onClick={() => onEdit?.(post)}
+        >
+          <Pencil className="h-3 w-3" />
+        </Button>
+        <Button
+          variant="destructive"
+          size="icon"
+          className="h-6 w-6 rounded-full shadow-lg"
+          onClick={() => onDelete?.(post.id)}
+        >
+          <Trash2 className="h-3 w-3" />
+        </Button>
       </div>
     </div>
   );

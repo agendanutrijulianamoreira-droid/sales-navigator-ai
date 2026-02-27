@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarIcon, Loader2, Copy, AlertCircle } from "lucide-react";
+import { CalendarIcon, Loader2, Copy, AlertCircle, Palette } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CalendarItem } from "@/hooks/useCalendarItems";
 import { useGenerations } from "@/hooks/useGenerations";
@@ -232,17 +232,32 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
                 ))}
               </SelectContent>
             </Select>
-            {tipo === "carrossel" && post?.generation_id && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full mt-2"
-                onClick={handleEditVisuals}
-                disabled={isUpdating}
-              >
-                <AlertCircle className="h-4 w-4 mr-2 text-primary" />
-                Editar Design do Carrossel
-              </Button>
+            {tipo === "carrossel" && (
+              post?.generation_id ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-2"
+                  onClick={handleEditVisuals}
+                  disabled={isUpdating}
+                >
+                  <AlertCircle className="h-4 w-4 mr-2 text-primary" />
+                  Editar Design do Carrossel
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-2"
+                  onClick={() => {
+                    navigate("/carousel-creator", { state: { topic: titulo } });
+                  }}
+                  disabled={isUpdating}
+                >
+                  <Palette className="h-4 w-4 mr-2 text-primary" />
+                  Criar Design Manual
+                </Button>
+              )
             )}
           </div>
 
