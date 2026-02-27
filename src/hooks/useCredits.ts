@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useProfile } from "./useProfile";
+import { useUserRole } from "./useUserRole";
 import { toast } from "sonner";
 
 export function useCredits() {
@@ -10,7 +11,15 @@ export function useCredits() {
     const [loading, setLoading] = useState(true);
 
     const { profile } = useProfile();
-    const isAdmin = (profile as any)?.role === 'admin';
+    const { hasRole, isLoading: isRoleLoading } = useUserRole();
+
+    // Check both systems for maximum reliability during transition
+    const isAdmin = (profile as any)?.role === 'admin' ||
+        hasRole('admin') ||
+        user?.email === 'agendanutrijulianamoreira@gmail.com';
+
+    // Loading should wait for roles too
+    const isActuallyLoading = loading || isRoleLoading;
 
     const fetchCredits = useCallback(async () => {
         if (!user) return;
@@ -71,8 +80,8 @@ export function useCredits() {
     };
 
     return {
-        credits: isAdmin || user?.email === 'agendanutrijulianamoreira@gmail.com' ? 999999 : credits,
-        loading,
+        credits: isAdmin ? 999999 : credits,
+        loading: isActuallyLoading,
         consumeCredit,
         refreshCredits: fetchCredits,
         isAdmin
