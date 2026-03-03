@@ -8,6 +8,7 @@ import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Calculator, DollarSign, Clock, TrendingUp, AlertCircle, Save, Loader2, Lightbulb, Target, Sparkles, PieChart, Crown, Trash2, Package, Check } from 'lucide-react';
+import { toast } from 'sonner';
 import { useFinancialSettings } from '@/hooks/useFinancialSettings';
 import { useStrategyContext } from '@/hooks/useStrategyContext';
 import { useMaestroPricing, PricingAdvice } from '@/hooks/useMaestroPricing';
@@ -33,7 +34,7 @@ type ProductData = {
 };
 
 export function PricingCalculator() {
-    const { settings, loading: loadingSettings, updateSettings } = useFinancialSettings();
+    const { settings, loading: loadingSettings, updateSettings, autoSave } = useFinancialSettings();
     const { strategy } = useStrategyContext();
     const { advice } = useMaestroPricing();
     const { products, addProduct, updateProduct, deleteProduct } = useProducts();
@@ -136,6 +137,29 @@ export function PricingCalculator() {
         });
     };
 
+    // Auto-save when financial values change
+    const watchedFinancials = financialForm.watch();
+    useEffect(() => {
+        if (!settings || loadingSettings) return;
+        const vals = watchedFinancials;
+        const hasChanged = 
+            Number(vals.incomeGoal) !== settings.monthly_income_goal ||
+            Number(vals.fixedCosts) !== settings.fixed_costs ||
+            Number(vals.taxRate) !== settings.tax_rate ||
+            Number(vals.daysPerWeek) !== settings.work_days_week ||
+            Number(vals.hoursPerDay) !== settings.work_hours_day;
+        
+        if (hasChanged) {
+            autoSave({
+                monthly_income_goal: Number(vals.incomeGoal),
+                fixed_costs: Number(vals.fixedCosts),
+                tax_rate: Number(vals.taxRate),
+                work_days_week: Number(vals.daysPerWeek),
+                work_hours_day: Number(vals.hoursPerDay)
+            });
+        }
+    }, [watchedFinancials.incomeGoal, watchedFinancials.fixedCosts, watchedFinancials.taxRate, watchedFinancials.daysPerWeek, watchedFinancials.hoursPerDay]);
+
     const applyMaestroValues = (advice: PricingAdvice) => {
         productForm.setValue('desiredMargin', advice.suggestedMargin);
         const currentHours = productForm.getValues('hoursSpent');
@@ -157,11 +181,8 @@ export function PricingCalculator() {
                 nome: vals.name,
                 tipo_produto: vals.type as any,
                 ticket: Number(suggestedPrice.toFixed(2)),
-                descricao: '',
+                descricao: `Margem: ${vals.desiredMargin}% | Horas: ${vals.hoursSpent}h | Custo material: R$${vals.materialCost}`,
                 tipo_cliente: 'inconformado' as any,
-                hours_spent: Number(vals.hoursSpent),
-                material_cost: Number(vals.materialCost),
-                desired_margin: Number(vals.desiredMargin),
                 ativo: true,
                 ordem: 0
             } as any;
@@ -171,6 +192,9 @@ export function PricingCalculator() {
             } else {
                 await addProduct(productData);
             }
+            toast.success("Produto salvo com sucesso!");
+        } catch (err) {
+            toast.error("Erro ao salvar produto.");
         } finally {
             setIsSaving(false);
         }
