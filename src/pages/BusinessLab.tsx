@@ -13,7 +13,7 @@ import { useGenerations } from "@/hooks/useGenerations";
 import { Badge } from "@/components/ui/badge";
 import {
     Loader2, Sparkles, Package, FileText, Trophy,
-    Plus, Trash2, Copy, Check, BarChart3
+    Plus, Trash2, Copy, Check, BarChart3, Target, TrendingUp
 } from "lucide-react";
 import { toast } from "sonner";
 import { PricingCalculator } from "@/components/business/PricingCalculator";
@@ -133,305 +133,392 @@ export default function BusinessLab() {
     };
 
     return (
-        <AppLayout title="Business Lab" description="Produtos & Engenharia Financeira">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="ladder" className="gap-2">
-                        <Package className="h-4 w-4" />
-                        Escada de Produtos
-                    </TabsTrigger>
-                    <TabsTrigger value="finance" className="gap-2">
-                        <BarChart3 className="h-4 w-4" />
-                        Engenharia Reversa
-                    </TabsTrigger>
-                    <TabsTrigger value="factory" className="gap-2">
-                        <Trophy className="h-4 w-4" />
-                        Fábrica de Ofertas
-                    </TabsTrigger>
-                </TabsList>
+        <AppLayout title="Business Lab" description="Venda o Invisível. Preocupe-se com a Estratégia, não com a Planilha.">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(120,119,198,0.1),transparent)] pointer-events-none" />
 
-                {/* Product Ladder */}
-                <TabsContent value="ladder" className="space-y-6">
-                    {/* Revenue Goal Simulator */}
-                    <Card className="border-primary/20 bg-primary/5 neon-border overflow-hidden">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Sparkles className="h-5 w-5 text-primary" />
-                                Simulador de Escala de Faturamento
-                            </CardTitle>
-                            <CardDescription>Quanto você quer faturar este mês?</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="flex flex-col md:flex-row gap-4 items-end">
-                                <div className="flex-1 space-y-2">
-                                    <Label className="text-sm font-bold">Meta Mensal (R$)</Label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-primary">R$</span>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8 relative z-10">
+                <div className="flex justify-center mb-8">
+                    <TabsList className="grid grid-cols-3 w-full max-w-2xl bg-muted/30 backdrop-blur-md border border-white/10 p-1 rounded-2xl h-14">
+                        <TabsTrigger value="ladder" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
+                            <Package className="h-4 w-4" />
+                            <span className="font-bold">Laboratório de Ofertas</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="finance" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
+                            <BarChart3 className="h-4 w-4" />
+                            <span className="font-bold">Engenharia de Lucro</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="factory" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
+                            <Trophy className="h-4 w-4" />
+                            <span className="font-bold">Fábrica Digital</span>
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
+
+                {/* Product Ladder / Revenue Roadmap */}
+                <TabsContent value="ladder" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div className="grid gap-8 lg:grid-cols-12">
+                        {/* Revenue Goal Simulator - LEFT SIDE (7 columns) */}
+                        <Card className="lg:col-span-7 border-none shadow-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 text-white overflow-hidden relative group">
+                            <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-700">
+                                <Sparkles className="w-64 h-64" />
+                            </div>
+
+                            <CardHeader className="relative z-10">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="bg-primary/20 p-1.5 rounded-lg backdrop-blur-md border border-primary/30">
+                                        <Target className="h-5 w-5 text-primary" />
+                                    </div>
+                                    <Badge variant="outline" className="text-primary-foreground/70 border-primary-foreground/20 text-[10px] uppercase font-black tracking-widest">Revenue Roadmap</Badge>
+                                </div>
+                                <CardTitle className="text-3xl font-black tracking-tighter">O Caminho do $ 1 Mi</CardTitle>
+                                <CardDescription className="text-slate-400">Quanto você quer faturar hoje? Simule sua escala de forma visual.</CardDescription>
+                            </CardHeader>
+
+                            <CardContent className="space-y-8 relative z-10 pb-8">
+                                <div className="space-y-4">
+                                    <Label className="text-xs font-black uppercase text-slate-500 tracking-widest">Sua Meta Mensal Desejada</Label>
+                                    <div className="relative group/input">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-black text-2xl group-focus-within/input:scale-110 transition-transform">R$</div>
                                         <Input
                                             type="number"
-                                            placeholder="10.000"
-                                            className="pl-10 h-12 text-lg font-black"
+                                            placeholder="50.000"
+                                            className="pl-14 h-20 text-4xl font-black bg-white/5 border-white/10 text-white focus:ring-primary focus:border-primary rounded-2xl transition-all hover:bg-white/10"
                                             value={revenueGoal}
                                             onChange={(e) => setRevenueGoal(e.target.value)}
                                         />
+                                        <Button
+                                            size="lg"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 h-14 px-8 font-black text-lg bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 rounded-xl"
+                                            onClick={handleCalculateSplit}
+                                        >
+                                            Simular Roadmap
+                                        </Button>
                                     </div>
                                 </div>
-                                <Button className="h-12 px-8 font-bold" onClick={handleCalculateSplit}>
-                                    Calcular Estratégia
-                                </Button>
-                            </div>
 
-                            {calculatedTargets && (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                    <div className="p-4 rounded-xl border bg-background/50">
-                                        <Badge className="mb-2 bg-emerald-500">ENTRADA (100%)</Badge>
-                                        <div className="text-2xl font-black">x{calculatedTargets.tripwire}</div>
-                                        <p className="text-[10px] text-muted-foreground uppercase mt-1">Vendas do Produto Barato</p>
-                                    </div>
-                                    <div className="p-4 rounded-xl border bg-background/50 border-primary/30">
-                                        <Badge className="mb-2">CORE (10%)</Badge>
-                                        <div className="text-2xl font-black">x{calculatedTargets.core}</div>
-                                        <p className="text-[10px] text-muted-foreground uppercase mt-1">Conversão para Oferta Principal</p>
-                                    </div>
-                                    <div className="p-4 rounded-xl border bg-background/50 border-primary/50">
-                                        <Badge className="mb-2 bg-purple-500">PREMIUM (1%)</Badge>
-                                        <div className="text-2xl font-black">x{calculatedTargets.premium}</div>
-                                        <p className="text-[10px] text-muted-foreground uppercase mt-1">Upsell para Mentoria VIP</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="bg-primary/10 p-4 rounded-lg flex items-start gap-3 mt-2">
-                                <Trophy className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                                <p className="text-xs text-muted-foreground leading-relaxed">
-                                    <strong>Estratégia do Maestro:</strong> Comece atraindo leads com produtos baratos (Tripwire).
-                                    A meta é converter 10% desses compradores para o seu Serviço Principal e, desses, mais 10% para o seu acompanhamento Premium.
-                                    Este funil sustentável garante fluxo de caixa e lucro de elite.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Package className="h-5 w-5 text-primary" />
-                                Sua Escada de Produtos
-                            </CardTitle>
-                            <CardDescription>Organize seus produtos do mais acessível ao premium</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {/* Product List */}
-                            {products && products.length > 0 ? (
-                                <div className="space-y-3">
-                                    {products
-                                        .sort((a, b) => a.ticket - b.ticket)
-                                        .map((product) => (
-                                            <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg glass-card hover:neon-border transition-all">
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <h4 className="font-medium">{product.nome}</h4>
-                                                        <Badge variant="secondary">{product.tipo_produto}</Badge>
-                                                    </div>
-                                                    <p className="text-sm text-muted-foreground">{product.descricao}</p>
+                                {calculatedTargets ? (
+                                    <div className="pt-4">
+                                        <div className="relative h-64 w-full flex items-end justify-center gap-2 mb-8 pt-10">
+                                            {/* Visual Funnel simulation using CSS bars */}
+                                            <div className="flex flex-col items-center flex-1 group/bar">
+                                                <div className="text-[10px] font-black mb-2 opacity-50 uppercase tracking-tighter">Vendas</div>
+                                                <div className="w-full bg-gradient-to-t from-emerald-500 to-emerald-400 rounded-t-2xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all duration-700 hover:scale-x-105"
+                                                    style={{ height: '140px', minHeight: '40px' }}>
+                                                    <div className="h-full w-full flex items-center justify-center font-black text-3xl">x{calculatedTargets.tripwire}</div>
                                                 </div>
-                                                <div className="flex items-center gap-4">
-                                                    <span className="font-bold text-lg">
-                                                        R$ {product.ticket.toLocaleString("pt-BR")}
-                                                    </span>
-                                                    <Button size="icon" variant="ghost" onClick={() => deleteProduct(product.id)}>
-                                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                                    </Button>
-                                                </div>
+                                                <Badge className="mt-4 bg-emerald-500/20 text-emerald-400 border-none px-4 py-1 rounded-full text-xs font-black group-hover/bar:bg-emerald-500 group-hover/bar:text-white transition-all">ENTRADA (100%)</Badge>
                                             </div>
-                                        ))}
-                                </div>
-                            ) : (
-                                <div className="text-center py-8 text-muted-foreground">
-                                    <Package className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                                    <p>Nenhum produto cadastrado ainda</p>
-                                </div>
-                            )}
 
-                            {/* Add Product Form */}
-                            <div className="border-t pt-4 mt-4">
-                                <h4 className="font-medium mb-4 flex items-center gap-2">
-                                    <Plus className="h-4 w-4" />
-                                    Adicionar Produto
-                                </h4>
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <Label>Nome do Produto</Label>
-                                        <Input
-                                            value={newProduct.nome}
-                                            onChange={(e) => setNewProduct({ ...newProduct, nome: e.target.value })}
-                                            placeholder="Ex: Consulta Avulsa"
-                                        />
+                                            <div className="flex flex-col items-center flex-1 group/bar">
+                                                <div className="text-[10px] font-black mb-2 opacity-50 uppercase tracking-tighter">Vendas</div>
+                                                <div className="w-full bg-gradient-to-t from-primary to-blue-400 rounded-t-2xl shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all duration-700 hover:scale-x-105"
+                                                    style={{ height: '180px', minHeight: '60px' }}>
+                                                    <div className="h-full w-full flex items-center justify-center font-black text-3xl">x{calculatedTargets.core}</div>
+                                                </div>
+                                                <Badge className="mt-4 bg-primary/20 text-primary border-none px-4 py-1 rounded-full text-xs font-black group-hover/bar:bg-primary group-hover/bar:text-white transition-all">CORE (10%)</Badge>
+                                            </div>
+
+                                            <div className="flex flex-col items-center flex-1 group/bar">
+                                                <div className="text-[10px] font-black mb-2 opacity-50 uppercase tracking-tighter">Vendas</div>
+                                                <div className="w-full bg-gradient-to-t from-purple-500 to-pink-500 rounded-t-2xl shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all duration-700 hover:scale-x-105"
+                                                    style={{ height: '220px', minHeight: '80px' }}>
+                                                    <div className="h-full w-full flex items-center justify-center font-black text-3xl">x{calculatedTargets.premium}</div>
+                                                </div>
+                                                <Badge className="mt-4 bg-purple-500/20 text-purple-400 border-none px-4 py-1 rounded-full text-xs font-black group-hover/bar:bg-purple-500 group-hover/bar:text-white transition-all">VIP (1%)</Badge>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white/5 border border-white/10 p-6 rounded-3xl backdrop-blur-md flex items-start gap-4 hover:border-primary/50 transition-colors">
+                                            <div className="bg-primary/20 p-2 rounded-xl">
+                                                <Trophy className="h-6 w-6 text-primary" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <h4 className="font-bold text-sm text-white">Estratégia do Maestro Pro:</h4>
+                                                <p className="text-xs text-slate-400 leading-relaxed">
+                                                    Para bater R$ {parseFloat(revenueGoal).toLocaleString('pt-BR')} você não precisa de milhares de clientes VIP.
+                                                    O segredo está no volume da **Base (Entrada)** que financia seu tráfego, enquanto o **Lucro Real** vem da conversão de 10% para o Core e 1% para o VIP.
+                                                    *Este é um modelo de faturamento previsível.*
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label>Valor (R$)</Label>
-                                        <Input
-                                            type="number"
-                                            value={newProduct.ticket}
-                                            onChange={(e) => setNewProduct({ ...newProduct, ticket: e.target.value })}
-                                            placeholder="250"
-                                        />
+                                ) : (
+                                    <div className="py-12 flex flex-col items-center justify-center text-center space-y-4 opacity-30">
+                                        <div className="w-20 h-20 rounded-full border-2 border-dashed border-white flex items-center justify-center">
+                                            <TrendingUp className="h-8 w-8" />
+                                        </div>
+                                        <p className="text-sm italic">Insira sua meta acima para ver o seu roadmap de escala visualmente.</p>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label>Tipo de Produto</Label>
-                                        <Select value={newProduct.tipo_produto} onValueChange={(v) => setNewProduct({ ...newProduct, tipo_produto: v })}>
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="isca">Isca Digital (Grátis)</SelectItem>
-                                                <SelectItem value="entrada">Produto de Entrada</SelectItem>
-                                                <SelectItem value="servico">Serviço Principal</SelectItem>
-                                                <SelectItem value="premium">Premium / VIP</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Product Management - RIGHT SIDE (5 columns) */}
+                        <div className="lg:col-span-5 space-y-6">
+                            <Card className="border-none shadow-xl bg-card/60 backdrop-blur-xl">
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle className="text-xl font-bold">Catálogo Direto</CardTitle>
+                                            <CardDescription>Produtos cadastrados na sua escada.</CardDescription>
+                                        </div>
+                                        <Badge variant="secondary" className="font-bold">{products?.length || 0} Itens</Badge>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label>Tipo de Cliente</Label>
-                                        <Select value={newProduct.tipo_cliente} onValueChange={(v) => setNewProduct({ ...newProduct, tipo_cliente: v })}>
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="inconformado">Inconformado (Iniciante)</SelectItem>
-                                                <SelectItem value="frustrado">Frustrado (Já tentou)</SelectItem>
-                                                <SelectItem value="desenvolvimento">Em Desenvolvimento</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                        {products && products.length > 0 ? (
+                                            products
+                                                .sort((a, b) => a.ticket - b.ticket)
+                                                .map((product) => (
+                                                    <div key={product.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl hover:border-primary/40 hover:bg-white/10 transition-all group">
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-bold text-sm">{product.nome}</span>
+                                                                <Badge className="text-[8px] h-4 uppercase tracking-tighter" variant="outline">{product.tipo_produto}</Badge>
+                                                            </div>
+                                                            <p className="text-[10px] text-muted-foreground line-clamp-1">{product.descricao || 'Sem descrição'}</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="font-black text-primary text-sm">
+                                                                R$ {product.ticket.toLocaleString("pt-BR")}
+                                                            </span>
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10 transition-all"
+                                                                onClick={() => deleteProduct(product.id)}
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                        ) : (
+                                            <div className="text-center py-10 opacity-30">
+                                                <Package className="h-10 w-10 mx-auto mb-2" />
+                                                <p className="text-xs italic">Nenhum produto na sua escada.</p>
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                                <div className="space-y-2 mt-4">
-                                    <Label>Descrição</Label>
-                                    <Textarea
-                                        value={newProduct.descricao}
-                                        onChange={(e) => setNewProduct({ ...newProduct, descricao: e.target.value })}
-                                        placeholder="Breve descrição do produto..."
-                                        rows={2}
+
+                                    {/* Add Product Inline Trigger/Form */}
+                                    <Button variant="outline" className="w-full border-dashed py-6 gap-2 hover:bg-primary/5 hover:border-primary/50 transition-all rounded-2xl">
+                                        <Plus className="h-4 w-4" />
+                                        <span className="text-xs font-bold uppercase tracking-widest">Adicionar Nova Oferta</span>
+                                    </Button>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-none shadow-lg bg-emerald-500/5 border border-emerald-500/10">
+                                <CardContent className="p-6">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="bg-emerald-500/20 p-2 rounded-lg">
+                                            <Target className="h-5 w-5 text-emerald-500" />
+                                        </div>
+                                        <h4 className="font-black text-xs uppercase tracking-widest text-emerald-600">Dica de Precificação</h4>
+                                    </div>
+                                    <p className="text-[11px] text-emerald-700/70 leading-relaxed italic">
+                                        "Produtos de entrada devem ter valor percebido 10x maior que o preço de etiqueta.
+                                        Preços terminados em **.00** transmitem sofisticação; terminados em **.90** transmitem oportunidade."
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+
+                    {/* Quick Add Product Form - Standardizing */}
+                    <Card className="border-white/10 bg-card/40 backdrop-blur-md overflow-hidden">
+                        <div className="bg-primary/5 p-4 border-b border-white/5 flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-primary" />
+                            <h4 className="text-sm font-black uppercase tracking-widest">Painel de Modelagem de Produto</h4>
+                        </div>
+                        <CardContent className="p-8">
+                            <div className="grid gap-8 md:grid-cols-4">
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2">Nome</Label>
+                                    <Input
+                                        value={newProduct.nome}
+                                        onChange={(e) => setNewProduct({ ...newProduct, nome: e.target.value })}
+                                        placeholder="Ex: Consultoria Express"
+                                        className="h-12 bg-white/5 border-white/10 focus:ring-primary rounded-xl"
                                     />
                                 </div>
-                                <Button onClick={handleAddProduct} className="mt-4">
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Adicionar Produto
-                                </Button>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2">Preço (R$)</Label>
+                                    <Input
+                                        type="number"
+                                        value={newProduct.ticket}
+                                        onChange={(e) => setNewProduct({ ...newProduct, ticket: e.target.value })}
+                                        placeholder="997"
+                                        className="h-12 bg-white/5 border-white/10 focus:ring-primary rounded-xl"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2">Categoria</Label>
+                                    <Select value={newProduct.tipo_produto} onValueChange={(v) => setNewProduct({ ...newProduct, tipo_produto: v })}>
+                                        <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="isca">Isca Digital (Grátis)</SelectItem>
+                                            <SelectItem value="entrada">Produto de Entrada</SelectItem>
+                                            <SelectItem value="servico">Serviço Principal</SelectItem>
+                                            <SelectItem value="premium">Premium / VIP</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2">Destino</Label>
+                                    <Button onClick={handleAddProduct} className="w-full h-12 font-black uppercase tracking-widest rounded-xl transition-all active:scale-[0.98]">
+                                        Fixar na Escada
+                                    </Button>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
 
                 {/* Finance / Reverse Engineering */}
-                <TabsContent value="finance" className="space-y-6">
+                <TabsContent value="finance" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <PricingCalculator />
                 </TabsContent>
 
                 {/* Factory (Materials & Challenges) */}
-                <TabsContent value="factory" className="space-y-6">
-                    <div className="grid gap-6 lg:grid-cols-2">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <FileText className="h-5 w-5 text-primary" />
-                                    Criar Material Rico
-                                </CardTitle>
-                                <CardDescription>Iscas que geram "pequenas vitórias"</CardDescription>
+                <TabsContent value="factory" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div className="grid gap-8 lg:grid-cols-2">
+                        <Card className="border-none shadow-2xl bg-gradient-to-br from-slate-900 to-indigo-900 text-white overflow-hidden group">
+                            <CardHeader className="relative z-10">
+                                <div className="bg-primary/20 p-2 rounded-xl w-fit mb-4 border border-primary/30">
+                                    <FileText className="h-6 w-6 text-primary" />
+                                </div>
+                                <CardTitle className="text-2xl font-black">Engenharia de Material Rico</CardTitle>
+                                <CardDescription className="text-slate-400">Crie iscas digitais que geram autoridade instantânea.</CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label>Tipo de Material</Label>
-                                    <Select value={materialType} onValueChange={setMaterialType}>
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="ebook">E-book</SelectItem>
-                                            <SelectItem value="checklist">Checklist</SelectItem>
-                                            <SelectItem value="guia">Guia Prático</SelectItem>
-                                            <SelectItem value="planner">Planner</SelectItem>
-                                            <SelectItem value="roteiro">Roteiro de Aula</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                            <CardContent className="space-y-6 relative z-10">
+                                <div className="grid grid-cols-2 gap-3">
+                                    {["ebook", "checklist", "guia", "planner", "roteiro"].map((type) => (
+                                        <div
+                                            key={type}
+                                            onClick={() => setMaterialType(type)}
+                                            className={`p-3 rounded-xl border cursor-pointer transition-all text-center capitalize text-xs font-bold ${materialType === type ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 hover:bg-white/10 text-slate-300'}`}
+                                        >
+                                            {type}
+                                        </div>
+                                    ))}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Tema</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Qual o tema central do conhecimento?</Label>
                                     <Textarea
                                         value={materialTopic}
                                         onChange={(e) => setMaterialTopic(e.target.value)}
-                                        placeholder="Sobre o que será o material?"
-                                        rows={3}
+                                        placeholder="Ex: 5 Passos para sair do sedentarismo em casa..."
+                                        rows={4}
+                                        className="bg-white/5 border-white/10 focus:ring-primary rounded-2xl p-4 text-sm"
                                     />
                                 </div>
-                                <Button onClick={handleGenerateMaterial} disabled={isLoading} className="w-full">
-                                    {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                                    Gerar Material
+                                <Button
+                                    onClick={handleGenerateMaterial}
+                                    disabled={isLoading}
+                                    className="w-full h-14 bg-white text-slate-900 hover:bg-white/90 font-black text-lg gap-2 rounded-2xl shadow-xl hover:scale-[1.02] transition-all"
+                                >
+                                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5 text-primary" />}
+                                    Forjar Material Agora
                                 </Button>
                             </CardContent>
                         </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Trophy className="h-5 w-5 text-primary" />
-                                    Criar Desafio
-                                </CardTitle>
-                                <CardDescription>Gamificação que engaja e converte</CardDescription>
+                        <Card className="border-none shadow-2xl bg-gradient-to-br from-slate-900 to-purple-900 text-white overflow-hidden group">
+                            <CardHeader className="relative z-10">
+                                <div className="bg-purple-500/20 p-2 rounded-xl w-fit mb-4 border border-purple-500/30 text-purple-400">
+                                    <Trophy className="h-6 w-6" />
+                                </div>
+                                <CardTitle className="text-2xl font-black">Arquiteto de Desafios</CardTitle>
+                                <CardDescription className="text-slate-400">Ganhe engajamento brutal e prepare o terreno para a venda.</CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label>Duração do Desafio</Label>
-                                    <div className="flex gap-2">
+                            <CardContent className="space-y-6 relative z-10">
+                                <div className="space-y-3">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Janela de Transformação</Label>
+                                    <div className="flex justify-between gap-2">
                                         {["5", "7", "14", "21"].map((d) => (
-                                            <Badge
+                                            <div
                                                 key={d}
-                                                variant={challengeDays === d ? "default" : "outline"}
-                                                className="cursor-pointer"
                                                 onClick={() => setChallengeDays(d)}
+                                                className={`flex-1 py-3 rounded-xl border cursor-pointer transition-all text-center text-xs font-black ${challengeDays === d ? 'bg-purple-600 border-purple-600 text-white' : 'bg-white/5 border-white/10 hover:bg-white/10 text-slate-300'}`}
                                             >
-                                                {d} dias
-                                            </Badge>
+                                                {d} DIAS
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Foco do Desafio</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Qual a grande vitória prometida?</Label>
                                     <Textarea
                                         value={challengeFocus}
                                         onChange={(e) => setChallengeFocus(e.target.value)}
-                                        placeholder="Qual transformação o participante terá?"
-                                        rows={3}
+                                        placeholder="Ex: Perder 2kg sem dietas malucas..."
+                                        rows={4}
+                                        className="bg-white/5 border-white/10 focus:ring-primary rounded-2xl p-4 text-sm"
                                     />
                                 </div>
-                                <Button onClick={handleGenerateChallenge} disabled={isLoading} className="w-full">
-                                    {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                                    Criar Estrutura do Desafio
+                                <Button
+                                    onClick={handleGenerateChallenge}
+                                    disabled={isLoading}
+                                    className="w-full h-14 bg-white text-slate-900 hover:bg-white/90 font-black text-lg gap-2 rounded-2xl shadow-xl hover:scale-[1.02] transition-all"
+                                >
+                                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5 text-purple-600" />}
+                                    Arquitetar Desafio
                                 </Button>
                             </CardContent>
                         </Card>
                     </div>
 
-                    {/* Shared Output for Factory */}
+                    {/* Shared Output Workspace for Factory */}
                     {streamedContent && (
-                        <Card className="mt-6">
-                            <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                <CardTitle className="text-sm">Resultado da Geração</CardTitle>
+                        <div className="animate-in slide-in-from-bottom-8 duration-500 max-w-4xl mx-auto w-full">
+                            <div className="flex items-center justify-between mb-4 mt-12 bg-white/5 p-4 rounded-2xl backdrop-blur-sm border border-white/10">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-3 w-3 rounded-full bg-red-500" />
+                                    <div className="h-3 w-3 rounded-full bg-amber-500" />
+                                    <div className="h-3 w-3 rounded-full bg-emerald-500" />
+                                    <span className="ml-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Preview: {materialType || 'Desafio'}</span>
+                                </div>
                                 <div className="flex gap-2">
-                                    <Button size="sm" variant="outline" onClick={handleCopy}>
-                                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                                    <Button size="sm" variant="ghost" className="h-8 text-[10px] font-black uppercase text-slate-400 hover:text-white" onClick={handleCopy}>
+                                        {copied ? 'Copiado' : 'Copiar Texto'}
                                     </Button>
-                                    <Button size="sm" variant="outline" onClick={() => handleSave("lab_content", "generative", "Business Lab Output")}>
-                                        Salvar
+                                    <Button size="sm" variant="outline" className="h-8 text-[10px] font-black uppercase border-primary/30 text-primary hover:bg-primary hover:text-white transition-all" onClick={() => handleSave("lab_content", "generative", "Business Lab Output")}>
+                                        Sincronizar com Maestro
                                     </Button>
                                 </div>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="prose prose-sm max-w-none whitespace-pre-wrap bg-muted/50 p-4 rounded-lg max-h-96 overflow-y-auto">
-                                    {streamedContent}
+                            </div>
+
+                            <Card className="border-none shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden rounded-[2rem] bg-white text-slate-900 group/doc hover:scale-[1.01] transition-transform duration-500">
+                                <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none group-hover/doc:scale-110 transition-transform duration-1000">
+                                    <FileText className="w-96 h-96" />
                                 </div>
-                            </CardContent>
-                        </Card>
+                                <CardContent className="p-0">
+                                    <div className="bg-slate-50 border-b p-10 flex items-center justify-between">
+                                        <div className="space-y-1">
+                                            <Badge className="bg-primary/10 text-primary border-none text-[8px] font-black uppercase">Entrega de Autoridade</Badge>
+                                            <h3 className="text-2xl font-black tracking-tight text-slate-900">Documento Estratégico</h3>
+                                        </div>
+                                        <div className="hidden sm:block">
+                                            <div className="text-[10px] font-black text-slate-400 text-right uppercase">Data de Emissão</div>
+                                            <div className="text-xs font-bold text-slate-600">{new Date().toLocaleDateString('pt-BR')}</div>
+                                        </div>
+                                    </div>
+                                    <div className="prose prose-p:text-slate-600 prose-headings:text-slate-900 prose-strong:text-slate-900 max-w-none whitespace-pre-wrap p-12 min-h-[500px] leading-relaxed text-base selection:bg-primary selection:text-white">
+                                        {streamedContent}
+                                    </div>
+                                    <div className="p-10 bg-slate-50 border-t flex items-center justify-center">
+                                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                            <Sparkles className="h-3 w-3 text-primary" /> Gerado pelo Business Lab AI - Maestro Pro
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
                     )}
                 </TabsContent>
             </Tabs>
