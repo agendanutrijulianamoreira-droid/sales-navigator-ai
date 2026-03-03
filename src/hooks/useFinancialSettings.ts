@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -15,6 +15,7 @@ export function useFinancialSettings() {
     const { user } = useAuth();
     const [settings, setSettings] = useState<FinancialSettings | null>(null);
     const [loading, setLoading] = useState(true);
+    const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
     const fetchSettings = useCallback(async () => {
         if (!user) return;
@@ -61,16 +62,31 @@ export function useFinancialSettings() {
             if (error) throw error;
 
             setSettings(prev => prev ? { ...prev, ...newSettings } : (newSettings as FinancialSettings));
-            toast.success("Configurações financeiras salvas!");
+            toast.success("Configurações salvas automaticamente!");
         } catch (error: any) {
             console.error('Error updating financial settings:', error);
             toast.error("Erro ao salvar configurações.");
         }
     };
 
+    // Auto-save with debounce
+    const autoSave = useCallback((newSettings: Partial<FinancialSettings>) => {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        setSettings(prev => prev ? { ...prev, ...newSettings } : (newSettings as FinancialSettings));
+        debounceRef.current = setTimeout(() => {
+            updateSettings(newSettings);
+        }, 1500);
+    }, [user, settings]);
+
     useEffect(() => {
         fetchSettings();
     }, [fetchSettings]);
 
-    return { settings, loading, updateSettings };
+    useEffect(() => {
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+    }, []);
+
+    return { settings, loading, updateSettings, autoSave };
 }

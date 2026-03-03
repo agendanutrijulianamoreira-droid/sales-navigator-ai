@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,11 +59,33 @@ export default function BusinessLab() {
         toast.success("Produto adicionado!");
     };
 
+    // Auto-save generated content
+    const prevContentRef = useRef<string | null>(null);
+    useEffect(() => {
+        if (streamedContent && streamedContent !== prevContentRef.current && !isLoading) {
+            prevContentRef.current = streamedContent;
+            const tipo = activeTab === 'factory' ? 'lab_content' : 'material';
+            const subtipo = materialType || 'desafio';
+            saveGeneration({
+                tipo,
+                subtipo,
+                specialist: 'material_copywriter',
+                output_content: streamedContent,
+                titulo: `${materialType || 'Desafio'} - ${materialTopic || challengeFocus || 'Business Lab'}`,
+                input_data: { materialType, materialTopic, challengeDays, challengeFocus },
+                favorito: false,
+                tags: ['business-lab'],
+            });
+            toast.success("Conteúdo salvo automaticamente na biblioteca!");
+        }
+    }, [streamedContent, isLoading]);
+
     const handleGenerateMaterial = async () => {
         if (!materialTopic) {
             toast.error("Digite o tema do material");
             return;
         }
+        prevContentRef.current = null;
         await generateContent("material_copywriter", materialType, {
             tipo: materialType,
             tema: materialTopic,
@@ -75,6 +97,7 @@ export default function BusinessLab() {
             toast.error("Digite o foco do desafio");
             return;
         }
+        prevContentRef.current = null;
         await generateContent("challenge_coach", "desafio", {
             dias: challengeDays,
             foco: challengeFocus,
@@ -303,7 +326,7 @@ export default function BusinessLab() {
                                     </div>
 
                                     {/* Add Product Inline Trigger/Form */}
-                                    <Button variant="outline" className="w-full border-dashed py-6 gap-2 hover:bg-primary/5 hover:border-primary/50 transition-all rounded-2xl">
+                                    <Button variant="outline" className="w-full border-dashed py-6 gap-2 hover:bg-primary/5 hover:border-primary/50 transition-all rounded-2xl" onClick={() => setActiveTab("ladder")} onClickCapture={() => document.getElementById('product-form-section')?.scrollIntoView({ behavior: 'smooth' })}>
                                         <Plus className="h-4 w-4" />
                                         <span className="text-xs font-bold uppercase tracking-widest">Adicionar Nova Oferta</span>
                                     </Button>
@@ -328,7 +351,7 @@ export default function BusinessLab() {
                     </div>
 
                     {/* Quick Add Product Form - Standardizing */}
-                    <Card className="border-white/10 bg-card/40 backdrop-blur-md overflow-hidden">
+                    <Card id="product-form-section" className="border-white/10 bg-card/40 backdrop-blur-md overflow-hidden">
                         <div className="bg-primary/5 p-4 border-b border-white/5 flex items-center gap-2">
                             <Sparkles className="h-4 w-4 text-primary" />
                             <h4 className="text-sm font-black uppercase tracking-widest">Painel de Modelagem de Produto</h4>
