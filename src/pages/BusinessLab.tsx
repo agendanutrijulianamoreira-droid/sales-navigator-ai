@@ -13,27 +13,42 @@ import { useGenerations } from "@/hooks/useGenerations";
 import { Badge } from "@/components/ui/badge";
 import {
     Loader2, Sparkles, Package, FileText, Trophy,
-    Plus, Trash2, Copy, Check, BarChart3, Target, TrendingUp
+    Plus, Trash2, Copy, Check, BarChart3, Target, TrendingUp,
+    AlertTriangle, Info, Clock, Calculator
 } from "lucide-react";
 import { toast } from "sonner";
 import { PricingCalculator } from "@/components/business/PricingCalculator";
+import { useFinancialSettings } from "@/hooks/useFinancialSettings";
+import { cn } from "@/lib/utils";
+import { Slider } from "@/components/ui/slider";
 
 export default function BusinessLab() {
     const { products, addProduct, deleteProduct } = useProducts();
     const { generateContent, isLoading, streamedContent } = useAISpecialist();
     const { saveGeneration } = useGenerations();
-    const [activeTab, setActiveTab] = useState("ladder");
+    const { settings } = useFinancialSettings();
+    const [activeTab, setActiveTab] = useState("finance");
     const [copied, setCopied] = useState(false);
+
+    // Sliders for conversion
+    const [convLeadToCore, setConvLeadToCore] = useState([10]);
+    const [convCoreToPremium, setConvCoreToPremium] = useState([1]);
+
     const [revenueGoal, setRevenueGoal] = useState("");
-    const [calculatedTargets, setCalculatedTargets] = useState<{ tripwire: number, core: number, premium: number } | null>(null);
+    const [calculatedTargets, setCalculatedTargets] = useState<{ tripwire: number, core: number, premium: number, viability: any } | null>(null);
+
+    // Unify real goal from settings if available
+    const monthlyGoal = settings?.monthly_income_goal || 10000;
 
     // New product form
     const [newProduct, setNewProduct] = useState({
         nome: "",
         ticket: "",
         tipo_produto: "servico",
+        ladder_stage: "core",
         tipo_cliente: "desenvolvimento",
         descricao: "",
+        hours_spent: "0",
     });
 
     // Material generator
@@ -50,12 +65,24 @@ export default function BusinessLab() {
             return;
         }
         await addProduct({
-            ...newProduct,
+            nome: newProduct.nome,
             ticket: parseFloat(newProduct.ticket),
+            tipo_produto: newProduct.tipo_produto,
+            ladder_stage: newProduct.ladder_stage,
+            tipo_cliente: newProduct.tipo_cliente,
+            descricao: newProduct.descricao,
             ativo: true,
             ordem: products?.length || 0,
         });
-        setNewProduct({ nome: "", ticket: "", tipo_produto: "servico", tipo_cliente: "desenvolvimento", descricao: "" });
+        setNewProduct({
+            nome: "",
+            ticket: "",
+            tipo_produto: "servico",
+            ladder_stage: "core",
+            tipo_cliente: "desenvolvimento",
+            descricao: "",
+            hours_spent: "0"
+        });
         toast.success("Produto adicionado!");
     };
 
@@ -113,27 +140,53 @@ export default function BusinessLab() {
         }
     };
 
+    const calculateViability = (salesNeeded: any) => {
+        // Mocking hours if not in product object yet, but preparing for schema
+        // We'll use a default of 2h for core and 10h for premium if hours_spent is missing
+        const hTrip = 0.5;
+        const hCore = 2;
+        const hPremium = 10;
+
+        const totalHoursNeeded = (salesNeeded.tripwire * hTrip) + (salesNeeded.core * hCore) + (salesNeeded.premium * hPremium);
+        const weeklyHours = (settings?.work_days_week || 5) * (settings?.work_hours_day || 6);
+        const availableHours = weeklyHours * 4.33;
+
+        return {
+            needed: totalHoursNeeded.toFixed(1),
+            available: availableHours.toFixed(1),
+            isPossible: totalHoursNeeded <= availableHours
+        };
+    };
+
     const handleCalculateSplit = () => {
-        const goal = parseFloat(revenueGoal);
+        const goal = revenueGoal ? parseFloat(revenueGoal) : monthlyGoal;
+
         if (isNaN(goal) || goal <= 0) {
             toast.error("Insira uma meta válida");
             return;
         }
 
-        // Search for product prices in the ladder
-        // Type mapping based on our convention: tripwire=entrada, coreOffer=servico, highTicket=premium
-        const pTrip = products?.find(p => p.tipo_produto === 'entrada')?.ticket || 47;
-        const pCore = products?.find(p => p.tipo_produto === 'servico')?.ticket || 497;
-        const pPremium = products?.find(p => p.tipo_produto === 'premium')?.ticket || 2500;
+        // Search for product prices in the ladder using ladder_stage
+        const pTrip = products?.find(p => p.ladder_stage === 'entrada' || p.tipo_produto === 'entrada')?.ticket || 47;
+        const pCore = products?.find(p => p.ladder_stage === 'core' || p.tipo_produto === 'servico')?.ticket || 497;
+        const pPremium = products?.find(p => p.ladder_stage === 'premium' || p.tipo_produto === 'premium')?.ticket || 2500;
 
-        // Formula: X * pTrip + (0.1 * X) * pCore + (0.01 * X) * pPremium = goal
-        // X * (pTrip + 0.1 * pCore + 0.01 * pPremium) = goal
-        const x = goal / (pTrip + (0.1 * pCore) + (0.01 * pPremium));
+        const cCore = convLeadToCore[0] / 100;
+        const cPremium = convCoreToPremium[0] / 100;
+
+        // Formula: X * pTrip + (cCore * X) * pCore + (cPremium * cCore * X) * pPremium = goal
+        // X * (pTrip + cCore * pCore + cPremium * cCore * pPremium) = goal
+        const x = goal / (pTrip + (cCore * pCore) + (cPremium * cCore * pPremium));
+
+        const targets = {
+            tripwire: Math.ceil(x),
+            core: Math.ceil(x * cCore),
+            premium: Math.ceil(x * cCore * cPremium)
+        };
 
         setCalculatedTargets({
-            tripwire: Math.ceil(x),
-            core: Math.ceil(x * 0.1),
-            premium: Math.ceil(x * 0.01)
+            ...targets,
+            viability: calculateViability(targets)
         });
 
         toast.success("Estratégia calculada!");
@@ -162,13 +215,13 @@ export default function BusinessLab() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8 relative z-10">
                 <div className="flex justify-center mb-8">
                     <TabsList className="grid grid-cols-3 w-full max-w-2xl bg-muted/30 backdrop-blur-md border border-white/10 p-1 rounded-2xl h-14">
-                        <TabsTrigger value="ladder" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
-                            <Package className="h-4 w-4" />
-                            <span className="font-bold">Laboratório de Ofertas</span>
-                        </TabsTrigger>
                         <TabsTrigger value="finance" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
                             <BarChart3 className="h-4 w-4" />
                             <span className="font-bold">Engenharia de Lucro</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="ladder" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
+                            <Package className="h-4 w-4" />
+                            <span className="font-bold">Laboratório de Ofertas</span>
                         </TabsTrigger>
                         <TabsTrigger value="factory" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
                             <Trophy className="h-4 w-4" />
@@ -204,7 +257,7 @@ export default function BusinessLab() {
                                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-primary font-black text-2xl group-focus-within/input:scale-110 transition-transform">R$</div>
                                         <Input
                                             type="number"
-                                            placeholder="50.000"
+                                            placeholder={monthlyGoal.toString()}
                                             className="pl-14 h-20 text-4xl font-black bg-white/5 border-white/10 text-white focus:ring-primary focus:border-primary rounded-2xl transition-all hover:bg-white/10"
                                             value={revenueGoal}
                                             onChange={(e) => setRevenueGoal(e.target.value)}
@@ -217,6 +270,79 @@ export default function BusinessLab() {
                                             Simular Roadmap
                                         </Button>
                                     </div>
+                                </div>
+
+                                <div className="grid md:grid-cols-2 gap-8 pt-4">
+                                    <div className="space-y-6">
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Conversão: Lead → Core</Label>
+                                                <Badge variant="outline" className="text-primary border-primary/30 font-black">{convLeadToCore}%</Badge>
+                                            </div>
+                                            <Slider
+                                                value={convLeadToCore}
+                                                onValueChange={setConvLeadToCore}
+                                                max={100}
+                                                step={1}
+                                                className="py-4"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <Label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Conversão: Core → Premium</Label>
+                                                <Badge variant="outline" className="text-purple-400 border-purple-500/30 font-black">{convCoreToPremium}%</Badge>
+                                            </div>
+                                            <Slider
+                                                value={convCoreToPremium}
+                                                onValueChange={setConvCoreToPremium}
+                                                max={20}
+                                                step={0.5}
+                                                className="py-4"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {calculatedTargets && (
+                                        <Card className={cn(
+                                            "border-none shadow-xl backdrop-blur-md transition-all duration-500",
+                                            calculatedTargets.viability.isPossible
+                                                ? "bg-emerald-500/10 border-l-4 border-l-emerald-500"
+                                                : "bg-red-500/10 border-l-4 border-l-red-500"
+                                        )}>
+                                            <CardContent className="p-6 space-y-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={cn(
+                                                        "p-2 rounded-lg",
+                                                        calculatedTargets.viability.isPossible ? "bg-emerald-500/20" : "bg-red-500/20"
+                                                    )}>
+                                                        <Clock className={cn(
+                                                            "h-5 w-5",
+                                                            calculatedTargets.viability.isPossible ? "text-emerald-500" : "text-red-500"
+                                                        )} />
+                                                    </div>
+                                                    <h4 className="font-black text-xs uppercase tracking-widest">Viabilidade de Agenda</h4>
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <div className="text-3xl font-black flex items-baseline gap-2">
+                                                        {calculatedTargets.viability.needed}h
+                                                        <span className="text-sm font-normal text-slate-500">/ {calculatedTargets.viability.available}h mensais</span>
+                                                    </div>
+                                                    <p className="text-[10px] text-slate-400 font-medium">Capacidade baseada no seu perfil.</p>
+                                                </div>
+
+                                                {!calculatedTargets.viability.isPossible && (
+                                                    <div className="flex items-start gap-2 p-3 bg-red-500/20 rounded-xl border border-red-500/30">
+                                                        <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                                                        <p className="text-[10px] text-red-200 leading-tight">
+                                                            **ALERTA DE BURNOUT:** Esta meta exige mais horas do que você tem disponível. Considere aumentar os preços ou automatizar processos.
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </CardContent>
+                                        </Card>
+                                    )}
                                 </div>
 
                                 {calculatedTargets ? (
@@ -298,7 +424,12 @@ export default function BusinessLab() {
                                                         <div className="space-y-1">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-bold text-sm">{product.nome}</span>
-                                                                <Badge className="text-[8px] h-4 uppercase tracking-tighter" variant="outline">{product.tipo_produto}</Badge>
+                                                                <Badge className="text-[8px] h-4 uppercase tracking-tighter" variant="outline">
+                                                                    {product.ladder_stage || product.tipo_produto}
+                                                                </Badge>
+                                                                {product.ladder_stage === 'premium' && (
+                                                                    <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
+                                                                )}
                                                             </div>
                                                             <p className="text-[10px] text-muted-foreground line-clamp-1">{product.descricao || 'Sem descrição'}</p>
                                                         </div>
@@ -378,18 +509,28 @@ export default function BusinessLab() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2">Categoria</Label>
-                                    <Select value={newProduct.tipo_produto} onValueChange={(v) => setNewProduct({ ...newProduct, tipo_produto: v })}>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2">Papel na Escada</Label>
+                                    <Select value={newProduct.ladder_stage} onValueChange={(v) => setNewProduct({ ...newProduct, ladder_stage: v })}>
                                         <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="isca">Isca Digital (Grátis)</SelectItem>
-                                            <SelectItem value="entrada">Produto de Entrada</SelectItem>
-                                            <SelectItem value="servico">Serviço Principal</SelectItem>
-                                            <SelectItem value="premium">Premium / VIP</SelectItem>
+                                            <SelectItem value="isca">Isca (Base)</SelectItem>
+                                            <SelectItem value="entrada">Entrada (Tripwire)</SelectItem>
+                                            <SelectItem value="core">Core (Serviço)</SelectItem>
+                                            <SelectItem value="premium">Premium (VIP)</SelectItem>
                                         </SelectContent>
                                     </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2">Esforço (Horas)</Label>
+                                    <Input
+                                        type="number"
+                                        value={newProduct.hours_spent}
+                                        onChange={(e) => setNewProduct({ ...newProduct, hours_spent: e.target.value })}
+                                        placeholder="2"
+                                        className="h-12 bg-white/5 border-white/10 focus:ring-primary rounded-xl"
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2">Destino</Label>
