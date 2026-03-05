@@ -45,7 +45,6 @@ export default function BusinessLab() {
         nome: "",
         ticket: "",
         tipo_produto: "servico",
-        ladder_stage: "core",
         tipo_cliente: "desenvolvimento",
         descricao: "",
         hours_spent: "0",
@@ -68,7 +67,6 @@ export default function BusinessLab() {
             nome: newProduct.nome,
             ticket: parseFloat(newProduct.ticket),
             tipo_produto: newProduct.tipo_produto,
-            ladder_stage: newProduct.ladder_stage,
             tipo_cliente: newProduct.tipo_cliente,
             descricao: newProduct.descricao,
             ativo: true,
@@ -78,7 +76,6 @@ export default function BusinessLab() {
             nome: "",
             ticket: "",
             tipo_produto: "servico",
-            ladder_stage: "core",
             tipo_cliente: "desenvolvimento",
             descricao: "",
             hours_spent: "0"
@@ -166,10 +163,10 @@ export default function BusinessLab() {
             return;
         }
 
-        // Search for product prices in the ladder using ladder_stage
-        const pTrip = products?.find(p => p.ladder_stage === 'entrada' || p.tipo_produto === 'entrada')?.ticket || 47;
-        const pCore = products?.find(p => p.ladder_stage === 'core' || p.tipo_produto === 'servico')?.ticket || 497;
-        const pPremium = products?.find(p => p.ladder_stage === 'premium' || p.tipo_produto === 'premium')?.ticket || 2500;
+        // Search for product prices by tipo_produto
+        const pTrip = products?.find(p => p.tipo_produto === 'entrada')?.ticket || 47;
+        const pCore = products?.find(p => p.tipo_produto === 'servico')?.ticket || 497;
+        const pPremium = products?.find(p => p.tipo_produto === 'premium')?.ticket || 2500;
 
         const cCore = convLeadToCore[0] / 100;
         const cPremium = convCoreToPremium[0] / 100;
@@ -425,9 +422,9 @@ export default function BusinessLab() {
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-bold text-sm">{product.nome}</span>
                                                                 <Badge className="text-[8px] h-4 uppercase tracking-tighter" variant="outline">
-                                                                    {product.ladder_stage || product.tipo_produto}
+                                                                    {product.tipo_produto}
                                                                 </Badge>
-                                                                {product.ladder_stage === 'premium' && (
+                                                                {product.tipo_produto === 'premium' && (
                                                                     <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
                                                                 )}
                                                             </div>
@@ -510,7 +507,7 @@ export default function BusinessLab() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2">Papel na Escada</Label>
-                                    <Select value={newProduct.ladder_stage} onValueChange={(v) => setNewProduct({ ...newProduct, ladder_stage: v })}>
+                                    <Select value={newProduct.tipo_produto} onValueChange={(v) => setNewProduct({ ...newProduct, tipo_produto: v })}>
                                         <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl">
                                             <SelectValue />
                                         </SelectTrigger>
