@@ -73,7 +73,7 @@ O calendário anual deve ter exatamente 12 meses, com campanhas sazonais relevan
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                model: "google/gemini-2.0-flash-exp",
+                model: "google/gemini-3-flash-preview",
                 messages: [
                     { role: "system", content: systemPrompt },
                     { role: "user", content: userPrompt },
