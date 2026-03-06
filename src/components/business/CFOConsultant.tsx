@@ -201,13 +201,12 @@ export function CFOConsultant() {
         if (!plan || !user) return;
         setIsSaving(true);
         try {
-            for (const item of plan.productMix) {
+        for (const item of plan.productMix) {
                 await addProduct({
                     nome: item.name,
                     tipo_produto: item.ladder === 'premium' ? 'acompanhamento' : item.ladder === 'core' ? 'consulta' : 'protocolo',
                     ticket: item.suggestedPrice,
-                    descricao: item.rationale,
-                    ladder_stage: item.ladder,
+                    descricao: `[${item.ladder}] ${item.rationale} | Horas/un: ${item.hoursPerUnit} | Volume: ${item.unitsNeeded}`,
                     tipo_cliente: 'desenvolvido',
                     ativo: true,
                     ordem: 0,
