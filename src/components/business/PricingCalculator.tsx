@@ -18,6 +18,9 @@ import { useProducts } from '@/hooks/useProducts';
 import { ProductLadder } from './ProductLadder';
 import { ProfitScenarios } from './ProfitScenarios';
 import { AgendaViability } from './AgendaViability';
+import { ClinicalCostAudit } from './ClinicalCostAudit';
+import { RevenueMixWidget } from './RevenueMixWidget';
+import { NetProfitCard } from './NetProfitCard';
 
 // Tipos
 type FinancialData = {
@@ -147,13 +150,13 @@ export function PricingCalculator() {
     useEffect(() => {
         if (!settings || loadingSettings) return;
         const vals = watchedFinancials;
-        const hasChanged = 
+        const hasChanged =
             Number(vals.incomeGoal) !== settings.monthly_income_goal ||
             Number(vals.fixedCosts) !== settings.fixed_costs ||
             Number(vals.taxRate) !== settings.tax_rate ||
             Number(vals.daysPerWeek) !== settings.work_days_week ||
             Number(vals.hoursPerDay) !== settings.work_hours_day;
-        
+
         if (hasChanged) {
             autoSave({
                 monthly_income_goal: Number(vals.incomeGoal),
@@ -312,10 +315,10 @@ export function PricingCalculator() {
 
                         <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Custos Fixos</Label>
-                            <div className="relative group/input">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">R$</span>
-                                <Input type="number" className="pl-12 h-12 text-lg font-black bg-white/5 border-white/10 rounded-xl group-focus-within/input:border-blue-400 transition-all" {...financialForm.register('fixedCosts')} />
-                            </div>
+                            <ClinicalCostAudit
+                                onChange={(total) => financialForm.setValue('fixedCosts', total)}
+                                initialTotal={Number(financials.fixedCosts)}
+                            />
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
@@ -467,6 +470,35 @@ export function PricingCalculator() {
                             Nutri, para ganhar {formatCurrency(Number(financials.incomeGoal) + Number(financials.fixedCosts))} com este produto de {formatCurrency(suggestedPrice)}, você terá que atender {unitsNeeded} pessoas. Sua hora líquida está saindo por {formatCurrency(profitPerHour)}. {weeklyHoursNeeded > 40 ? "Isso está sufocando sua liberdade física!" : "Vale a pena?"}
                         </p>
                     </Card>
+
+                    {/* Justificativa do Maestro por Nicho */}
+                    {advice && (
+                        <Card className={cn(
+                            "border-none p-5 rounded-2xl border space-y-3",
+                            advice.suggestedMargin >= 45
+                                ? "bg-emerald-500/10 border-emerald-500/20"
+                                : "bg-amber-500/10 border-amber-500/20"
+                        )}>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Crown className={cn('h-4 w-4', advice.suggestedMargin >= 45 ? 'text-emerald-400' : 'text-amber-400')} />
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Justificativa do Nicho</span>
+                                </div>
+                                <Badge className={cn('text-[9px] font-black', advice.suggestedMargin >= 45 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30')}>
+                                    {advice.label}
+                                </Badge>
+                            </div>
+                            <p className="text-[10px] text-slate-300 leading-relaxed">{advice.reasoning}</p>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="w-full text-[9px] font-black uppercase tracking-widest h-8 border-white/10 hover:bg-white/10 transition-all"
+                                onClick={() => applyMaestroValues(advice)}
+                            >
+                                Aplicar Margem de {advice.suggestedMargin}%
+                            </Button>
+                        </Card>
+                    )}
                 </div>
 
                 {/* MY CATALOG - FULL WIDTH (12 colunas) - MOVIDO PARA BAIXO COMO ACERVO */}
@@ -524,6 +556,24 @@ export function PricingCalculator() {
                         </div>
                     )}
                 </div>
+            </div>
+
+            {/* Row 2: Revenue Mix + Net Profit */}
+            <div className="grid md:grid-cols-2 gap-8 mt-4 pt-8 border-t border-white/5">
+                <Card className="border-none bg-card/60 backdrop-blur-xl rounded-[2rem] overflow-hidden p-6 shadow-xl">
+                    <RevenueMixWidget
+                        totalGoal={Number(financials.incomeGoal) + Number(financials.fixedCosts)}
+                        currentPrice={suggestedPrice}
+                        hoursPerUnit={product.hoursSpent}
+                    />
+                </Card>
+                <Card className="border-none bg-card/60 backdrop-blur-xl rounded-[2rem] overflow-hidden p-6 shadow-xl">
+                    <NetProfitCard
+                        grossRevenue={Number(financials.incomeGoal) + Number(financials.fixedCosts)}
+                        taxRate={Number(financials.taxRate)}
+                        fixedCosts={Number(financials.fixedCosts)}
+                    />
+                </Card>
             </div>
 
             {/* Comparador de Cenários */}
