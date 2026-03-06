@@ -57,3 +57,27 @@ verify_jwt = false
 [functions.generate-carousel]
 enabled = true
 verify_jwt = false
+
+[functions.generate-business-plan]
+enabled = true
+verify_jwt = false
+
+[functions.generate-strategy]
+enabled = true
+verify_jwt = false
+
+[functions.generate-month-plan]
+enabled = true
+verify_jwt = false
+
+[functions.generate-carousel-text]
+enabled = true
+verify_jwt = false
+
+[functions.get-viral-ideas]
+enabled = true
+verify_jwt = false
+
+[functions.stripe-webhook]
+enabled = true
+verify_jwt = false
