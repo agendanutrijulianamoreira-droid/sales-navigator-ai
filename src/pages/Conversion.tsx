@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAISpecialist } from "@/hooks/useAISpecialist";
 import { useGenerations } from "@/hooks/useGenerations";
 import { useProducts } from "@/hooks/useProducts";
+import { useCredits } from "@/hooks/useCredits";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles, MessageSquare, Users, Copy, Check, Crown, Zap, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +52,7 @@ type ScriptKey = (typeof SCRIPT_CARDS)[number]["key"];
 
 export default function Conversion() {
   const { profile } = useProfile();
+  const { consumeCredit } = useCredits();
   const { generateContent, isLoading, streamedContent } = useAISpecialist();
   const { saveGeneration } = useGenerations();
   const { products } = useProducts();
@@ -84,13 +86,37 @@ export default function Conversion() {
 
   const handleGenerateScript = async (card: (typeof SCRIPT_CARDS)[number]) => {
     const product = products?.find(p => p.id === selectedProduct);
+
+    const hasCredits = await consumeCredit(1);
+    if (!hasCredits) return;
+
     setScriptLoading(prev => ({ ...prev, [card.key]: true }));
     setScriptOutputs(prev => ({ ...prev, [card.key]: "" }));
+
     try {
-      const result = await generateContent("vip_closer", card.subtipo, {
-        produto: product ? { nome: product.nome, ticket: product.ticket } : null,
+      const typeMap: Record<string, string> = {
+        qualificacao: "qualification_script",
+        apresentacao: "presentation_script",
+        fechamento: "closing_script",
+      };
+
+      const { data, error } = await supabase.functions.invoke("generate-sales-closer", {
+        body: {
+          type: typeMap[card.key],
+          data: {
+            product: product ? { nome: product.nome, ticket: product.ticket } : null,
+          },
+          profile
+        }
       });
-      setScriptOutputs(prev => ({ ...prev, [card.key]: result || "" }));
+
+      if (error) throw error;
+
+      setScriptOutputs(prev => ({ ...prev, [card.key]: data.response || "" }));
+      toast.success("Script gerado!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao gerar script");
     } finally {
       setScriptLoading(prev => ({ ...prev, [card.key]: false }));
     }
@@ -331,28 +357,30 @@ export default function Conversion() {
                     </Card>
 
                     {scriptOutputs[card.key] && (
-                      <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                            Script gerado
+                      <Card className="border-primary/20 bg-primary/5 animate-in fade-in slide-in-from-top-2">
+                        <CardHeader className="py-3 flex flex-row items-center justify-between space-y-0">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                            Script Sugerido
                           </p>
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 px-2 text-xs gap-1"
+                            className="h-8 px-2 text-xs gap-1.5 hover:bg-primary/10"
                             onClick={() => handleCopyScript(card.key)}
                           >
                             {scriptCopied[card.key] ? (
-                              <><Check className="h-3 w-3" /> Copiado</>
+                              <><Check className="h-3.5 w-3.5 text-green-500" /> Copiado</>
                             ) : (
-                              <><Copy className="h-3 w-3" /> Copiar</>
+                              <><Copy className="h-3.5 w-3.5" /> Copiar</>
                             )}
                           </Button>
-                        </div>
-                        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-                          {scriptOutputs[card.key]}
-                        </p>
-                      </div>
+                        </CardHeader>
+                        <CardContent className="pt-0 pb-4">
+                          <p className="text-sm text-foreground whitespace-pre-line leading-relaxed italic">
+                            {scriptOutputs[card.key]}
+                          </p>
+                        </CardContent>
+                      </Card>
                     )}
                   </div>
                 ))}

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,8 @@ interface DateSuggestionsProps {
 }
 
 export function DateSuggestions({ items, weekDates, onSelectDate }: DateSuggestionsProps) {
+  const [selectedDay, setSelectedDay] = useState<number>(new Date().getDay());
+
   // Contar posts por dia da semana
   const postsPerDay: Record<number, number> = {
     0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0,
@@ -38,51 +41,87 @@ export function DateSuggestions({ items, weekDates, onSelectDate }: DateSuggesti
     .map((date) => ({
       date,
       day: date.getDay(),
-      dayName: ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][date.getDay()],
+      dayName: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][date.getDay()],
+      fullDayName: ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][date.getDay()],
       postsCount: items.filter((item) => item.data === date.toISOString().split("T")[0]).length,
     }))
     .sort((a, b) => a.postsCount - b.postsCount);
 
-  const topSuggestions = suggestions.slice(0, 3);
-  const isEmpty = topSuggestions.every((s) => s.postsCount === 0);
-
-  if (isEmpty || topSuggestions.every((s) => s.postsCount > 0)) {
-    return null;
-  }
+  const topSuggestions = suggestions.filter(s => s.postsCount < 3).slice(0, 3);
 
   return (
-    <Card className="border-blue-200 bg-blue-50">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center gap-2">
-          <Lightbulb className="h-4 w-4 text-blue-600" />
-          Melhor Momento para Postar
-        </CardTitle>
-        <CardDescription>Dias com menos posts agendados</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {topSuggestions.map((suggestion) => (
-          <Button
-            key={suggestion.date.toISOString()}
-            variant="outline"
-            className="w-full justify-between h-auto py-2"
-            onClick={() => onSelectDate(suggestion.date)}
-          >
-            <span className="flex items-center gap-2 flex-wrap">
-              {suggestion.dayName} ({suggestion.date.getDate()})
-              <Badge variant="secondary">
-                {suggestion.postsCount} post{suggestion.postsCount !== 1 ? "s" : ""}
-              </Badge>
-              <Badge
-                variant="outline"
-                className={`text-[10px] font-medium border ${ALCATEIA_CALENDAR[suggestion.day].color}`}
+    <div className="space-y-6">
+      {/* Cadência Alcateia */}
+      <div className="space-y-3">
+        <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground pl-1">
+          Cadência semanal recomendada
+        </h4>
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {weekDates.sort((a, b) => a.getTime() - b.getTime()).map((date) => {
+            const day = date.getDay();
+            const isSelected = selectedDay === day;
+            const config = ALCATEIA_CALENDAR[day];
+
+            return (
+              <button
+                key={day}
+                onClick={() => setSelectedDay(day)}
+                className={`flex flex-col items-center min-w-[50px] p-2 rounded-xl transition-all border-2 ${isSelected
+                  ? "bg-background border-primary shadow-sm scale-105"
+                  : "bg-muted/30 border-transparent hover:bg-muted/50"
+                  }`}
               >
-                {ALCATEIA_CALENDAR[suggestion.day].label}
-              </Badge>
-            </span>
-            <span className="text-xs text-muted-foreground">Agendar →</span>
-          </Button>
-        ))}
-      </CardContent>
-    </Card>
+                <span className="text-[10px] uppercase font-bold text-muted-foreground">
+                  {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][day]}
+                </span>
+                <span className="text-sm font-bold">{date.getDate()}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className={`p-4 rounded-2xl border transition-all animate-in fade-in slide-in-from-top-2 ${ALCATEIA_CALENDAR[selectedDay].color}`}>
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Sugestão Elite</p>
+              <h5 className="font-bold text-sm flex items-center gap-2">
+                {ALCATEIA_CALENDAR[selectedDay].label}
+              </h5>
+            </div>
+            <Lightbulb className="h-5 w-5 opacity-50" />
+          </div>
+        </div>
+      </div>
+
+      {topSuggestions.length > 0 && (
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardHeader className="pb-3 pt-4 px-4">
+            <CardTitle className="text-xs flex items-center gap-2">
+              <Lightbulb className="h-4 w-4 text-blue-600" />
+              Melhor Momento para Postar
+            </CardTitle>
+            <CardDescription className="text-[10px]">Dias com menos posts agendados</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 px-4 pb-4">
+            {topSuggestions.map((suggestion) => (
+              <Button
+                key={suggestion.date.toISOString()}
+                variant="outline"
+                className="w-full justify-between h-auto py-2 bg-white/50 border-blue-100 hover:bg-white"
+                onClick={() => onSelectDate(suggestion.date)}
+              >
+                <span className="flex items-center gap-2 flex-wrap text-xs">
+                  {suggestion.fullDayName} ({suggestion.date.getDate()})
+                  <Badge variant="secondary" className="bg-blue-100/50 text-blue-700 text-[10px]">
+                    {suggestion.postsCount} post{suggestion.postsCount !== 1 ? "s" : ""}
+                  </Badge>
+                </span>
+                <span className="text-[10px] text-blue-600 font-bold uppercase tracking-tighter">Agendar →</span>
+              </Button>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }

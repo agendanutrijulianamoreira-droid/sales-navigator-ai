@@ -38,7 +38,7 @@ export function AIAssistantSidebar() {
         <Sheet>
             <SheetTrigger asChild>
                 <Button
-                    className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 hover:scale-110 transition-all z-[100] border-none group"
+                    className="hidden md:flex fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 hover:scale-110 transition-all z-[100] border-none group"
                     size="icon"
                 >
                     <MessageSquare className="w-7 h-7 text-white group-hover:rotate-12 transition-transform" />
@@ -70,8 +70,8 @@ export function AIAssistantSidebar() {
                                     </div>
                                 )}
                                 <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${m.role === 'ai'
-                                        ? 'bg-muted text-foreground rounded-tl-none'
-                                        : 'bg-primary text-primary-foreground rounded-tr-none'
+                                    ? 'bg-muted text-foreground rounded-tl-none'
+                                    : 'bg-primary text-primary-foreground rounded-tr-none'
                                     }`}>
                                     {m.content}
                                 </div>

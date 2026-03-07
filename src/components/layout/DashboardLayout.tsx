@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
     Sparkles, Target, Calendar, ShoppingBag, MessageSquare,
-    BarChart3, BookOpen, User, Zap, Home, Camera, Settings, LogOut, Plus, Coins, Crown, Trophy
+    BarChart3, BookOpen, User, Zap, Home, Camera, Settings, LogOut, Plus, Coins, Crown, Trophy, TrendingUp
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCredits } from "@/hooks/useCredits";
@@ -19,11 +19,19 @@ const NAV_ITEMS = [
     { title: "Conteúdo IA", icon: Sparkles, href: "/carousel-creator" },
     { title: "Funis de Vendas", icon: Target, href: "/funnels" },
     { title: "Lista VIP", icon: MessageSquare, href: "/vip-list" },
-    { title: "Acelerador de Vendas", icon: Zap, href: "/conversion" },
+    { title: "Acelerador de Vendas", icon: TrendingUp, href: "/conversion" },
     { title: "Fábrica de Desafios", icon: Trophy, href: "/challenge-creator" },
     { title: "Estúdio de Fotos", icon: Camera, href: "/photo-studio" },
     { title: "Resultados", icon: BarChart3, href: "/results" },
     { title: "Mentor IA", icon: Zap, href: "/mentor" },
+];
+
+const MOBILE_NAV_ITEMS = [
+    { title: "Início", icon: Home, href: "/" },
+    { title: "Funis", icon: Target, href: "/funnels" },
+    { title: "Conteúdo", icon: Sparkles, href: "/carousel-creator" },
+    { title: "VIP", icon: Crown, href: "/vip-list" },
+    { title: "Mentor", icon: MessageSquare, href: "/mentor" },
 ];
 
 export default function DashboardLayout({ children }: { children?: React.ReactNode }) {
@@ -127,13 +135,35 @@ export default function DashboardLayout({ children }: { children?: React.ReactNo
 
             {/* Main Content */}
             <main className="flex-1 overflow-y-auto relative">
-                <div className="container mx-auto p-4 md:p-8 max-w-7xl animate-fade-in">
+                <div className="container mx-auto p-4 pb-24 md:p-8 max-w-7xl animate-fade-in">
                     {children || <Outlet />}
                 </div>
 
                 <AIAssistantSidebar />
                 <CreditTopUpModal isOpen={isTopUpOpen} onClose={() => setIsTopUpOpen(false)} />
             </main>
+
+            {/* Mobile Nav */}
+            <nav className="md:hidden fixed bottom-0 left-0 right-0 glass-sidebar border-t border-border/50 flex justify-around py-3 z-50 px-2 backdrop-blur-xl">
+                {MOBILE_NAV_ITEMS.map((item) => {
+                    const isActive = location.pathname === item.href;
+                    return (
+                        <Link
+                            key={item.href}
+                            to={item.href}
+                            className={cn(
+                                "flex flex-col items-center gap-1.5 px-1 transition-all duration-300",
+                                isActive ? "text-primary scale-110" : "text-muted-foreground"
+                            )}
+                        >
+                            <item.icon className={cn("h-5 w-5 transition-colors", isActive && "text-primary")} />
+                            <span className={cn("text-[9px] font-bold uppercase tracking-tight", isActive && "text-primary")}>
+                                {item.title}
+                            </span>
+                        </Link>
+                    );
+                })}
+            </nav>
         </div>
     );
 }

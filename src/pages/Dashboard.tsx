@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,10 +23,10 @@ const MODULES = [
 ];
 
 const FUNNEL_METRICS = [
-  { label: "Leads Hoje", icon: Users, color: "text-blue-400", bg: "from-blue-500/10 to-blue-600/5", borderColor: "border-blue-500/20" },
-  { label: "Conversas Ativas", icon: MessageSquare, color: "text-amber-400", bg: "from-amber-500/10 to-amber-600/5", borderColor: "border-amber-500/20" },
-  { label: "Propostas Enviadas", icon: FileText, color: "text-purple-400", bg: "from-purple-500/10 to-purple-600/5", borderColor: "border-purple-500/20" },
-  { label: "Vendas no Mês", icon: DollarSign, color: "text-emerald-400", bg: "from-emerald-500/10 to-emerald-600/5", borderColor: "border-emerald-500/20" },
+  { label: "Leads Capturados", icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
+  { label: "Conversas Ativas", icon: MessageSquare, color: "text-amber-500", bg: "bg-amber-500/10" },
+  { label: "Propostas Enviadas", icon: FileText, color: "text-purple-500", bg: "bg-purple-500/10" },
+  { label: "Vendas no Mês", icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10" },
 ];
 
 export default function Dashboard() {
@@ -54,28 +55,33 @@ export default function Dashboard() {
       </div>
 
       {/* Pulso do Funil */}
-      <div>
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3 pl-1">Pulso do Funil</p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {FUNNEL_METRICS.map((metric, i) => (
-            <Card key={metric.label} className={`glass-card border ${metric.borderColor} hover:glass-card-elevated transition-all duration-300`}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs text-muted-foreground font-medium">{metric.label}</p>
-                  <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${metric.bg} flex items-center justify-center`}>
-                    <metric.icon className={`h-3.5 w-3.5 ${metric.color}`} />
-                  </div>
-                </div>
-                <p className={`text-3xl font-bold tracking-tight ${metric.color}`}>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {FUNNEL_METRICS.map((metric, i) => (
+          <Card key={metric.label} className="glass-card border-border/50 hover:glass-card-elevated transition-all duration-300">
+            <CardContent className="p-5 relative overflow-hidden">
+              <div className="flex flex-col gap-1">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  {metric.label}
+                </p>
+                <p className="text-3xl font-bold text-foreground">
                   {funnelValues[i]}
                 </p>
-                <Badge variant="secondary" className="mt-2 text-[10px] bg-muted/50 text-muted-foreground border-0 font-normal">
-                  +0 hoje
-                </Badge>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                <div className="mt-3">
+                  <Badge variant="secondary" className="text-[10px] bg-muted/30 text-muted-foreground border-0 font-normal px-2 py-0">
+                    +0 hoje
+                  </Badge>
+                </div>
+              </div>
+
+              <div className={cn(
+                "absolute top-5 right-5 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm",
+                metric.bg
+              )}>
+                <metric.icon className={cn("h-5 w-5", metric.color)} />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">

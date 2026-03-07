@@ -11,8 +11,6 @@ import { BrandProvider } from "@/contexts/BrandContext";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import ChallengeCreator from "./pages/ChallengeCreator";
-import Conversion from "./pages/Conversion";
 
 // Componente de Loading Simples
 const PageLoader = () => (
@@ -29,14 +27,14 @@ const BusinessLab = lazy(() => import("./pages/BusinessLab"));
 const CalendarPage = lazy(() => import("./pages/CalendarPage"));
 const ContentPlanner = lazy(() => import("./pages/ContentPlanner"));
 const CarouselCreator = lazy(() => import("./pages/CarouselCreator"));
-// const Conversion = lazy(() => import("./pages/Conversion"));
+const Conversion = lazy(() => import("./pages/Conversion"));
 const Results = lazy(() => import("./pages/Results"));
 const Mentor = lazy(() => import("./pages/Mentor"));
 const Settings = lazy(() => import("./pages/Settings"));
 const PhotoStudio = lazy(() => import("./pages/PhotoStudio"));
 const Funnels = lazy(() => import("./pages/Funnels"));
 const VipListManager = lazy(() => import("./pages/VipListManager"));
-// const ChallengeCreator = lazy(() => import("./pages/ChallengeCreator"));
+const ChallengeCreator = lazy(() => import("./pages/ChallengeCreator"));
 
 const queryClient = new QueryClient();
 

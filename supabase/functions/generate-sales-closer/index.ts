@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 const PERSONAS = {
@@ -15,7 +16,7 @@ PROTOCOLO: Papel de autoridade, mas acolhedora. Fale como quem já viu centenas 
 
 serve(async (req) => {
     if (req.method === "OPTIONS") {
-        return new Response(null, { headers: corsHeaders });
+        return new Response("ok", { headers: corsHeaders, status: 200 });
     }
 
     try {
@@ -51,7 +52,28 @@ REGRAS:
 
         let userPrompt = "";
 
-        if (type === "breaking_objection") {
+        if (type === "qualification_script") {
+            userPrompt = `TIPO: Script de Qualificação de Lead
+PRODUTO: ${data.product?.nome || "Programa Personalizado"}
+TICKET: R$ ${data.product?.ticket || "Consultar"}
+
+Tarefa: Gere um script persuasivo para iniciar o contato com um lead e descobrir se ele tem o perfil ideal.
+Retorne um JSON com: { "response": "texto do script" }`;
+        } else if (type === "presentation_script") {
+            userPrompt = `TIPO: Script de Apresentação de Oferta
+PRODUTO: ${data.product?.nome || "Programa Personalizado"}
+TICKET: R$ ${data.product?.ticket || "Consultar"}
+
+Tarefa: Gere um script para apresentar a solução focando nos benefícios e na transformação.
+Retorne um JSON com: { "response": "texto do script" }`;
+        } else if (type === "closing_script") {
+            userPrompt = `TIPO: Script de Fechamento Irresistível
+PRODUTO: ${data.product?.nome || "Programa Personalizado"}
+TICKET: R$ ${data.product?.ticket || "Consultar"}
+
+Tarefa: Gere um script focado em levar o lead para a ação final de compra.
+Retorne um JSON com: { "response": "texto do script" }`;
+        } else if (type === "breaking_objection") {
             userPrompt = `TIPO: Quebra de Objeção Complexa
 OBJECÃO DO CLIENTE: "${data.objection}"
 CONTEXTO: ${data.context || "Lead em fechamento de mentoria"}
@@ -62,10 +84,11 @@ Tarefa: Gere uma resposta persuasiva para Direct ou WhatsApp que:
 3. Chame para a decisão/próximo passo.
 Retorne um JSON com: { "response": "texto da resposta" }`;
         } else if (type === "follow_up_elite") {
-            userPrompt = `TIPO: Follow-up de Elite (Última Chamada)
-SITUAÇÃO: Lead sumiu ou disse que "ia pensar" há 24h.
+            userPrompt = `TIPO: Follow-up de Elite
+SITUAÇÃO: Lead sumiu ou disse que "ia pensar".
+PRODUTO: ${data.product?.nome || "Programa Personalizado"}
 
-Tarefa: Gere uma mensagem curta e poderosa para "limpar o terreno" ou fechar a venda agora.
+Tarefa: Gere uma mensagem curta para retomar o contato ou fechar a venda agora.
 Retorne um JSON com: { "response": "texto da mensagem" }`;
         } else {
             userPrompt = `TIPO: Refinamento de Proposta High Ticket

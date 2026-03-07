@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Sparkles, Target, Calendar, ShoppingBag, MessageSquare,
   BarChart3, BookOpen, LogOut, User, Zap, Home, ChevronLeft,
-  Camera, Crown, Trophy
+  Camera, Crown, Trophy, TrendingUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +16,7 @@ const NAV_ITEMS = [
   { title: "Conteúdo IA", icon: Sparkles, href: "/carousel-creator" },
   { title: "Funis de Vendas", icon: Target, href: "/funnels" },
   { title: "Lista VIP", icon: MessageSquare, href: "/vip-list" },
-  { title: "Acelerador de Vendas", icon: Zap, href: "/conversion" },
+  { title: "Acelerador de Vendas", icon: TrendingUp, href: "/conversion" },
   { title: "Fábrica de Desafios", icon: Trophy, href: "/challenge-creator" },
   { title: "Estúdio de Fotos", icon: Camera, href: "/photo-studio" },
   { title: "Resultados", icon: BarChart3, href: "/results" },
