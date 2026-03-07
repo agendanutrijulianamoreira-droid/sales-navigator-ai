@@ -4,6 +4,17 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarItem } from "@/hooks/useCalendarItems";
 import { Lightbulb } from "lucide-react";
 
+// Calendário Alcateia: sugestão de conteúdo por dia da semana
+const ALCATEIA_CALENDAR: Record<number, { label: string; type: string; color: string }> = {
+  0: { label: "Levantada de Mão 🙋", type: "levantada", color: "bg-pink-100 text-pink-700 border-pink-200" },
+  1: { label: "Caixinha 3x1 📦", type: "stories", color: "bg-blue-100 text-blue-700 border-blue-200" },
+  2: { label: "Empurrãozinho 🚀", type: "stories", color: "bg-orange-100 text-orange-700 border-orange-200" },
+  3: { label: "Carrossel de Valor 🎠", type: "carrossel", color: "bg-purple-100 text-purple-700 border-purple-200" },
+  4: { label: "Levantada de Mão 🙋", type: "levantada", color: "bg-pink-100 text-pink-700 border-pink-200" },
+  5: { label: "Caixinha 3x1 📦", type: "stories", color: "bg-blue-100 text-blue-700 border-blue-200" },
+  6: { label: "Empurrãozinho 🚀", type: "stories", color: "bg-orange-100 text-orange-700 border-orange-200" },
+};
+
 interface DateSuggestionsProps {
   items: CalendarItem[];
   weekDates: Date[];
@@ -56,10 +67,16 @@ export function DateSuggestions({ items, weekDates, onSelectDate }: DateSuggesti
             className="w-full justify-between h-auto py-2"
             onClick={() => onSelectDate(suggestion.date)}
           >
-            <span>
-              {suggestion.dayName} ({suggestion.date.getDate()}) -{" "}
-              <Badge variant="secondary" className="ml-2">
+            <span className="flex items-center gap-2 flex-wrap">
+              {suggestion.dayName} ({suggestion.date.getDate()})
+              <Badge variant="secondary">
                 {suggestion.postsCount} post{suggestion.postsCount !== 1 ? "s" : ""}
+              </Badge>
+              <Badge
+                variant="outline"
+                className={`text-[10px] font-medium border ${ALCATEIA_CALENDAR[suggestion.day].color}`}
+              >
+                {ALCATEIA_CALENDAR[suggestion.day].label}
               </Badge>
             </span>
             <span className="text-xs text-muted-foreground">Agendar →</span>

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
+import { useProfile } from "@/hooks/useProfile";
+import { HighTicketProposal } from "@/components/business/HighTicketProposal";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +13,8 @@ import { useAISpecialist } from "@/hooks/useAISpecialist";
 import { useGenerations } from "@/hooks/useGenerations";
 import { useProducts } from "@/hooks/useProducts";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, MessageSquare, Users, Copy, Check, Crown } from "lucide-react";
+import { Loader2, Sparkles, MessageSquare, Users, Copy, Check, Crown, Zap, ShieldAlert } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const MESSAGE_TYPES = [
@@ -23,7 +26,31 @@ const MESSAGE_TYPES = [
   { value: "objecao", label: "Quebra de Objeção", description: "Responda dúvidas comuns" },
 ];
 
+const SCRIPT_CARDS = [
+  {
+    key: "qualificacao",
+    title: "Script de Qualificação",
+    desc: "Identifique leads qualificados",
+    subtipo: "script_cedo_conectar",
+  },
+  {
+    key: "apresentacao",
+    title: "Script de Apresentação",
+    desc: "Apresente sua oferta com elegância",
+    subtipo: "script_apresentacao",
+  },
+  {
+    key: "fechamento",
+    title: "Script de Fechamento",
+    desc: "Conduza para a decisão",
+    subtipo: "script_fechamento",
+  },
+] as const;
+
+type ScriptKey = (typeof SCRIPT_CARDS)[number]["key"];
+
 export default function Conversion() {
+  const { profile } = useProfile();
   const { generateContent, isLoading, streamedContent } = useAISpecialist();
   const { saveGeneration } = useGenerations();
   const { products } = useProducts();
@@ -32,6 +59,51 @@ export default function Conversion() {
   const [context, setContext] = useState("");
   const [selectedProduct, setSelectedProduct] = useState("");
   const [copied, setCopied] = useState(false);
+
+  // Sales Closer — Objection breaking
+  const [objection, setObjection] = useState("");
+  const [objectionResult, setObjectionResult] = useState("");
+  const [isBreaking, setIsBreaking] = useState(false);
+
+  // Scripts tab — each card has its own output + loading state
+  const [scriptOutputs, setScriptOutputs] = useState<Record<ScriptKey, string>>({
+    qualificacao: "",
+    apresentacao: "",
+    fechamento: "",
+  });
+  const [scriptLoading, setScriptLoading] = useState<Record<ScriptKey, boolean>>({
+    qualificacao: false,
+    apresentacao: false,
+    fechamento: false,
+  });
+  const [scriptCopied, setScriptCopied] = useState<Record<ScriptKey, boolean>>({
+    qualificacao: false,
+    apresentacao: false,
+    fechamento: false,
+  });
+
+  const handleGenerateScript = async (card: (typeof SCRIPT_CARDS)[number]) => {
+    const product = products?.find(p => p.id === selectedProduct);
+    setScriptLoading(prev => ({ ...prev, [card.key]: true }));
+    setScriptOutputs(prev => ({ ...prev, [card.key]: "" }));
+    try {
+      const result = await generateContent("vip_closer", card.subtipo, {
+        produto: product ? { nome: product.nome, ticket: product.ticket } : null,
+      });
+      setScriptOutputs(prev => ({ ...prev, [card.key]: result || "" }));
+    } finally {
+      setScriptLoading(prev => ({ ...prev, [card.key]: false }));
+    }
+  };
+
+  const handleCopyScript = (key: ScriptKey) => {
+    const text = scriptOutputs[key];
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setScriptCopied(prev => ({ ...prev, [key]: true }));
+    toast.success("Copiado!");
+    setTimeout(() => setScriptCopied(prev => ({ ...prev, [key]: false })), 2000);
+  };
 
   const handleGenerate = async () => {
     const product = products?.find(p => p.id === selectedProduct);
@@ -68,12 +140,35 @@ export default function Conversion() {
     }
   };
 
+  const handleBreakObjection = async () => {
+    if (!objection.trim()) return;
+    setIsBreaking(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-sales-closer", {
+        body: {
+          type: "breaking_objection",
+          data: { objection },
+          profile: profile
+        }
+      });
+      if (error) throw error;
+      setObjectionResult(data.response || "");
+      toast.success("Argumento gerado!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao gerar quebra de objeção");
+    } finally {
+      setIsBreaking(false);
+    }
+  };
+
   return (
-    <AppLayout title="Conversão" description="Lista VIP & Closer">
+    <AppLayout title="Acelerador de Vendas" description="Scripts de Elite & Propostas High Ticket">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="vip">Lista VIP</TabsTrigger>
           <TabsTrigger value="scripts">Scripts de Vendas</TabsTrigger>
+          <TabsTrigger value="proposals">Propostas Elite</TabsTrigger>
         </TabsList>
 
         <TabsContent value="vip" className="space-y-6">
@@ -97,8 +192,8 @@ export default function Conversion() {
                           key={type.value}
                           onClick={() => setMessageType(type.value)}
                           className={`p-3 rounded-lg border cursor-pointer transition-all ${messageType === type.value
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
                             }`}
                         >
                           <span className="font-medium text-sm">{type.label}</span>
@@ -209,28 +304,129 @@ export default function Conversion() {
               <CardDescription>Sequências completas para converter leads</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-3">
-                {[
-                  { title: "Script de Qualificação", desc: "Identifique leads qualificados" },
-                  { title: "Script de Apresentação", desc: "Apresente sua oferta com elegância" },
-                  { title: "Script de Fechamento", desc: "Conduza para a decisão" },
-                ].map((script) => (
-                  <Card key={script.title} className="cursor-pointer hover:border-primary/30 transition-colors">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">{script.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-xs text-muted-foreground">{script.desc}</p>
-                      <Button size="sm" className="mt-4 w-full" variant="outline">
-                        <Sparkles className="h-3 w-3 mr-2" />
-                        Gerar
-                      </Button>
-                    </CardContent>
-                  </Card>
+              <div className="grid gap-6 md:grid-cols-3">
+                {SCRIPT_CARDS.map((card) => (
+                  <div key={card.key} className="flex flex-col gap-3">
+                    <Card className="hover:border-primary/30 transition-colors">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">{card.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-xs text-muted-foreground">{card.desc}</p>
+                        <Button
+                          size="sm"
+                          className="mt-4 w-full"
+                          variant="outline"
+                          disabled={scriptLoading[card.key]}
+                          onClick={() => handleGenerateScript(card)}
+                        >
+                          {scriptLoading[card.key] ? (
+                            <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-3 w-3 mr-2" />
+                          )}
+                          {scriptLoading[card.key] ? "Gerando..." : "Gerar"}
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    {scriptOutputs[card.key] && (
+                      <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                            Script gerado
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs gap-1"
+                            onClick={() => handleCopyScript(card.key)}
+                          >
+                            {scriptCopied[card.key] ? (
+                              <><Check className="h-3 w-3" /> Copiado</>
+                            ) : (
+                              <><Copy className="h-3 w-3" /> Copiar</>
+                            )}
+                          </Button>
+                        </div>
+                        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                          {scriptOutputs[card.key]}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="proposals" className="space-y-8">
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <HighTicketProposal />
+            </div>
+
+            <div className="space-y-6">
+              <Card className="glass-card border-amber-500/20 bg-amber-500/5">
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <ShieldAlert className="h-4 w-4 text-amber-500" />
+                    Quebra de Objeções (IA Closer)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs">O que o cliente disse?</Label>
+                    <Textarea
+                      placeholder="Ex: Está caro, vou pensar, preciso falar com meu marido..."
+                      value={objection}
+                      onChange={(e) => setObjection(e.target.value)}
+                      className="text-sm h-24"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleBreakObjection}
+                    disabled={isBreaking || !objection}
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+                  >
+                    {isBreaking ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
+                    Gerar Contra-Argumento
+                  </Button>
+
+                  {objectionResult && (
+                    <div className="mt-4 p-4 rounded-xl bg-white/10 border border-white/20 animate-in fade-in slide-in-from-top-2">
+                      <p className="text-xs font-bold uppercase text-amber-500 mb-2">Sugestão de Resposta:</p>
+                      <p className="text-sm italic leading-relaxed">"{objectionResult}"</p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mt-3 w-full h-8 text-xs underline"
+                        onClick={() => {
+                          navigator.clipboard.writeText(objectionResult);
+                          toast.success("Copiado!");
+                        }}
+                      >
+                        Copiar para o WhatsApp
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Fechamento High Ticket</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Lembre-se: Em vendas de alto valor, você não vende "tempo", você vende **velocidade e segurança**.
+                    Use a proposta visual para tangibilizar o invisível.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </AppLayout>

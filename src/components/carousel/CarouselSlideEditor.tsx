@@ -28,12 +28,16 @@ export function CarouselSlideEditor({ slide, index, onUpdate, onSelectBackground
     const subtextoRef = useRef<HTMLDivElement>(null);
     const destaqueRef = useRef<HTMLDivElement>(null);
 
-    // Sync refs with slide data on initial load or index change
+    // Remove markdown bold/italic markers that the AI sometimes outputs literally
+    const stripMarkdown = (text: string) =>
+        text.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1");
+
+    // Sync refs with slide data whenever the displayed slide changes
     useEffect(() => {
-        if (headlineRef.current) headlineRef.current.innerText = slide.headline;
-        if (subtextoRef.current) subtextoRef.current.innerText = slide.subtexto || "";
-        if (destaqueRef.current) destaqueRef.current.innerText = slide.destaque || "";
-    }, [index, slide.layout]);
+        if (headlineRef.current) headlineRef.current.innerText = stripMarkdown(slide.headline);
+        if (subtextoRef.current) subtextoRef.current.innerText = stripMarkdown(slide.subtexto || "");
+        if (destaqueRef.current) destaqueRef.current.innerText = stripMarkdown(slide.destaque || "");
+    }, [index, slide.layout, slide.headline, slide.subtexto, slide.destaque]);
 
     const handleBlur = () => {
         onUpdate(index, {

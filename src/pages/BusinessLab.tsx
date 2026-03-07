@@ -19,6 +19,7 @@ import {
 import { toast } from "sonner";
 import { PricingCalculator } from "@/components/business/PricingCalculator";
 import { CFOConsultant } from "@/components/business/CFOConsultant";
+import { FinancialGPS } from "@/components/business/FinancialGPS";
 import { useFinancialSettings } from "@/hooks/useFinancialSettings";
 import { cn } from "@/lib/utils";
 import { Slider } from "@/components/ui/slider";
@@ -212,7 +213,7 @@ export default function BusinessLab() {
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8 relative z-10">
                 <div className="flex justify-center mb-8">
-                    <TabsList className="grid grid-cols-4 w-full max-w-3xl bg-muted/30 backdrop-blur-md border border-white/10 p-1 rounded-2xl h-14">
+                    <TabsList className="grid grid-cols-5 w-full max-w-4xl bg-muted/30 backdrop-blur-md border border-white/10 p-1 rounded-2xl h-14">
                         <TabsTrigger value="finance" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
                             <BarChart3 className="h-4 w-4" />
                             <span className="font-bold hidden sm:inline">Engenharia de Lucro</span>
@@ -229,12 +230,21 @@ export default function BusinessLab() {
                             <Trophy className="h-4 w-4" />
                             <span className="font-bold hidden sm:inline">Fábrica Digital</span>
                         </TabsTrigger>
+                        <TabsTrigger value="gps" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
+                            <TrendingUp className="h-4 w-4" />
+                            <span className="font-bold hidden sm:inline">GPS Financeiro</span>
+                        </TabsTrigger>
                     </TabsList>
                 </div>
 
                 {/* CFO Consultant Tab */}
                 <TabsContent value="cfo" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <CFOConsultant />
+                </TabsContent>
+
+                {/* GPS Financeiro Tab */}
+                <TabsContent value="gps" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <FinancialGPS />
                 </TabsContent>
 
                 {/* Product Ladder / Revenue Roadmap */}

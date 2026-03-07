@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
     Sparkles, Target, Calendar, ShoppingBag, MessageSquare,
-    BarChart3, BookOpen, User, Zap, Home, Camera, Settings, LogOut, Plus, Coins, Crown
+    BarChart3, BookOpen, User, Zap, Home, Camera, Settings, LogOut, Plus, Coins, Crown, Trophy
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCredits } from "@/hooks/useCredits";
@@ -17,9 +17,13 @@ const NAV_ITEMS = [
     { title: "Business Lab", icon: ShoppingBag, href: "/business-lab" },
     { title: "Calendário", icon: Calendar, href: "/planner" },
     { title: "Conteúdo IA", icon: Sparkles, href: "/carousel-creator" },
+    { title: "Funis de Vendas", icon: Target, href: "/funnels" },
+    { title: "Lista VIP", icon: MessageSquare, href: "/vip-list" },
+    { title: "Acelerador de Vendas", icon: Zap, href: "/conversion" },
+    { title: "Fábrica de Desafios", icon: Trophy, href: "/challenge-creator" },
     { title: "Estúdio de Fotos", icon: Camera, href: "/photo-studio" },
     { title: "Resultados", icon: BarChart3, href: "/results" },
-    { title: "Mentor IA", icon: MessageSquare, href: "/mentor" },
+    { title: "Mentor IA", icon: Zap, href: "/mentor" },
 ];
 
 export default function DashboardLayout({ children }: { children?: React.ReactNode }) {

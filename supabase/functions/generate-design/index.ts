@@ -18,77 +18,101 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Enhanced style descriptions for better visual consistency
+    // Premium style descriptions with high-ticket visual references
     const styleDescriptions: Record<string, string> = {
-      minimalist: "Clean, minimalist graphic design with ample white space, high-end editorial feel, modern sans-serif typography, subtle depth with soft shadows.",
-      twitter: "Modern social media text-post style, clean dark text on a light solid background, professional and highly readable, minimalist UI elements.",
-      elegant: "Premium sophisticated design, luxury brand aesthetic, serif typography, refined color palette with gold or muted accents, spacious layout.",
-      bold: "High-impact energetic design, vibrant high-contrast colors, massive bold typography, dynamic geometric shapes, modern and attention-grabbing.",
-      warm: "Friendly and welcoming design, soft organic shapes, warm pastel color palette, approachable feel, rounded typography, clean and cozy layout.",
+      minimalist: "Ultra-clean editorial design. Pure white or off-white (#FAFAF8) background. A single strong accent color block. Generous whitespace. Headlines in heavy weight, body text in light weight. No decorative clutter. Think Vogue magazine meets premium wellness brand.",
+      twitter: "Sophisticated text-forward post. Cream or very light warm-gray background (#F5F0EB). Headline in large bold serif or sans-serif. A thin accent rule or colored text highlight. No icons or clipart. Clean like a premium newsletter.",
+      elegant: "Luxury brand aesthetic. Deep background color (near-black, dark wine #5C1A2E, or charcoal) with cream/ivory (#F5ECD7) text and a single warm gold (#C9A96E) accent. Serif headline, delicate body font. Feels like a high-end spa or premium coaching brand.",
+      bold: "High-impact editorial. Full bleed background in a strong desaturated color. Massive headline, 80–120pt, centered with crop. Controlled color palette: 2 colors max. Geometric negative space. Feels like a luxury fashion label or a dominant expert brand.",
+      warm: "Premium nurturing aesthetic. Warm neutral background (#F2E8DC or soft parchment). Serif headlines in a muted warm tone. Icons replaced by elegant checkmarks or numbered circles. Linen texture overlay at 5% opacity. Think Goop or premium health brand.",
+      high_ticket: "PREMIUM HIGH-TICKET EDITORIAL. Wine/burgundy (#7B1F3A) or dark champagne tones. Creamy white (#FDFAF5) text on dark, or wine text on cream. Bold serif headline (Cormorant Garamond or Playfair style). Slim professional name watermark at top. Asymmetric layout: photo or color block on one column, text on the other with a fine vertical rule separator. Minimal, confident, absolutely no clipart or gradients except a single subtle dark overlay on photos.",
     };
 
     const fontDescriptions: Record<string, string> = {
-      inter: "Modern, clean sans-serif (Inter/Helvetica style)",
-      playfair: "Elegant, high-contrast serif (Playfair Display style)",
-      montserrat: "Geometric, bold sans-serif (Montserrat style)",
-      lora: "Classic, highly readable serif (Lora style)",
+      inter: "Clean neutral sans-serif (Inter). Headlines heavy weight 700-900, body 400.",
+      playfair: "High-contrast elegant serif (Playfair Display). Headlines at weight 900 italic for headlines, 400 for body.",
+      montserrat: "Confident geometric sans (Montserrat). Headlines 800 ExtraBold uppercase, body 300 Light.",
+      lora: "Warm authoritative serif (Lora). Headlines 700 bold, body 400 regular with relaxed line-height 1.8.",
     };
 
-    const styleDesc = styleDescriptions[style] || styleDescriptions.minimalist;
-    const fontDesc = fontDescriptions[fontFamily] || fontDescriptions.inter;
+    const styleDesc = styleDescriptions[style] || styleDescriptions.high_ticket;
+    const fontDesc = fontDescriptions[fontFamily] || fontDescriptions.playfair;
 
-    // Layout logic based on slide type
+    // Layout logic based on slide layout field (capa/topicos/cta) with high-ticket instructions
     let layoutInstructions = "";
-    if (slide.tipo === 'capa') {
+    const layout = slide.layout || slide.tipo || "topicos";
+
+    if (layout === "capa") {
       layoutInstructions = `
-      LAYOUT: CENTERED HERO
-      - Headline should be massive and centered.
-      - Use a high-impact background or a strong geometric element.
-      - Subtext should be smaller, positioned below the headline.
-      - Visual focus must be 100% on the main promise.`;
-    } else if (slide.tipo === 'cta') {
+      LAYOUT: HIGH-TICKET COVER / CAPA
+      - Dominant headline at 80-100pt, centered or left-aligned if there's a side photo.
+      - Brand name at top in small caps, very subtle (9-10pt, 40% opacity).
+      - Subtext below headline in 16-18pt, lighter weight, max 2 lines.
+      - If using a photo: place person on right 40% of frame, text on left 60% with a fine vertical line separator.
+      - Background: either full-bleed hero color or a clean gradient from dark wine to near-black.
+      - One thin horizontal line as a decorative accent (1px). NO icons or emojis.`;
+    } else if (layout === "cta") {
       layoutInstructions = `
-      LAYOUT: CALL TO ACTION
-      - Headline should be a clear command.
-      - Include a visual element that looks like a button or a pointer.
-      - High contrast to ensure the action stands out.`;
+      LAYOUT: HIGH-TICKET CALL TO ACTION
+      - Command headline centered, 48-60pt bold serif. Make it feel like an invitation, not a demand.
+      - Subtext in 16pt, italic, light weight below.
+      - A clearly designed CTA element: elegant rounded pill button shape or underlined text in brand accent color.
+      - Bottom: branded name and a fine accent line. Feel premium, exclusive, and confident.
+      - Background: solid brand color (wine or deep champagne) or white with a strong color block at 1/3 of the slide.`;
     } else {
       layoutInstructions = `
-      LAYOUT: CONTENT LIST
-      - Headline at the top, clearly separated.
-      - Body text (subtext) in the center with good line spacing.
-      - Use bullet points or numbers if appropriate.
-      - Maintain a clear hierarchy between title and content.`;
+      LAYOUT: HIGH-TICKET CONTENT / TÓPICOS
+      - Headline at top, 32-40pt bold serif, left-aligned. Color block behind it or bold accent color text.
+      - Body text below in 15-17pt, excellent line spacing (1.7-2.0). Use elegant checkmarks ✓ or numbered labels, NOT bullet points.
+      - If slide has a list: items in clean column with subtle horizontal lines between them (1px, 10% opacity).
+      - Brand name top right, 8-9pt, light weight, muted color.
+      - At most ONE accent element per slide (a color block, a line, or a number circle). Never combine all three.`;
     }
 
-    const prompt = `Task: Create a professional Instagram carousel slide graphic.
+    const prompt = `You are a premium Instagram carousel designer for a high-ticket nutritionist expert brand.
 
-VISUAL STYLE: ${styleDesc}
-TYPOGRAPHY: Use ${fontDesc} for all text.
-${brandColors ? `COLOR PALETTE: ${brandColors}` : "COLOR PALETTE: Professional and balanced."}
+MISSION: Create a slide that feels like it belongs in a luxury wellness brand Instagram feed — think premium, confident, editorial.
 
+== VISUAL STYLE ==
+${styleDesc}
+
+== TYPOGRAPHY ==
+${fontDesc}
+
+== COLOR PALETTE ==
+${brandColors
+        ? `Use EXACTLY these brand colors: ${brandColors}. Do not invent other colors. Max 2-3 colors total.`
+        : "Use a high-ticket palette: deep wine #7B1F3A, creamy off-white #FDFAF5, and warm gold #C9A96E as the only accent."}
+
+== LAYOUT ==
 ${layoutInstructions}
 
-${slide.backgroundImageUrl ? `
-BACKGROUND IMAGE (CRITICAL): 
-- Use the person from this URL as the main visual subject: ${slide.backgroundImageUrl}
-- Integrate the person naturally into the design style (${style}).
-- ENSURE TEXT LEGIBILITY: Position the person so they don't overlap with the main text, or add a subtle semi-transparent overlay/gradient behind the text.
-` : "BACKGROUND: Use only graphic design, typography, and vector elements."}
+${slide.backgroundImageUrl
+        ? `== PHOTO INTEGRATION ==
+- The subject/person from this URL is the brand's nutritionist expert: ${slide.backgroundImageUrl}
+- Place the person naturally on ONE SIDE of the slide (right or left), occupying 35-45% of the frame.
+- Do NOT crop the face. Position elegantly, full or 3/4 body preferred.
+- Add a subtle semi-transparent dark overlay (20-30%) IF text is placed over the photo area to guarantee readability.
+- The photo should feel editorial, like a magazine shoot—not a social media screenshot.`
+        : `== BACKGROUND ==
+No photo. Use a clean graphic background: solid brand color, a 2-tone split, or a minimal geometric shape. NO stock photo backgrounds, NO textures beyond a very subtle linen at 3% opacity.`}
 
-CONTENT TO INCLUDE:
-1. MAIN HEADLINE: "${slide.headline}" (Make this the primary focus)
-2. SUBTEXT: "${slide.subtexto || ""}" (Secondary focus)
-3. HIGHLIGHT: "${slide.destaque || ""}" (Use a different color or bold weight for this specific word/phrase)
-4. BRANDING: "${profileName || ""}" (Small, elegant placement at the bottom)
+== CONTENT TO RENDER ==
+HEADLINE: "${slide.headline}"
+${slide.subtexto ? `SUBTEXT: "${slide.subtexto}"` : ""}
+${slide.destaque ? `HIGHLIGHT/CTA ELEMENT: "${slide.destaque}" — make this visually distinct: different color, weight, or inside a pill shape.` : ""}
+${profileName ? `BRAND NAME (small, top or bottom): "${profileName}"` : ""}
 
-CRITICAL RULES:
-- FORMAT: 1080x1080 pixels (Square).
-- READABILITY: Text must be perfectly legible with high contrast against the background.
-- CONSISTENCY: Do not add random elements. Keep it clean and professional.
-- LANGUAGE: All text must be exactly as provided in Portuguese.
+== CRITICAL RULES ==
+- SQUARE FORMAT: 1080x1080px exactly.
+- TEXT LEGIBILITY: All text must be clearly readable. High contrast always. Never place light text on light background.
+- NO CLIPART, NO ICONS, NO EMOJIS in the design itself.
+- NO gradients except a dark overlay on photos.
+- All text MUST be in Portuguese, exactly as provided. Do NOT translate or modify the content.
+- The final result must feel high-end, premium, exclusive — like a result a professional designer would deliver.
 
-Generate a stunning, high-quality graphic design for this slide.`;
+Generate the slide now.`;
+
 
     console.log(`[Generate-Design] Creating ${style} (${slide.tipo}) slide for: ${slide.headline?.substring(0, 50)}...`);
 

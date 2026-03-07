@@ -54,6 +54,8 @@ const FONT_OPTIONS = [
   { id: "montserrat", label: "Montserrat", category: "Sans-serif geométrica" },
   { id: "lora", label: "Lora", category: "Serif clássica" },
   { id: "poppins", label: "Poppins", category: "Sans-serif arredondada" },
+  { id: "outfit", label: "Outfit", category: "Sans-serif geométrica" },
+  { id: "baskerville", label: "Libre Baskerville", category: "Serif tradicional" },
 ];
 
 const BRANDING_PRESETS = [
@@ -92,6 +94,42 @@ const BRANDING_PRESETS = [
     fontTitle: "inter",
     fontBody: "lora",
     style: "warm"
+  },
+  {
+    name: "Luxury Gold",
+    primary: "#1c1917",
+    secondary: "#eab308",
+    neutral: "#78716c",
+    fontTitle: "playfair",
+    fontBody: "inter",
+    style: "premium"
+  },
+  {
+    name: "Pure Health",
+    primary: "#1e3a8a",
+    secondary: "#60a5fa",
+    neutral: "#64748b",
+    fontTitle: "outfit",
+    fontBody: "inter",
+    style: "clinical"
+  },
+  {
+    name: "Organic Calm",
+    primary: "#365314",
+    secondary: "#a3e635",
+    neutral: "#71717a",
+    fontTitle: "lora",
+    fontBody: "inter",
+    style: "minimal"
+  },
+  {
+    name: "High Focus",
+    primary: "#581c87",
+    secondary: "#d8b4fe",
+    neutral: "#52525b",
+    fontTitle: "poppins",
+    fontBody: "inter",
+    style: "bold"
   }
 ];
 
@@ -242,6 +280,18 @@ export function BrandKit() {
       toast.error("Erro ao salvar o kit de marca");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const getFontFamily = (fontId: string) => {
+    switch (fontId) {
+      case 'playfair': return "'Playfair Display', serif";
+      case 'montserrat': return "'Montserrat', sans-serif";
+      case 'lora': return "'Lora', serif";
+      case 'poppins': return "'Poppins', sans-serif";
+      case 'outfit': return "'Outfit', sans-serif";
+      case 'baskerville': return "'Libre Baskerville', serif";
+      default: return "'Inter', sans-serif";
     }
   };
 
@@ -635,7 +685,7 @@ export function BrandKit() {
               background: `linear-gradient(135deg, ${primaryColor}15, ${secondaryColor}15)`,
               borderColor: primaryColor,
               borderWidth: 2,
-              fontFamily: fontBody
+              fontFamily: getFontFamily(fontBody)
             }}
           >
             {/* Watermark effect in preview */}
@@ -658,7 +708,7 @@ export function BrandKit() {
 
             <h3
               className="text-xl font-bold mb-2"
-              style={{ color: primaryColor, fontFamily: fontTitle }}
+              style={{ color: primaryColor, fontFamily: getFontFamily(fontTitle) }}
             >
               Headline do Slide
             </h3>

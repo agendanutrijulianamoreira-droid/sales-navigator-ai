@@ -92,14 +92,20 @@ serve(async (req) => {
         `;
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const isLovableKey = !!Deno.env.get('LOVABLE_API_KEY');
+    const apiUrl = isLovableKey
+      ? 'https://ai.gateway.lovable.dev/v1/chat/completions'
+      : 'https://api.openai.com/v1/chat/completions';
+    const model = isLovableKey ? 'google/gemini-2.0-flash-exp' : 'gpt-4o-mini';
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: model,
         messages: [{ role: 'system', content: 'Você é um estrategista de conteúdo para nutricionistas experiente em marketing no Instagram.' }, { role: 'user', content: prompt }],
         temperature: 0.7,
       }),

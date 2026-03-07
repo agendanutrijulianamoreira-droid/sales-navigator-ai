@@ -158,7 +158,9 @@ export function useCarouselGenerator() {
           customInstructions,
           profile,
           products,
-          strategyContext
+          strategyContext,
+          brandColors: brand.primary ? `Primary: ${brand.primary}, Secondary: ${brand.secondary}` : undefined,
+          brandFonts: brand.fontHeading ? `Heading: ${brand.fontHeading}, Body: ${brand.fontBody}` : undefined,
         }
       });
 
@@ -184,7 +186,7 @@ export function useCarouselGenerator() {
     } finally {
       setIsGenerating(false);
     }
-  }, [profile, products, toast]);
+  }, [profile, products, brand, toast]);
 
   const generateSlideDesign = useCallback(async (
     slideIndex: number,
