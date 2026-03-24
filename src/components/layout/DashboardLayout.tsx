@@ -16,7 +16,7 @@ const NAV_ITEMS = [
     { title: "Brand Hub", icon: Crown, href: "/brand-hub" },
     { title: "Business Lab", icon: ShoppingBag, href: "/business-lab" },
     { title: "Calendário", icon: Calendar, href: "/planner" },
-    { title: "Conteúdo IA", icon: Sparkles, href: "/carousel-creator" },
+    { title: "Criar Conteúdo", icon: Sparkles, href: "/carousel-creator" },
     { title: "Funis de Vendas", icon: Target, href: "/funnels" },
     { title: "Lista VIP", icon: MessageSquare, href: "/vip-list" },
     { title: "Acelerador de Vendas", icon: TrendingUp, href: "/conversion" },
@@ -28,9 +28,9 @@ const NAV_ITEMS = [
 
 const MOBILE_NAV_ITEMS = [
     { title: "Início", icon: Home, href: "/" },
+    { title: "Criar", icon: Sparkles, href: "/carousel-creator" },
+    { title: "Calendário", icon: Calendar, href: "/planner" },
     { title: "Funis", icon: Target, href: "/funnels" },
-    { title: "Conteúdo", icon: Sparkles, href: "/carousel-creator" },
-    { title: "VIP", icon: Crown, href: "/vip-list" },
     { title: "Mentor", icon: MessageSquare, href: "/mentor" },
 ];
 

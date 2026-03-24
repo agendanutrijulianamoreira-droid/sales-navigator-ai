@@ -1,93 +1,250 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { useProfile } from "@/hooks/useProfile";
-import { useAuth } from "@/hooks/useAuth";
+import { useGenerations } from "@/hooks/useGenerations";
+import { useCalendarItems } from "@/hooks/useCalendarItems";
+import { useProducts } from "@/hooks/useProducts";
 import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
-import { UnifiedComposer } from "@/components/UnifiedComposer";
+import { Progress } from "@/components/ui/progress";
+import { Link, useNavigate } from "react-router-dom";
 import {
-  Sparkles, Target, Calendar, ShoppingBag,
-  BarChart3, LogOut, User, Zap, Palette,
-  Camera, ArrowRight, Crown,
-  Users, MessageSquare, FileText, DollarSign
+  Sparkles, Calendar, ShoppingBag,
+  BarChart3, Zap, Palette, Camera,
+  ArrowRight, Crown, Target, Users,
+  FileText, Plus, Clock, CheckCircle2,
+  AlertCircle, TrendingUp, Layers,
+  MessageSquare, Trophy, Image
 } from "lucide-react";
 
-const MODULES = [
-  { title: "Brand Hub", description: "Design & Estratégia", icon: Crown, href: "/brand-hub", gradient: "from-primary/10 to-accent/10", iconColor: "text-primary" },
-  { title: "Business Lab", description: "Produtos & Finanças", icon: ShoppingBag, href: "/business-lab", gradient: "from-purple-500/10 to-pink-500/10", iconColor: "text-purple-500" },
-  { title: "Planejador", description: "Calendário editorial", icon: Calendar, href: "/planner", gradient: "from-emerald-500/10 to-teal-500/10", iconColor: "text-emerald-500" },
-  { title: "Resultados", description: "GPS Financeiro", icon: BarChart3, href: "/results", gradient: "from-emerald-500/10 to-green-500/10", iconColor: "text-emerald-500" },
-  { title: "Estúdio Fotos", description: "Fotos Profissionais", icon: Camera, href: "/photo-studio", gradient: "from-orange-500/10 to-amber-500/10", iconColor: "text-orange-500" },
+const QUICK_ACTIONS = [
+  { label: "Carrossel", icon: Layers, format: "carousel", emoji: "🎠", color: "from-blue-500 to-indigo-600" },
+  { label: "Post Único", icon: Image, format: "single_post", emoji: "📸", color: "from-emerald-500 to-teal-600" },
+  { label: "Stories", icon: FileText, format: "stories", emoji: "📱", color: "from-orange-500 to-amber-600" },
+  { label: "Roteiro Reels", icon: Camera, format: "reels_script", emoji: "🎬", color: "from-purple-500 to-pink-600" },
 ];
 
-const FUNNEL_METRICS = [
-  { label: "Leads Capturados", icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
-  { label: "Conversas Ativas", icon: MessageSquare, color: "text-amber-500", bg: "bg-amber-500/10" },
-  { label: "Propostas Enviadas", icon: FileText, color: "text-purple-500", bg: "bg-purple-500/10" },
-  { label: "Vendas no Mês", icon: DollarSign, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+const MODULES = [
+  { title: "Brand Hub", description: "Marca e Estratégia", icon: Crown, href: "/brand-hub", color: "text-primary", bg: "bg-primary/10" },
+  { title: "Business Lab", description: "Produtos e Finanças", icon: ShoppingBag, href: "/business-lab", color: "text-purple-500", bg: "bg-purple-500/10" },
+  { title: "Funis de Vendas", description: "Captação e conversão", icon: Target, href: "/funnels", color: "text-rose-500", bg: "bg-rose-500/10" },
+  { title: "Lista VIP", description: "Leads e DMs", icon: Users, href: "/vip-list", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { title: "Resultados", description: "GPS Financeiro", icon: BarChart3, href: "/results", color: "text-emerald-500", bg: "bg-emerald-500/10" },
+  { title: "Desafios", description: "Gamificação", icon: Trophy, href: "/challenge-creator", color: "text-orange-500", bg: "bg-orange-500/10" },
 ];
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { profile } = useProfile();
-  const [leadsHoje] = useState(0);
-  const [conversasAtivas] = useState(0);
-  const [propostasEnviadas] = useState(0);
-  const [vendasMes] = useState(0);
+  const { generations, loading: loadingGen } = useGenerations();
+  const { items: calendarItems, loading: loadingCal } = useCalendarItems();
+  const { products } = useProducts();
 
-  const funnelValues = [leadsHoje, conversasAtivas, propostasEnviadas, vendasMes];
+  // Recent content (last 5)
+  const recentContent = useMemo(() =>
+    generations?.slice(0, 5) || [], [generations]
+  );
+
+  // Upcoming calendar items (next 7 days)
+  const upcomingItems = useMemo(() => {
+    if (!calendarItems) return [];
+    const now = new Date();
+    const weekAhead = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    return calendarItems
+      .filter(item => {
+        const d = new Date(item.data);
+        return d >= now && d <= weekAhead;
+      })
+      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
+      .slice(0, 5);
+  }, [calendarItems]);
+
+  // Profile completeness
+  const profileCompleteness = useMemo(() => {
+    if (!profile) return 0;
+    const fields = ['nome', 'nicho', 'persona_ideal', 'mecanismo_unico', 'promessa_principal', 'tom_voz', 'dor_principal'];
+    const filled = fields.filter(f => !!(profile as any)[f]).length;
+    return Math.round((filled / fields.length) * 100);
+  }, [profile]);
+
+  // Navigate to creator with format preselected
+  const handleQuickCreate = (format: string) => {
+    navigate('/carousel-creator', { state: { preselectedFormat: format } });
+  };
+
+  const greeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return "Bom dia";
+    if (h < 18) return "Boa tarde";
+    return "Boa noite";
+  };
 
   return (
     <div className="space-y-8">
       {/* Welcome Hero */}
       <div className="relative overflow-hidden rounded-3xl premium-gradient p-8 md:p-10">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
-        <div className="relative z-10">
-          <p className="text-primary-foreground/60 text-sm font-medium tracking-wide uppercase mb-2">Command Center</p>
-          <h1 className="text-3xl md:text-4xl font-bold text-primary-foreground tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            Olá, {profile?.nome?.split(" ")[0] || "Nutri"}! ✨
-          </h1>
-          <p className="text-primary-foreground/70 text-base mt-2 max-w-lg">
-            Sua estratégia de elite está pronta para escalar.
-          </p>
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <p className="text-primary-foreground/60 text-sm font-medium tracking-wide uppercase mb-1">Command Center</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-primary-foreground tracking-tight">
+              {greeting()}, {profile?.nome?.split(" ")[0] || "Nutri"}!
+            </h1>
+            <p className="text-primary-foreground/70 text-base mt-1 max-w-lg">
+              {recentContent.length > 0
+                ? `Você já criou ${generations?.length || 0} conteúdos. Vamos continuar?`
+                : "Pronta para criar conteúdo que converte?"}
+            </p>
+          </div>
+          <Button
+            size="lg"
+            className="bg-white/20 hover:bg-white/30 text-white border-white/20 backdrop-blur-sm rounded-2xl px-6 gap-2"
+            variant="outline"
+            onClick={() => navigate('/carousel-creator')}
+          >
+            <Plus className="h-5 w-5" /> Criar Conteúdo
+          </Button>
         </div>
       </div>
 
-      {/* Pulso do Funil */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {FUNNEL_METRICS.map((metric, i) => (
-          <Card key={metric.label} className="glass-card border-border/50 hover:glass-card-elevated transition-all duration-300">
-            <CardContent className="p-5 relative overflow-hidden">
-              <div className="flex flex-col gap-1">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {metric.label}
-                </p>
-                <p className="text-3xl font-bold text-foreground">
-                  {funnelValues[i]}
-                </p>
-                <div className="mt-3">
-                  <Badge variant="secondary" className="text-[10px] bg-muted/30 text-muted-foreground border-0 font-normal px-2 py-0">
-                    +0 hoje
-                  </Badge>
-                </div>
+      {/* Quick Create — 4 Formatos */}
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" /> Criar Agora
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {QUICK_ACTIONS.map((action) => (
+            <button
+              key={action.format}
+              onClick={() => handleQuickCreate(action.format)}
+              className="group relative overflow-hidden rounded-2xl p-5 text-left transition-all hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] border border-border/50 bg-card"
+            >
+              <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br", action.color)} />
+              <div className="relative z-10">
+                <span className="text-3xl mb-3 block">{action.emoji}</span>
+                <p className="font-bold text-sm group-hover:text-white transition-colors">{action.label}</p>
+                <p className="text-xs text-muted-foreground group-hover:text-white/70 transition-colors mt-0.5">Criar com IA</p>
               </div>
-
-              <div className={cn(
-                "absolute top-5 right-5 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm",
-                metric.bg
-              )}>
-                <metric.icon className={cn("h-5 w-5", metric.color)} />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Main */}
+        {/* Main Column */}
         <div className="lg:col-span-2 space-y-6">
-          <UnifiedComposer />
+
+          {/* Conteúdo Recente */}
+          <Card className="glass-card border-border/50">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  Conteúdo Recente
+                </CardTitle>
+                <Button variant="ghost" size="sm" className="text-xs text-primary" asChild>
+                  <Link to="/planner">Ver tudo →</Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {loadingGen ? (
+                <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">Carregando...</div>
+              ) : recentContent.length === 0 ? (
+                <div className="text-center py-8">
+                  <Sparkles className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">Nenhum conteúdo criado ainda</p>
+                  <Button size="sm" className="mt-3 rounded-xl" onClick={() => navigate('/carousel-creator')}>
+                    <Plus className="h-4 w-4 mr-1" /> Criar Primeiro Conteúdo
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {recentContent.map((gen) => (
+                    <div
+                      key={gen.id}
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors group cursor-pointer"
+                      onClick={() => navigate('/carousel-creator')}
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                        <FileText className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{gen.titulo || 'Sem título'}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {gen.subtipo && <span className="capitalize">{gen.subtipo}</span>}
+                          {gen.created_at && ` · ${new Date(gen.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}`}
+                        </p>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Próximos Agendamentos */}
+          <Card className="glass-card border-border/50">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  Próximos 7 Dias
+                </CardTitle>
+                <Button variant="ghost" size="sm" className="text-xs text-primary" asChild>
+                  <Link to="/planner">Calendário →</Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {loadingCal ? (
+                <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">Carregando...</div>
+              ) : upcomingItems.length === 0 ? (
+                <div className="text-center py-8">
+                  <Calendar className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">Nenhum conteúdo agendado</p>
+                  <Button size="sm" variant="outline" className="mt-3 rounded-xl" asChild>
+                    <Link to="/planner"><Plus className="h-4 w-4 mr-1" /> Planejar Semana</Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {upcomingItems.map((item) => {
+                    const itemDate = new Date(item.data);
+                    const isToday = itemDate.toDateString() === new Date().toDateString();
+                    return (
+                      <div
+                        key={item.id}
+                        className={cn(
+                          "flex items-center gap-3 p-3 rounded-xl transition-colors",
+                          isToday ? "bg-primary/5 border border-primary/20" : "hover:bg-muted/50"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-10 h-10 rounded-xl flex flex-col items-center justify-center shrink-0 text-center",
+                          isToday ? "bg-primary text-primary-foreground" : "bg-muted"
+                        )}>
+                          <span className="text-[10px] font-bold uppercase leading-none">
+                            {itemDate.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')}
+                          </span>
+                          <span className="text-sm font-black leading-none">{itemDate.getDate()}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{item.titulo}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <Badge variant="outline" className="text-[10px] py-0 h-4 capitalize">{item.tipo}</Badge>
+                            {isToday && <Badge className="text-[10px] py-0 h-4 bg-primary/20 text-primary border-none">Hoje</Badge>}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Mentor CTA */}
           <Card className="glass-card-elevated neon-border overflow-hidden group hover:shadow-lg transition-all duration-300">
@@ -103,8 +260,7 @@ export default function Dashboard() {
               </div>
               <Button size="sm" className="rounded-xl gap-2 group-hover:gap-3 transition-all" asChild>
                 <Link to="/mentor">
-                  Conversar
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  Conversar <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </Button>
             </CardContent>
@@ -113,39 +269,86 @@ export default function Dashboard() {
 
         {/* Right Sidebar */}
         <div className="space-y-4">
+          {/* Profile Completeness */}
+          <Card className={cn("glass-card", profileCompleteness < 100 ? "border-amber-200" : "neon-border")}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  {profileCompleteness >= 100
+                    ? <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    : <AlertCircle className="h-4 w-4 text-amber-500" />}
+                  <span className="text-sm font-medium text-foreground">
+                    {profileCompleteness >= 100 ? "Perfil Completo" : "Complete seu Perfil"}
+                  </span>
+                </div>
+                <span className="text-xs font-bold text-muted-foreground">{profileCompleteness}%</span>
+              </div>
+              <Progress value={profileCompleteness} className="h-2 mb-3" />
+              {profileCompleteness < 100 ? (
+                <p className="text-xs text-muted-foreground mb-2">
+                  Perfis completos geram conteúdo 3x mais relevante.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground mb-2">
+                  Todos os dados estão configurados para a IA.
+                </p>
+              )}
+              <Button variant="link" size="sm" className="p-0 h-auto text-primary text-xs" asChild>
+                <Link to="/brand-hub">{profileCompleteness < 100 ? "Completar agora →" : "Editar perfil →"}</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Brand Status */}
-          {profile?.brand_locked ? (
-            <Card className="glass-card neon-border">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Palette className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium text-foreground">Marca Configurada</span>
-                  <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-0">Travada</Badge>
+          <Card className="glass-card">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Palette className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-foreground">
+                  {profile?.brand_locked ? "Marca Configurada" : "Configure sua Marca"}
+                </span>
+                {profile?.brand_locked && (
+                  <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-0">Ativa</Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {profile?.brand_locked
+                  ? "Designs seguem sua identidade automaticamente"
+                  : "Cores, fontes e estilos para seus designs"}
+              </p>
+              <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-primary text-xs" asChild>
+                <Link to="/brand-hub">{profile?.brand_locked ? "Editar →" : "Configurar →"}</Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Products Summary */}
+          <Card className="glass-card">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <ShoppingBag className="h-4 w-4 text-purple-500" />
+                <span className="text-sm font-medium text-foreground">Produtos</span>
+                <Badge variant="secondary" className="text-[10px] bg-purple-500/10 text-purple-500 border-0">
+                  {products?.length || 0}
+                </Badge>
+              </div>
+              {products && products.length > 0 ? (
+                <div className="space-y-1.5 mt-2">
+                  {products.slice(0, 3).map((p) => (
+                    <div key={p.id} className="flex items-center justify-between text-xs">
+                      <span className="truncate text-muted-foreground">{p.nome}</span>
+                      <span className="font-semibold text-foreground ml-2">R$ {p.ticket}</span>
+                    </div>
+                  ))}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Designs seguem sua identidade visual automaticamente
-                </p>
-                <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-primary" asChild>
-                  <Link to="/brand-hub">Editar Hub →</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="glass-card border-accent/20">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Palette className="h-4 w-4 text-accent" />
-                  <span className="text-sm font-medium text-foreground">Configure sua Marca</span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Defina cores, fontes e estilos para designs automáticos
-                </p>
-                <Button size="sm" className="mt-3 w-full rounded-xl" asChild>
-                  <Link to="/brand-hub">Configurar Hub</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+              ) : (
+                <p className="text-xs text-muted-foreground">Nenhum produto cadastrado</p>
+              )}
+              <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-purple-500 text-xs" asChild>
+                <Link to="/business-lab">{products?.length ? "Gerenciar →" : "Cadastrar →"}</Link>
+              </Button>
+            </CardContent>
+          </Card>
 
           {/* Modules Grid */}
           <div className="grid grid-cols-2 gap-2.5">
@@ -153,8 +356,8 @@ export default function Dashboard() {
               <Link key={module.href} to={module.href}>
                 <Card className="h-full glass-card hover:glass-card-elevated hover:neon-border transition-all duration-300 cursor-pointer group p-3.5">
                   <div className="flex flex-col gap-2.5">
-                    <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${module.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                      <module.icon className={`h-4 w-4 ${module.iconColor}`} />
+                    <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300", module.bg)}>
+                      <module.icon className={cn("h-4 w-4", module.color)} />
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-foreground">{module.title}</p>
@@ -166,7 +369,7 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {/* Profile Summary */}
+          {/* Promessa */}
           {profile?.promessa_principal && (
             <Card className="glass-card">
               <CardContent className="p-4">
