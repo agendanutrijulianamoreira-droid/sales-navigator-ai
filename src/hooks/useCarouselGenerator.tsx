@@ -50,7 +50,8 @@ export type PostType =
   | "COMPARATIVO_ELITE"
   | "ANTES_DEPOIS_CONCEITUAL"
   | "CTA_DIRETO"
-  | "ESTRATEGIA_UTIL";
+  | "MITO_VS_VERDADE"
+  | "ROTINA_PRATICA";
 
 export const POST_TYPE_LABELS: Record<PostType, string> = {
   STORYTELLING_RESULTADO: "Storytelling de Resultado",
@@ -59,8 +60,71 @@ export const POST_TYPE_LABELS: Record<PostType, string> = {
   LISTA_AUTORIDADE: "Lista de Autoridade",
   COMPARATIVO_ELITE: "Comparativo de Elite",
   ANTES_DEPOIS_CONCEITUAL: "Antes e Depois Conceitual",
-  CTA_DIRETO: "CTA Direto",
-  ESTRATEGIA_UTIL: "Estratégia Útil",
+  CTA_DIRETO: "CTA Direto / Oferta",
+  MITO_VS_VERDADE: "Mito vs Verdade",
+  ROTINA_PRATICA: "Rotina Prática",
+};
+
+export const POST_TYPE_DESCRIPTIONS: Record<PostType, string> = {
+  STORYTELLING_RESULTADO: "Conte a transformação de uma paciente — da dor ao resultado",
+  CONTRA_INTUITIVO: "Quebre uma crença popular com um fato surpreendente",
+  QUEBRA_OBJECAO: "Destrua a desculpa que impede a pessoa de agir",
+  LISTA_AUTORIDADE: "Entregue valor denso em lista numerada",
+  COMPARATIVO_ELITE: "Compare o caminho comum vs. o caminho ideal",
+  ANTES_DEPOIS_CONCEITUAL: "Mostre transformação de mindset e hábitos (sem fotos de corpo)",
+  CTA_DIRETO: "Post focado em conversão com oferta direta",
+  MITO_VS_VERDADE: "Desmistifique informações erradas do nicho",
+  ROTINA_PRATICA: "Mostre como aplicar algo no dia a dia real da paciente",
+};
+
+export type FunnelStage = "ALCANCE" | "EVENTOS_DOR" | "PRINCIPIOS_VALORES" | "VENDA_DIRETA";
+
+export const FUNNEL_STAGE_LABELS: Record<FunnelStage, string> = {
+  ALCANCE: "Alcance",
+  EVENTOS_DOR: "Eventos / Dor",
+  PRINCIPIOS_VALORES: "Princípios e Valores",
+  VENDA_DIRETA: "Venda Direta",
+};
+
+export const FUNNEL_STAGE_DESCRIPTIONS: Record<FunnelStage, string> = {
+  ALCANCE: "Atrair novos seguidores — conteúdo viral e compartilhável",
+  EVENTOS_DOR: "Engajamento profundo — tocar em dores reais e gerar desejo",
+  PRINCIPIOS_VALORES: "Doutrinação — criar conexão com seus valores e método",
+  VENDA_DIRETA: "Conversão — oferta clara com CTA direto",
+};
+
+export const FUNNEL_STAGE_ICONS: Record<FunnelStage, string> = {
+  ALCANCE: "📢",
+  EVENTOS_DOR: "💬",
+  PRINCIPIOS_VALORES: "👑",
+  VENDA_DIRETA: "🎯",
+};
+
+export type CtaStyle = "PALAVRA_CHAVE" | "LINK_BIO" | "DM" | "SALVAR_COMPARTILHAR" | "LEVANTADA_MAO" | "auto";
+
+export const CTA_STYLE_LABELS: Record<CtaStyle, string> = {
+  PALAVRA_CHAVE: "Comente [Palavra]",
+  LINK_BIO: "Link na Bio",
+  DM: "Envie DM",
+  SALVAR_COMPARTILHAR: "Salve / Compartilhe",
+  LEVANTADA_MAO: "Levantada de Mão",
+  auto: "Automático (IA escolhe)",
+};
+
+export type NarrativeElement = "metafora" | "analogia" | "plot_twist" | "conflito" | "paradoxo" | "experiencia_pessoal" | "suspense" | "ironia" | "dialogo" | "jornada_heroi" | "auto";
+
+export const NARRATIVE_ELEMENT_LABELS: Record<NarrativeElement, string> = {
+  metafora: "Metáfora",
+  analogia: "Analogia",
+  plot_twist: "Plot Twist",
+  conflito: "Conflito",
+  paradoxo: "Paradoxo",
+  experiencia_pessoal: "Experiência Pessoal",
+  suspense: "Suspense",
+  ironia: "Ironia",
+  dialogo: "Diálogo",
+  jornada_heroi: "Jornada do Herói",
+  auto: "Automático (IA escolhe)",
 };
 
 export const CONTENT_PILLARS = [
@@ -71,12 +135,38 @@ export const CONTENT_PILLARS = [
   "Entretenimento",
 ];
 
+export type ContentFormat = "carousel" | "single_post" | "stories" | "reels_script";
+
+export const CONTENT_FORMAT_LABELS: Record<ContentFormat, string> = {
+  carousel: "Carrossel",
+  single_post: "Post Único",
+  stories: "Stories",
+  reels_script: "Roteiro Reels/Vídeo",
+};
+
+export const CONTENT_FORMAT_DESCRIPTIONS: Record<ContentFormat, string> = {
+  carousel: "5-10 slides deslizáveis — ideal para educar e converter",
+  single_post: "1 imagem + legenda completa — rápido e direto",
+  stories: "Sequência de 5-7 stories — interativo e pessoal",
+  reels_script: "Roteiro com texto na tela + script falado — viral",
+};
+
+export const CONTENT_FORMAT_ICONS: Record<ContentFormat, string> = {
+  carousel: "🎠",
+  single_post: "📸",
+  stories: "📱",
+  reels_script: "🎬",
+};
+
 export const DESIGN_STYLES = [
   { id: "minimalist", label: "Minimalista", description: "Clean e moderno" },
   { id: "twitter", label: "Twitter/X", description: "Estilo post de texto" },
   { id: "elegant", label: "Elegante", description: "Premium e sofisticado" },
   { id: "bold", label: "Bold", description: "Vibrante e energético" },
   { id: "warm", label: "Acolhedor", description: "Tons quentes e amigáveis" },
+  { id: "high_ticket", label: "High Ticket", description: "Luxo e exclusividade" },
+  { id: "vibrant", label: "Vibrante", description: "Gradientes modernos e fun" },
+  { id: "editorial", label: "Editorial", description: "Estilo revista premium" },
 ];
 
 export const FONT_OPTIONS = [
@@ -109,6 +199,7 @@ export function useCarouselGenerator() {
   const [carousel, setCarousel] = useState<CarouselData | null>(null);
   const [weekContent, setWeekContent] = useState<WeekContent[]>([]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [currentContentFormat, setCurrentContentFormat] = useState<ContentFormat>("carousel");
 
   // Initialize design settings from BrandContext
   const [designSettings, setDesignSettings] = useState<DesignSettings>({
@@ -140,7 +231,11 @@ export function useCarouselGenerator() {
     postType: PostType,
     contentPillar: string,
     customInstructions?: string,
-    strategyContext?: any
+    strategyContext?: any,
+    funnelStage?: FunnelStage,
+    ctaStyle?: CtaStyle,
+    narrativeElement?: NarrativeElement,
+    contentFormat?: ContentFormat
   ) => {
     // 1. Verificar Créditos
     const hasCredit = await consumeCredit(1);
@@ -155,6 +250,10 @@ export function useCarouselGenerator() {
           topic,
           postType,
           contentPillar,
+          contentFormat: contentFormat || 'carousel',
+          funnelStage: funnelStage || 'EVENTOS_DOR',
+          ctaStyle: ctaStyle || 'auto',
+          narrativeElement: narrativeElement || 'auto',
           customInstructions,
           profile,
           products,
@@ -168,10 +267,12 @@ export function useCarouselGenerator() {
 
       setCarousel(data);
       setCurrentSlideIndex(0);
+      setCurrentContentFormat(contentFormat || 'carousel');
 
+      const formatLabel = contentFormat === 'single_post' ? 'Post' : contentFormat === 'stories' ? 'Stories' : contentFormat === 'reels_script' ? 'Roteiro' : 'Carrossel';
       toast({
-        title: "Carrossel gerado!",
-        description: `${data.slides.length} slides criados`,
+        title: `${formatLabel} gerado!`,
+        description: `${data.slides.length} ${contentFormat === 'reels_script' ? 'seções' : 'slides'} criados`,
       });
 
       return data;
@@ -218,6 +319,7 @@ export function useCarouselGenerator() {
             backgroundImageUrl: backgroundImageUrl || carousel.slides[slideIndex].backgroundImageUrl
           },
           style,
+          contentFormat: currentContentFormat,
           profileName: profile?.nome,
           brandColors: brandColors ? `Primary: ${brandColors.primary}, Secondary: ${brandColors.secondary}` : undefined,
           fontFamily,
@@ -281,6 +383,7 @@ export function useCarouselGenerator() {
               backgroundImageUrl: carousel.slides[i].backgroundImageUrl
             },
             style: designSettings.style,
+            contentFormat: currentContentFormat,
             profileName: profile?.nome,
             brandColors: `Primary: ${designSettings.primaryColor}, Secondary: ${designSettings.secondaryColor}`,
             fontFamily: designSettings.fontFamily,
@@ -508,6 +611,8 @@ export function useCarouselGenerator() {
     isBrandLocked: profile?.brand_locked || false,
     currentSlideIndex,
     setCurrentSlideIndex,
+    currentContentFormat,
+    setCurrentContentFormat,
     generateCarousel,
     generateSlideDesign,
     generateAllSlideDesigns,

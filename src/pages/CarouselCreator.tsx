@@ -5,12 +5,25 @@ import {
   CarouselData,
   PostType,
   POST_TYPE_LABELS,
+  POST_TYPE_DESCRIPTIONS,
   CONTENT_PILLARS,
   DESIGN_STYLES,
   FONT_OPTIONS,
   COLOR_PALETTES,
   CarouselSlide,
-  WeekContent
+  WeekContent,
+  FunnelStage,
+  FUNNEL_STAGE_LABELS,
+  FUNNEL_STAGE_DESCRIPTIONS,
+  FUNNEL_STAGE_ICONS,
+  CtaStyle,
+  CTA_STYLE_LABELS,
+  NarrativeElement,
+  NARRATIVE_ELEMENT_LABELS,
+  ContentFormat,
+  CONTENT_FORMAT_LABELS,
+  CONTENT_FORMAT_DESCRIPTIONS,
+  CONTENT_FORMAT_ICONS,
 } from "@/hooks/useCarouselGenerator";
 import { useGenerations } from "@/hooks/useGenerations";
 import { useCalendarItems } from "@/hooks/useCalendarItems";
@@ -77,14 +90,19 @@ export default function CarouselCreator() {
     resetCarousel,
     resetWeekContent,
     refineText,
+    currentContentFormat,
   } = useCarouselGenerator();
 
   const [useCustomColors, setUseCustomColors] = useState(false);
 
   // Form state
   const [topic, setTopic] = useState("");
-  const [postType, setPostType] = useState<PostType>("ESTRATEGIA_UTIL");
+  const [contentFormat, setContentFormat] = useState<ContentFormat>("carousel");
+  const [postType, setPostType] = useState<PostType>("LISTA_AUTORIDADE");
   const [contentPillar, setContentPillar] = useState("Educativo");
+  const [funnelStage, setFunnelStage] = useState<FunnelStage>("EVENTOS_DOR");
+  const [ctaStyle, setCtaStyle] = useState<CtaStyle>("auto");
+  const [narrativeElement, setNarrativeElement] = useState<NarrativeElement>("auto");
   const [customInstructions, setCustomInstructions] = useState("");
   const [editingSlide, setEditingSlide] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
@@ -95,6 +113,7 @@ export default function CarouselCreator() {
   const [editingWeekItem, setEditingWeekItem] = useState<string | null>(null);
   const [showPhotoDialog, setShowPhotoDialog] = useState(false);
   const [photoTargetIndex, setPhotoTargetIndex] = useState<number | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Handlers for SlideToolbar
   const duplicateSlide = (index: number) => {
@@ -165,9 +184,9 @@ export default function CarouselCreator() {
   const [weekTopics, setWeekTopics] = useState<{ topic: string; postType: PostType; contentPillar: string }[]>([
     { topic: "", postType: "STORYTELLING_RESULTADO", contentPillar: "Autoridade" },
     { topic: "", postType: "CONTRA_INTUITIVO", contentPillar: "Educativo" },
-    { topic: "", postType: "QUEBRA_OBJECAO", contentPillar: "Conexão" },
+    { topic: "", postType: "QUEBRA_OBJECAO", contentPillar: "Conexão/Bastidores" },
     { topic: "", postType: "LISTA_AUTORIDADE", contentPillar: "Autoridade" },
-    { topic: "", postType: "CTA_DIRETO", contentPillar: "Conversão" },
+    { topic: "", postType: "CTA_DIRETO", contentPillar: "Conversão/Venda" },
   ]);
 
   const handleGenerate = async () => {
@@ -175,11 +194,7 @@ export default function CarouselCreator() {
       toast({ variant: "destructive", title: "Digite um tema" });
       return;
     }
-    // Assuming 'strategy' is defined elsewhere or will be defined.
-    // For now, it's added as per instruction, but will cause a reference error if not defined.
-    // strategy Context is removed if not defined, or passed if available. 
-    // Usually it should come from the profile or a local state.
-    await generateCarousel(topic, postType, contentPillar, customInstructions);
+    await generateCarousel(topic, postType, contentPillar, customInstructions, undefined, funnelStage, ctaStyle, narrativeElement, contentFormat);
   };
 
   const handleGenerateWeek = async () => {
@@ -230,7 +245,7 @@ export default function CarouselCreator() {
 
   const addWeekTopic = () => {
     if (weekTopics.length < 7) {
-      setWeekTopics(prev => [...prev, { topic: "", postType: "ESTRATEGIA_UTIL", contentPillar: "Educativo" }]);
+      setWeekTopics(prev => [...prev, { topic: "", postType: "LISTA_AUTORIDADE", contentPillar: "Educativo" }]);
     }
   };
 
@@ -321,10 +336,10 @@ export default function CarouselCreator() {
             )}
             <div>
               <h1 className="font-semibold">
-                {editingWeekItem ? "Editando Post" : "Gerador de Carrossel"}
+                {editingWeekItem ? "Editando Post" : `Gerador de ${CONTENT_FORMAT_LABELS[currentContentFormat] || 'Conteúdo'}`}
               </h1>
               <p className="text-xs text-muted-foreground">
-                {editingWeekItem ? "Voltar para lista da semana" : "Crie posts que convertem"}
+                {editingWeekItem ? "Voltar para lista da semana" : "Crie conteúdo que converte"}
               </p>
             </div>
           </div>
@@ -411,57 +426,235 @@ export default function CarouselCreator() {
             </div>
           </div>
         ) : !carousel ? (
-          <div className="max-w-3xl mx-auto pt-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="text-center space-y-4">
-              <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-4">
+          <div className="max-w-4xl mx-auto pt-6 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Header */}
+            <div className="text-center space-y-3">
+              <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-full mb-2">
                 <Sparkles className="w-8 h-8 text-primary" />
               </div>
-              <h1 className="text-4xl font-bold tracking-tight text-foreground">
-                O que vamos criar hoje?
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+                Crie seu Conteúdo Estratégico
               </h1>
-              <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-                Descreva o tema e nossa IA criará o roteiro, design e copy persuasiva para seu carrossel.
+              <p className="text-base text-muted-foreground max-w-2xl mx-auto">
+                Escolha o formato, preencha os campos e a IA criará conteúdo de alta conversão com design profissional.
               </p>
             </div>
 
-            <Card className="border-2 shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardContent className="p-6 space-y-4">
-                <div className="relative">
-                  <Textarea
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                    placeholder="Ex: 5 dicas de nutrição para mulheres na menopausa com foco em redução de inchaço..."
-                    className="min-h-[120px] text-lg p-4 resize-none border-muted focus-visible:ring-primary/20 bg-muted/5 rounded-xl"
-                  />
-                  <div className="absolute bottom-3 right-3 text-xs text-muted-foreground">
-                    {topic.length} caracteres
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-2">
-                  <div className="flex gap-2">
-                    <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                      <Lightbulb className="w-3 h-3" /> Dica: Seja específico no público-alvo
-                    </span>
-                  </div>
-
-                  <Button
-                    onClick={handleGenerate}
-                    disabled={isGenerating || !topic.trim()}
-                    size="lg"
-                    className="rounded-full px-8 font-semibold shadow-md hover:shadow-lg transition-all"
-                  >
-                    {isGenerating ? (
-                      <>Gerando Estratégia...</>
-                    ) : (
-                      <>
-                        Gerar Carrossel <ArrowRight className="ml-2 w-4 h-4" />
-                      </>
-                    )}
-                  </Button>
+            {/* STEP 1: Formato */}
+            <Card className="border-2 shadow-lg">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold">1</span>
+                  Qual formato de conteúdo?
+                </CardTitle>
+                <CardDescription>Cada formato gera conteúdo e design otimizado para sua finalidade.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {(Object.keys(CONTENT_FORMAT_LABELS) as ContentFormat[]).map((fmt) => (
+                    <button
+                      key={fmt}
+                      onClick={() => setContentFormat(fmt)}
+                      className={cn(
+                        "flex flex-col items-center gap-2 p-4 rounded-xl border-2 text-center transition-all hover:shadow-md",
+                        contentFormat === fmt
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-muted hover:border-primary/30"
+                      )}
+                    >
+                      <span className="text-3xl">{CONTENT_FORMAT_ICONS[fmt]}</span>
+                      <p className="font-semibold text-sm">{CONTENT_FORMAT_LABELS[fmt]}</p>
+                      <p className="text-[10px] text-muted-foreground leading-tight">{CONTENT_FORMAT_DESCRIPTIONS[fmt]}</p>
+                    </button>
+                  ))}
                 </div>
               </CardContent>
             </Card>
+
+            {/* STEP 2: Tema */}
+            <Card className="border-2 shadow-lg">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold">2</span>
+                  Qual é o tema {contentFormat === 'reels_script' ? 'do vídeo' : contentFormat === 'stories' ? 'da sequência' : contentFormat === 'single_post' ? 'do post' : 'do carrossel'}?
+                </CardTitle>
+                <CardDescription>Seja específica: inclua o assunto, a dor ou o resultado que quer abordar.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-3">
+                <Textarea
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder={
+                    contentFormat === 'reels_script'
+                      ? "Ex: Falar sobre os 3 erros que fazem a dieta falhar — tom conversacional, como se estivesse falando com uma amiga..."
+                      : contentFormat === 'stories'
+                      ? "Ex: Sequência sobre como o estresse engorda — usando enquete no 1º story e CTA no final para DM..."
+                      : contentFormat === 'single_post'
+                      ? "Ex: Frase de impacto sobre por que contar caloria não funciona para regulação hormonal..."
+                      : "Ex: Por que cortar carboidrato não emagrece — e o que fazer no lugar para mulheres com resistência insulínica..."
+                  }
+                  className="min-h-[100px] text-base p-4 resize-none border-muted focus-visible:ring-primary/20 bg-muted/5 rounded-xl"
+                />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Lightbulb className="w-3 h-3" /> Quanto mais específico, melhor o resultado
+                  </span>
+                  <span className="text-xs text-muted-foreground">{topic.length} caracteres</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* STEP 2: Funil */}
+            <Card className="border-2 shadow-lg">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold">3</span>
+                  Objetivo no funil?
+                </CardTitle>
+                <CardDescription>Escolha onde esse post se encaixa na sua estratégia de captação e conversão.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {(Object.keys(FUNNEL_STAGE_LABELS) as FunnelStage[]).map((stage) => (
+                    <button
+                      key={stage}
+                      onClick={() => setFunnelStage(stage)}
+                      className={cn(
+                        "flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all hover:shadow-md",
+                        funnelStage === stage
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-muted hover:border-primary/30"
+                      )}
+                    >
+                      <span className="text-2xl mt-0.5">{FUNNEL_STAGE_ICONS[stage]}</span>
+                      <div>
+                        <p className="font-semibold text-sm">{FUNNEL_STAGE_LABELS[stage]}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{FUNNEL_STAGE_DESCRIPTIONS[stage]}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* STEP 3: Tipo de Post */}
+            <Card className="border-2 shadow-lg">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold">4</span>
+                  Tipo de post
+                </CardTitle>
+                <CardDescription>Cada tipo usa uma estrutura narrativa diferente para máximo impacto.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {(Object.keys(POST_TYPE_LABELS) as PostType[]).map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => setPostType(type)}
+                      className={cn(
+                        "p-3 rounded-xl border-2 text-left transition-all hover:shadow-sm",
+                        postType === type
+                          ? "border-primary bg-primary/5"
+                          : "border-muted hover:border-primary/30"
+                      )}
+                    >
+                      <p className="font-semibold text-sm">{POST_TYPE_LABELS[type]}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{POST_TYPE_DESCRIPTIONS[type]}</p>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* STEP 4: CTA e Narrativa (colapsável) */}
+            <Card className="border-2 shadow-lg">
+              <CardHeader className="pb-3 cursor-pointer" onClick={() => setShowAdvanced(!showAdvanced)}>
+                <CardTitle className="text-base flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold">5</span>
+                    Ajustes avançados
+                  </div>
+                  <ChevronRight className={cn("h-5 w-5 text-muted-foreground transition-transform", showAdvanced && "rotate-90")} />
+                </CardTitle>
+                <CardDescription>CTA, elemento narrativo e instruções extras (opcional).</CardDescription>
+              </CardHeader>
+
+              {showAdvanced && (
+                <CardContent className="pt-0 space-y-5">
+                  {/* CTA Style */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">Estilo de CTA</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {(Object.keys(CTA_STYLE_LABELS) as CtaStyle[]).map((style) => (
+                        <button
+                          key={style}
+                          onClick={() => setCtaStyle(style)}
+                          className={cn(
+                            "p-2.5 rounded-lg border-2 text-xs font-medium transition-all",
+                            ctaStyle === style
+                              ? "border-primary bg-primary/5 text-primary"
+                              : "border-muted hover:border-primary/30"
+                          )}
+                        >
+                          {CTA_STYLE_LABELS[style]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Narrative Element */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">Elemento Narrativo</Label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                      {(Object.keys(NARRATIVE_ELEMENT_LABELS) as NarrativeElement[]).map((el) => (
+                        <button
+                          key={el}
+                          onClick={() => setNarrativeElement(el)}
+                          className={cn(
+                            "p-2.5 rounded-lg border-2 text-xs font-medium transition-all",
+                            narrativeElement === el
+                              ? "border-primary bg-primary/5 text-primary"
+                              : "border-muted hover:border-primary/30"
+                          )}
+                        >
+                          {NARRATIVE_ELEMENT_LABELS[el]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Custom Instructions */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">Instruções extras (opcional)</Label>
+                    <Textarea
+                      value={customInstructions}
+                      onChange={(e) => setCustomInstructions(e.target.value)}
+                      placeholder="Ex: Mencionar a consulta de R$297 como CTA. Usar tom mais científico. Focar em saúde intestinal..."
+                      className="min-h-[80px] text-sm resize-none"
+                    />
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+
+            {/* Generate Button */}
+            <div className="flex justify-center pt-2 pb-8">
+              <Button
+                onClick={handleGenerate}
+                disabled={isGenerating || !topic.trim()}
+                size="lg"
+                className="rounded-full px-10 py-6 text-base font-bold shadow-xl hover:shadow-2xl transition-all hover:scale-[1.02] bg-gradient-to-r from-primary to-primary/80"
+              >
+                {isGenerating ? (
+                  <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Gerando {CONTENT_FORMAT_LABELS[contentFormat]}...</>
+                ) : (
+                  <>
+                    <Wand2 className="mr-2 h-5 w-5" /> Gerar {CONTENT_FORMAT_LABELS[contentFormat]} Estratégico <ArrowRight className="ml-2 w-5 h-5" />
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         ) : (
           /* Carousel Editor */
@@ -479,9 +672,11 @@ export default function CarouselCreator() {
                       <h2 className="font-extrabold text-xl tracking-tight">{carousel.titulo}</h2>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
+                    <Badge variant="secondary" className="bg-primary/10 text-primary border-none px-4 py-1.5 rounded-xl font-bold">{CONTENT_FORMAT_LABELS[currentContentFormat]}</Badge>
                     <Badge variant="secondary" className="bg-primary/10 text-primary border-none px-4 py-1.5 rounded-xl font-bold">{POST_TYPE_LABELS[postType] || 'Estratégia'}</Badge>
-                    <Badge variant="outline" className="border-primary/20 px-4 py-1.5 rounded-xl font-medium">{contentPillar}</Badge>
+                    <Badge variant="outline" className="border-primary/20 px-4 py-1.5 rounded-xl font-medium">{FUNNEL_STAGE_LABELS[funnelStage] || contentPillar}</Badge>
+                    {ctaStyle !== 'auto' && <Badge variant="outline" className="border-emerald-200 text-emerald-700 px-4 py-1.5 rounded-xl font-medium">{CTA_STYLE_LABELS[ctaStyle]}</Badge>}
                   </div>
                 </div>
 
@@ -505,12 +700,58 @@ export default function CarouselCreator() {
                       </div>
 
                       {/* Direct Editor Stage */}
-                      <div className="relative group transition-all duration-700 ease-in-out bg-slate-50/50 dark:bg-slate-900/10 p-4 md:p-16 rounded-[48px] border border-slate-200/40 flex justify-center shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] min-h-[500px]">
-                        <div className="relative">
-                          {/* Realistic Sombra */}
-                          <div className="absolute -inset-4 bg-gradient-to-tr from-primary/10 via-transparent to-primary/5 blur-3xl opacity-50" />
+                      {currentContentFormat === 'reels_script' ? (
+                        /* Reels Script View */
+                        <div className="bg-slate-50/50 dark:bg-slate-900/10 p-6 md:p-10 rounded-[32px] border border-slate-200/40 shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] min-h-[400px]">
+                          <div className="max-w-lg mx-auto space-y-4">
+                            <div className="flex items-center gap-3 mb-6">
+                              <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+                                <span className="text-lg">🎬</span>
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold uppercase tracking-wider text-red-500/70">Seção {currentSlideIndex + 1} / {carousel.slides.length}</p>
+                                <p className="text-sm font-semibold text-muted-foreground">
+                                  {currentSlideIndex === 0 ? 'Gancho (0-3s)' : currentSlideIndex === carousel.slides.length - 1 ? 'Fechamento + CTA' : `Desenvolvimento (${currentSlideIndex * 8}-${(currentSlideIndex + 1) * 8}s)`}
+                                </p>
+                              </div>
+                            </div>
 
-                          <div id="active-slide-container" className="relative w-[340px] aspect-[4/5] bg-white rounded-xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] overflow-hidden ring-1 ring-black/5 transform hover:scale-[1.01] transition-all duration-500">
+                            <div className="space-y-4">
+                              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-2">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-primary/60">Texto na Tela</p>
+                                <div className="text-xl font-bold text-foreground">{carousel.slides[currentSlideIndex]?.headline || '—'}</div>
+                              </div>
+
+                              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-2">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500/60">Script Falado</p>
+                                <div className="text-base text-foreground leading-relaxed whitespace-pre-line">{carousel.slides[currentSlideIndex]?.subtexto || '—'}</div>
+                              </div>
+
+                              {carousel.slides[currentSlideIndex]?.destaque && (
+                                <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200 space-y-1">
+                                  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600/60">Indicação Técnica</p>
+                                  <div className="text-sm font-medium text-amber-800">{carousel.slides[currentSlideIndex]?.destaque}</div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Visual Slide Editor (Carousel, Single Post, Stories) */
+                        <div className="relative group transition-all duration-700 ease-in-out bg-slate-50/50 dark:bg-slate-900/10 p-4 md:p-16 rounded-[48px] border border-slate-200/40 flex justify-center shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] min-h-[500px]">
+                          <div className="relative">
+                            {/* Realistic Sombra */}
+                            <div className="absolute -inset-4 bg-gradient-to-tr from-primary/10 via-transparent to-primary/5 blur-3xl opacity-50" />
+
+                            <div
+                              id="active-slide-container"
+                              className={cn(
+                                "relative bg-white rounded-xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] overflow-hidden ring-1 ring-black/5 transform hover:scale-[1.01] transition-all duration-500",
+                                currentContentFormat === 'stories'
+                                  ? "w-[270px] aspect-[9/16]"
+                                  : "w-[340px] aspect-[4/5]"
+                              )}
+                            >
                             <CarouselSlideEditor
                               slide={carousel.slides[currentSlideIndex]}
                               index={currentSlideIndex}
@@ -534,15 +775,18 @@ export default function CarouselCreator() {
                           </div>
                         </div>
                       </div>
+                      )}
 
                       <div className="mt-8 flex flex-wrap justify-center gap-4">
+                        {currentContentFormat !== 'reels_script' && (
                         <Button
                           onClick={() => exportSlideAsImage('active-slide-container', `slide-${currentSlideIndex + 1}`)}
                           className="h-14 px-8 gap-3 rounded-[20px] shadow-lg hover:shadow-xl transition-all border-slate-200 bg-white"
                           variant="outline"
                         >
-                          <Download className="h-5 w-5 text-primary" /> Exportar Slide HD
+                          <Download className="h-5 w-5 text-primary" /> Exportar {currentContentFormat === 'stories' ? 'Story' : 'Slide'} HD
                         </Button>
+                        )}
 
                         <Button
                           onClick={handleCloudSave}

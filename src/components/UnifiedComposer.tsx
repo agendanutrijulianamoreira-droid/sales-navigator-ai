@@ -51,7 +51,7 @@ const CONTENT_OBJECTIVES = [
     color: "text-emerald-500",
     bgColor: "bg-emerald-500/10",
     borderColor: "border-emerald-500/30",
-    postTypes: ["PROMESSA", "ESTRATEGIA_UTIL", "LEVANTADA_MAO"],
+    postTypes: ["CTA_DIRETO", "QUEBRA_OBJECAO", "STORYTELLING_RESULTADO"],
     formats: ["carousel", "single_post"],
   },
 ];
@@ -120,7 +120,7 @@ export function UnifiedComposer({ onGenerate }: UnifiedComposerProps) {
     setDraft(null);
     
     try {
-      const postType = selectedObjective?.postTypes[0] || "ESTRATEGIA_UTIL";
+      const postType = selectedObjective?.postTypes[0] || "LISTA_AUTORIDADE";
       const contentPillar = selectedObjective?.label || "Educativo";
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-carousel`, {
@@ -157,7 +157,7 @@ export function UnifiedComposer({ onGenerate }: UnifiedComposerProps) {
   const handleContinueToDesign = () => {
     if (!draft || !objective) return;
 
-    const postType = selectedObjective?.postTypes[0] || "ESTRATEGIA_UTIL";
+    const postType = selectedObjective?.postTypes[0] || "LISTA_AUTORIDADE";
     
     const data: GeneratedContent = {
       objective,
