@@ -46,8 +46,9 @@ export default function BusinessLab() {
     const [newProduct, setNewProduct] = useState({
         nome: "",
         ticket: "",
-        tipo_produto: "servico",
-        tipo_cliente: "desenvolvimento",
+        tipo_produto: "consultoria",
+        tipo_cliente: "frustrado",
+        ladder_stage: "core",
         descricao: "",
         hours_spent: "0",
     });
@@ -73,12 +74,14 @@ export default function BusinessLab() {
             descricao: newProduct.descricao,
             ativo: true,
             ordem: products?.length || 0,
-        });
+            ladder_stage: newProduct.ladder_stage,
+        } as any);
         setNewProduct({
             nome: "",
             ticket: "",
-            tipo_produto: "servico",
-            tipo_cliente: "desenvolvimento",
+            tipo_produto: "consultoria",
+            tipo_cliente: "frustrado",
+            ladder_stage: "core",
             descricao: "",
             hours_spent: "0"
         });
@@ -165,10 +168,10 @@ export default function BusinessLab() {
             return;
         }
 
-        // Search for product prices by tipo_produto
-        const pTrip = products?.find(p => p.tipo_produto === 'entrada')?.ticket || 47;
-        const pCore = products?.find(p => p.tipo_produto === 'servico')?.ticket || 497;
-        const pPremium = products?.find(p => p.tipo_produto === 'premium')?.ticket || 2500;
+        // Search for product prices by ladder_stage
+        const pTrip = products?.find(p => (p as any).ladder_stage === 'entrada')?.ticket || 47;
+        const pCore = products?.find(p => (p as any).ladder_stage === 'core')?.ticket || 497;
+        const pPremium = products?.find(p => (p as any).ladder_stage === 'premium')?.ticket || 2500;
 
         const cCore = convLeadToCore[0] / 100;
         const cPremium = convCoreToPremium[0] / 100;
@@ -433,9 +436,9 @@ export default function BusinessLab() {
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-bold text-sm">{product.nome}</span>
                                                                 <Badge className="text-[8px] h-4 uppercase tracking-tighter" variant="outline">
-                                                                    {product.tipo_produto}
+                                                                    {(product as any).ladder_stage || product.tipo_produto}
                                                                 </Badge>
-                                                                {product.tipo_produto === 'premium' && (
+                                                                {(product as any).ladder_stage === 'premium' && (
                                                                     <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
                                                                 )}
                                                             </div>
@@ -489,25 +492,25 @@ export default function BusinessLab() {
                         </div>
                     </div>
 
-                    {/* Quick Add Product Form - Standardizing */}
+                    {/* Quick Add Product Form */}
                     <Card id="product-form-section" className="border-white/10 bg-card/40 backdrop-blur-md overflow-hidden">
                         <div className="bg-primary/5 p-4 border-b border-white/5 flex items-center gap-2">
                             <Sparkles className="h-4 w-4 text-primary" />
-                            <h4 className="text-sm font-black uppercase tracking-widest">Painel de Modelagem de Produto</h4>
+                            <h4 className="text-sm font-black uppercase tracking-widest">Cadastrar Novo Produto</h4>
                         </div>
                         <CardContent className="p-8">
-                            <div className="grid gap-8 md:grid-cols-4">
+                            <div className="grid gap-6 md:grid-cols-3">
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2">Nome</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nome do Produto</Label>
                                     <Input
                                         value={newProduct.nome}
                                         onChange={(e) => setNewProduct({ ...newProduct, nome: e.target.value })}
-                                        placeholder="Ex: Consultoria Express"
+                                        placeholder="Ex: Consultoria Nutri Express"
                                         className="h-12 bg-white/5 border-white/10 focus:ring-primary rounded-xl"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2">Preço (R$)</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Preço (R$)</Label>
                                     <Input
                                         type="number"
                                         value={newProduct.ticket}
@@ -517,21 +520,38 @@ export default function BusinessLab() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2">Papel na Escada</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipo de Produto</Label>
                                     <Select value={newProduct.tipo_produto} onValueChange={(v) => setNewProduct({ ...newProduct, tipo_produto: v })}>
                                         <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="isca">Isca (Base)</SelectItem>
-                                            <SelectItem value="entrada">Entrada (Tripwire)</SelectItem>
-                                            <SelectItem value="core">Core (Serviço)</SelectItem>
-                                            <SelectItem value="premium">Premium (VIP)</SelectItem>
+                                            <SelectItem value="consultoria">Consultoria</SelectItem>
+                                            <SelectItem value="mentoria">Mentoria</SelectItem>
+                                            <SelectItem value="curso">Curso</SelectItem>
+                                            <SelectItem value="grupo">Grupo</SelectItem>
+                                            <SelectItem value="desafio">Desafio</SelectItem>
+                                            <SelectItem value="ebook">E-book / PDF</SelectItem>
+                                            <SelectItem value="outro">Outro</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2">Esforço (Horas)</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Papel na Escada</Label>
+                                    <Select value={newProduct.ladder_stage} onValueChange={(v) => setNewProduct({ ...newProduct, ladder_stage: v })}>
+                                        <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="isca">Isca (Grátis/Baixo)</SelectItem>
+                                            <SelectItem value="entrada">Entrada (Tripwire)</SelectItem>
+                                            <SelectItem value="core">Core (Serviço Principal)</SelectItem>
+                                            <SelectItem value="premium">Premium (VIP/High Ticket)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Horas por Atendimento</Label>
                                     <Input
                                         type="number"
                                         value={newProduct.hours_spent}
@@ -541,9 +561,9 @@ export default function BusinessLab() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mr-2">Destino</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">&nbsp;</Label>
                                     <Button onClick={handleAddProduct} className="w-full h-12 font-black uppercase tracking-widest rounded-xl transition-all active:scale-[0.98]">
-                                        Fixar na Escada
+                                        <Plus className="h-4 w-4 mr-2" /> Cadastrar Produto
                                     </Button>
                                 </div>
                             </div>
