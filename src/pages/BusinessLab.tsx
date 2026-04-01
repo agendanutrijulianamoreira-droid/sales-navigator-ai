@@ -14,12 +14,12 @@ import { Badge } from "@/components/ui/badge";
 import {
     Loader2, Sparkles, Package, FileText, Trophy,
     Plus, Trash2, Copy, Check, BarChart3, Target, TrendingUp,
-    AlertTriangle, Info, Clock, Calculator, BrainCircuit
+    AlertTriangle, Info, Clock, Calculator, BrainCircuit, Wallet
 } from "lucide-react";
 import { toast } from "sonner";
 import { PricingCalculator } from "@/components/business/PricingCalculator";
 import { CFOConsultant } from "@/components/business/CFOConsultant";
-import { FinancialGPS } from "@/components/business/FinancialGPS";
+import { FinancialPanel } from "@/components/business/FinancialPanel";
 import { useFinancialSettings } from "@/hooks/useFinancialSettings";
 import { cn } from "@/lib/utils";
 import { Slider } from "@/components/ui/slider";
@@ -213,38 +213,29 @@ export default function BusinessLab() {
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8 relative z-10">
                 <div className="flex justify-center mb-8">
-                    <TabsList className="grid grid-cols-5 w-full max-w-4xl bg-muted/30 backdrop-blur-md border border-white/10 p-1 rounded-2xl h-14">
+                    <TabsList className="grid grid-cols-4 w-full max-w-3xl bg-muted/30 backdrop-blur-md border border-white/10 p-1 rounded-2xl h-14">
                         <TabsTrigger value="finance" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
-                            <BarChart3 className="h-4 w-4" />
-                            <span className="font-bold hidden sm:inline">Engenharia de Lucro</span>
+                            <Wallet className="h-4 w-4" />
+                            <span className="font-bold hidden sm:inline">Painel Financeiro</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="ladder" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
+                            <Package className="h-4 w-4" />
+                            <span className="font-bold hidden sm:inline">Escada de Ofertas</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="simulator" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
+                            <Calculator className="h-4 w-4" />
+                            <span className="font-bold hidden sm:inline">Simulador</span>
                         </TabsTrigger>
                         <TabsTrigger value="cfo" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
                             <BrainCircuit className="h-4 w-4" />
                             <span className="font-bold hidden sm:inline">Consultoria CFO</span>
                         </TabsTrigger>
-                        <TabsTrigger value="ladder" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
-                            <Package className="h-4 w-4" />
-                            <span className="font-bold hidden sm:inline">Laboratório de Ofertas</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="factory" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
-                            <Trophy className="h-4 w-4" />
-                            <span className="font-bold hidden sm:inline">Fábrica Digital</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="gps" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
-                            <TrendingUp className="h-4 w-4" />
-                            <span className="font-bold hidden sm:inline">GPS Financeiro</span>
-                        </TabsTrigger>
                     </TabsList>
                 </div>
 
-                {/* CFO Consultant Tab */}
-                <TabsContent value="cfo" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <CFOConsultant />
-                </TabsContent>
-
-                {/* GPS Financeiro Tab */}
-                <TabsContent value="gps" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <FinancialGPS />
+                {/* Painel Financeiro (NEW - Real Data) */}
+                <TabsContent value="finance" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <FinancialPanel />
                 </TabsContent>
 
                 {/* Product Ladder / Revenue Roadmap */}
@@ -560,147 +551,14 @@ export default function BusinessLab() {
                     </Card>
                 </TabsContent>
 
-                {/* Finance / Reverse Engineering */}
-                <TabsContent value="finance" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                {/* Simulador (PricingCalculator) */}
+                <TabsContent value="simulator" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <PricingCalculator />
                 </TabsContent>
 
-                {/* Factory (Materials & Challenges) */}
-                <TabsContent value="factory" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <div className="grid gap-8 lg:grid-cols-2">
-                        <Card className="border-none shadow-2xl bg-gradient-to-br from-slate-900 to-indigo-900 text-white overflow-hidden group">
-                            <CardHeader className="relative z-10">
-                                <div className="bg-primary/20 p-2 rounded-xl w-fit mb-4 border border-primary/30">
-                                    <FileText className="h-6 w-6 text-primary" />
-                                </div>
-                                <CardTitle className="text-2xl font-black">Engenharia de Material Rico</CardTitle>
-                                <CardDescription className="text-slate-400">Crie iscas digitais que geram autoridade instantânea.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6 relative z-10">
-                                <div className="grid grid-cols-2 gap-3">
-                                    {["ebook", "checklist", "guia", "planner", "roteiro"].map((type) => (
-                                        <div
-                                            key={type}
-                                            onClick={() => setMaterialType(type)}
-                                            className={`p-3 rounded-xl border cursor-pointer transition-all text-center capitalize text-xs font-bold ${materialType === type ? 'bg-primary border-primary text-white' : 'bg-white/5 border-white/10 hover:bg-white/10 text-slate-300'}`}
-                                        >
-                                            {type}
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Qual o tema central do conhecimento?</Label>
-                                    <Textarea
-                                        value={materialTopic}
-                                        onChange={(e) => setMaterialTopic(e.target.value)}
-                                        placeholder="Ex: 5 Passos para sair do sedentarismo em casa..."
-                                        rows={4}
-                                        className="bg-white/5 border-white/10 focus:ring-primary rounded-2xl p-4 text-sm"
-                                    />
-                                </div>
-                                <Button
-                                    onClick={handleGenerateMaterial}
-                                    disabled={isLoading}
-                                    className="w-full h-14 bg-white text-slate-900 hover:bg-white/90 font-black text-lg gap-2 rounded-2xl shadow-xl hover:scale-[1.02] transition-all"
-                                >
-                                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5 text-primary" />}
-                                    Forjar Material Agora
-                                </Button>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="border-none shadow-2xl bg-gradient-to-br from-slate-900 to-purple-900 text-white overflow-hidden group">
-                            <CardHeader className="relative z-10">
-                                <div className="bg-purple-500/20 p-2 rounded-xl w-fit mb-4 border border-purple-500/30 text-purple-400">
-                                    <Trophy className="h-6 w-6" />
-                                </div>
-                                <CardTitle className="text-2xl font-black">Arquiteto de Desafios</CardTitle>
-                                <CardDescription className="text-slate-400">Ganhe engajamento brutal e prepare o terreno para a venda.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6 relative z-10">
-                                <div className="space-y-3">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Janela de Transformação</Label>
-                                    <div className="flex justify-between gap-2">
-                                        {["5", "7", "14", "21"].map((d) => (
-                                            <div
-                                                key={d}
-                                                onClick={() => setChallengeDays(d)}
-                                                className={`flex-1 py-3 rounded-xl border cursor-pointer transition-all text-center text-xs font-black ${challengeDays === d ? 'bg-purple-600 border-purple-600 text-white' : 'bg-white/5 border-white/10 hover:bg-white/10 text-slate-300'}`}
-                                            >
-                                                {d} DIAS
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Qual a grande vitória prometida?</Label>
-                                    <Textarea
-                                        value={challengeFocus}
-                                        onChange={(e) => setChallengeFocus(e.target.value)}
-                                        placeholder="Ex: Perder 2kg sem dietas malucas..."
-                                        rows={4}
-                                        className="bg-white/5 border-white/10 focus:ring-primary rounded-2xl p-4 text-sm"
-                                    />
-                                </div>
-                                <Button
-                                    onClick={handleGenerateChallenge}
-                                    disabled={isLoading}
-                                    className="w-full h-14 bg-white text-slate-900 hover:bg-white/90 font-black text-lg gap-2 rounded-2xl shadow-xl hover:scale-[1.02] transition-all"
-                                >
-                                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5 text-purple-600" />}
-                                    Arquitetar Desafio
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    {/* Shared Output Workspace for Factory */}
-                    {streamedContent && (
-                        <div className="animate-in slide-in-from-bottom-8 duration-500 max-w-4xl mx-auto w-full">
-                            <div className="flex items-center justify-between mb-4 mt-12 bg-white/5 p-4 rounded-2xl backdrop-blur-sm border border-white/10">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-3 w-3 rounded-full bg-red-500" />
-                                    <div className="h-3 w-3 rounded-full bg-amber-500" />
-                                    <div className="h-3 w-3 rounded-full bg-emerald-500" />
-                                    <span className="ml-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Preview: {materialType || 'Desafio'}</span>
-                                </div>
-                                <div className="flex gap-2">
-                                    <Button size="sm" variant="ghost" className="h-8 text-[10px] font-black uppercase text-slate-400 hover:text-white" onClick={handleCopy}>
-                                        {copied ? 'Copiado' : 'Copiar Texto'}
-                                    </Button>
-                                    <Button size="sm" variant="outline" className="h-8 text-[10px] font-black uppercase border-primary/30 text-primary hover:bg-primary hover:text-white transition-all" onClick={() => handleSave("lab_content", "generative", "Business Lab Output")}>
-                                        Sincronizar com Maestro
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <Card className="border-none shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] overflow-hidden rounded-[2rem] bg-white text-slate-900 group/doc hover:scale-[1.01] transition-transform duration-500">
-                                <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none group-hover/doc:scale-110 transition-transform duration-1000">
-                                    <FileText className="w-96 h-96" />
-                                </div>
-                                <CardContent className="p-0">
-                                    <div className="bg-slate-50 border-b p-10 flex items-center justify-between">
-                                        <div className="space-y-1">
-                                            <Badge className="bg-primary/10 text-primary border-none text-[8px] font-black uppercase">Entrega de Autoridade</Badge>
-                                            <h3 className="text-2xl font-black tracking-tight text-slate-900">Documento Estratégico</h3>
-                                        </div>
-                                        <div className="hidden sm:block">
-                                            <div className="text-[10px] font-black text-slate-400 text-right uppercase">Data de Emissão</div>
-                                            <div className="text-xs font-bold text-slate-600">{new Date().toLocaleDateString('pt-BR')}</div>
-                                        </div>
-                                    </div>
-                                    <div className="prose prose-p:text-slate-600 prose-headings:text-slate-900 prose-strong:text-slate-900 max-w-none whitespace-pre-wrap p-12 min-h-[500px] leading-relaxed text-base selection:bg-primary selection:text-white">
-                                        {streamedContent}
-                                    </div>
-                                    <div className="p-10 bg-slate-50 border-t flex items-center justify-center">
-                                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                            <Sparkles className="h-3 w-3 text-primary" /> Gerado pelo Business Lab AI - Maestro Pro
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    )}
+                {/* CFO Consultant */}
+                <TabsContent value="cfo" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <CFOConsultant />
                 </TabsContent>
             </Tabs>
         </AppLayout>
