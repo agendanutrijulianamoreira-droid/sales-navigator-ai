@@ -148,6 +148,39 @@ export type Database = {
         }
         Relationships: []
       }
+      expense_entries: {
+        Row: {
+          categoria: string
+          created_at: string
+          data: string
+          descricao: string | null
+          id: string
+          recorrente: boolean | null
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          categoria?: string
+          created_at?: string
+          data: string
+          descricao?: string | null
+          id?: string
+          recorrente?: boolean | null
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          data?: string
+          descricao?: string | null
+          id?: string
+          recorrente?: boolean | null
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       financial_goals: {
         Row: {
           created_at: string
@@ -403,6 +436,45 @@ export type Database = {
           tom_voz?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      revenue_entries: {
+        Row: {
+          categoria: string
+          created_at: string
+          data: string
+          descricao: string | null
+          id: string
+          paciente_nome: string | null
+          produto_id: string | null
+          recorrente: boolean | null
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          categoria?: string
+          created_at?: string
+          data: string
+          descricao?: string | null
+          id?: string
+          paciente_nome?: string | null
+          produto_id?: string | null
+          recorrente?: boolean | null
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          data?: string
+          descricao?: string | null
+          id?: string
+          paciente_nome?: string | null
+          produto_id?: string | null
+          recorrente?: boolean | null
+          user_id?: string
+          valor?: number
         }
         Relationships: []
       }
