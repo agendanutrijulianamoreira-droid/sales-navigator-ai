@@ -38,7 +38,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { profile } = useProfile();
   const { generations, loading: loadingGen } = useGenerations();
-  const { items: calendarItems, loading: loadingCal } = useCalendarItems();
+  const { items: calendarItems, isLoading: loadingCal } = useCalendarItems();
   const { products } = useProducts();
 
   // Recent content (last 5)
