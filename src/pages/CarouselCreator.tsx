@@ -477,6 +477,44 @@ export default function CarouselCreator() {
               </CardContent>
             </Card>
 
+            {/* Templates Prontos (atalhos) */}
+            <Card className="border border-dashed border-primary/30 bg-primary/[0.02]">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2 text-primary/80">
+                  <Lightbulb className="h-4 w-4" />
+                  Templates Prontos — clique para preencher automaticamente
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { label: "Levantada de Mão", emoji: "🖐️", format: "stories" as ContentFormat, funnel: "EVENTOS_DOR" as FunnelStage, type: "CTA_DIRETO" as PostType, cta: "PALAVRA_CHAVE" as CtaStyle, topic: "Resultado real de paciente + 3 pilares do método + CTA para comentar palavra-chave. Objetivo: gerar leads quentes nos stories." },
+                    { label: "Mito vs Verdade", emoji: "🧠", format: "carousel" as ContentFormat, funnel: "ALCANCE" as FunnelStage, type: "MITO_VS_VERDADE" as PostType, cta: "SALVAR_COMPARTILHAR" as CtaStyle, topic: "Desmistificar uma crença popular sobre alimentação/nutrição que prejudica o resultado das pacientes." },
+                    { label: "Storytelling Resultado", emoji: "✨", format: "carousel" as ContentFormat, funnel: "EVENTOS_DOR" as FunnelStage, type: "STORYTELLING_RESULTADO" as PostType, cta: "PALAVRA_CHAVE" as CtaStyle, topic: "Contar a história de transformação de uma paciente — da dor inicial ao resultado alcançado com o acompanhamento nutricional." },
+                    { label: "Reels: 3 Erros", emoji: "🎬", format: "reels_script" as ContentFormat, funnel: "ALCANCE" as FunnelStage, type: "LISTA_AUTORIDADE" as PostType, cta: "SALVAR_COMPARTILHAR" as CtaStyle, topic: "3 erros que sabotam o emagrecimento e que a maioria das pessoas comete sem perceber. Tom conversacional, como amiga." },
+                    { label: "Post de Oferta", emoji: "🎯", format: "single_post" as ContentFormat, funnel: "VENDA_DIRETA" as FunnelStage, type: "CTA_DIRETO" as PostType, cta: "LINK_BIO" as CtaStyle, topic: "Post direto de venda do plano de acompanhamento nutricional — mostrar o que inclui, para quem é, e por que agora é o momento." },
+                    { label: "Quebra de Objeção", emoji: "🛡️", format: "carousel" as ContentFormat, funnel: "EVENTOS_DOR" as FunnelStage, type: "QUEBRA_OBJECAO" as PostType, cta: "DM" as CtaStyle, topic: "Destruir a objeção 'não tenho tempo para cuidar da alimentação' mostrando que o acompanhamento se adapta à rotina." },
+                    { label: "Stories: Rotina", emoji: "📱", format: "stories" as ContentFormat, funnel: "PRINCIPIOS_VALORES" as FunnelStage, type: "ROTINA_PRATICA" as PostType, cta: "LEVANTADA_MAO" as CtaStyle, topic: "Mostrar bastidores da rotina profissional — consulta, estudo de caso, preparo de plano alimentar. Humanizar e gerar conexão." },
+                    { label: "Antes e Depois", emoji: "🔄", format: "carousel" as ContentFormat, funnel: "EVENTOS_DOR" as FunnelStage, type: "ANTES_DEPOIS_CONCEITUAL" as PostType, cta: "PALAVRA_CHAVE" as CtaStyle, topic: "Mostrar a transformação de mindset e hábitos de uma paciente (sem fotos de corpo) — do caos alimentar para a organização e equilíbrio." },
+                  ].map((tpl) => (
+                    <button
+                      key={tpl.label}
+                      onClick={() => {
+                        setContentFormat(tpl.format);
+                        setFunnelStage(tpl.funnel);
+                        setPostType(tpl.type);
+                        setCtaStyle(tpl.cta);
+                        setTopic(tpl.topic);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-primary/20 bg-white hover:bg-primary/5 hover:border-primary/40 transition-all text-xs font-medium text-foreground"
+                    >
+                      <span>{tpl.emoji}</span> {tpl.label}
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
             {/* STEP 2: Tema */}
             <Card className="border-2 shadow-lg">
               <CardHeader className="pb-3">

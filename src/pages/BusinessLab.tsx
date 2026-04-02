@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { PricingCalculator } from "@/components/business/PricingCalculator";
 import { CFOConsultant } from "@/components/business/CFOConsultant";
 import { FinancialPanel } from "@/components/business/FinancialPanel";
+import { OfferBuilder } from "@/components/business/OfferBuilder";
 import { useFinancialSettings } from "@/hooks/useFinancialSettings";
 import { cn } from "@/lib/utils";
 import { Slider } from "@/components/ui/slider";
@@ -30,6 +31,7 @@ export default function BusinessLab() {
     const { saveGeneration } = useGenerations();
     const { settings } = useFinancialSettings();
     const [activeTab, setActiveTab] = useState("finance");
+    const [showOfferBuilder, setShowOfferBuilder] = useState(false);
     const [copied, setCopied] = useState(false);
 
     // Sliders for conversion
@@ -243,6 +245,27 @@ export default function BusinessLab() {
 
                 {/* Product Ladder / Revenue Roadmap */}
                 <TabsContent value="ladder" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    {/* Toggle: Offer Builder vs Regular View */}
+                    <div className="flex items-center justify-center gap-3">
+                        <Button
+                            variant={!showOfferBuilder ? "default" : "outline"}
+                            onClick={() => setShowOfferBuilder(false)}
+                            className="rounded-xl gap-2"
+                        >
+                            <Package className="h-4 w-4" /> Catálogo & Simulador
+                        </Button>
+                        <Button
+                            variant={showOfferBuilder ? "default" : "outline"}
+                            onClick={() => setShowOfferBuilder(true)}
+                            className="rounded-xl gap-2"
+                        >
+                            <Sparkles className="h-4 w-4" /> Construir Nova Oferta
+                        </Button>
+                    </div>
+
+                    {showOfferBuilder ? (
+                        <OfferBuilder />
+                    ) : (
                     <div className="grid gap-8 lg:grid-cols-12">
                         {/* Revenue Goal Simulator - LEFT SIDE (7 columns) */}
                         <Card className="lg:col-span-7 border-none shadow-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 text-white overflow-hidden relative group">
@@ -569,6 +592,7 @@ export default function BusinessLab() {
                             </div>
                         </CardContent>
                     </Card>
+                    )}
                 </TabsContent>
 
                 {/* Simulador (PricingCalculator) */}
