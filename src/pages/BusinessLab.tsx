@@ -266,6 +266,7 @@ export default function BusinessLab() {
                     {showOfferBuilder ? (
                         <OfferBuilder />
                     ) : (
+                    <>
                     <div className="grid gap-8 lg:grid-cols-12">
                         {/* Revenue Goal Simulator - LEFT SIDE (7 columns) */}
                         <Card className="lg:col-span-7 border-none shadow-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950 text-white overflow-hidden relative group">
@@ -592,6 +593,7 @@ export default function BusinessLab() {
                             </div>
                         </CardContent>
                     </Card>
+                    </>
                     )}
                 </TabsContent>
 
