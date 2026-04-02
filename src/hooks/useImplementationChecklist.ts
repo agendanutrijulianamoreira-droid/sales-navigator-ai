@@ -85,7 +85,7 @@ export function useImplementationChecklist() {
   const fetchChecklist = useCallback(async () => {
     if (!user) { setLoading(false); return; }
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("implementation_checklist")
         .select("task_key")
         .eq("user_id", user.id)
