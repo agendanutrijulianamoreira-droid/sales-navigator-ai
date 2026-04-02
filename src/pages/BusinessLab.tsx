@@ -593,6 +593,7 @@ export default function BusinessLab() {
                             </div>
                         </CardContent>
                     </Card>
+                    </>
                     )}
                 </TabsContent>
 
