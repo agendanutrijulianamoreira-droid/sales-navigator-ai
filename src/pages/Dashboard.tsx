@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Link, useNavigate } from "react-router-dom";
+import { ImplementationGPS } from "@/components/ImplementationGPS";
 import {
   Sparkles, Calendar, ShoppingBag,
   BarChart3, Zap, Palette, Camera,
@@ -130,6 +131,9 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+
+      {/* GPS de Implementação */}
+      <ImplementationGPS />
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Main Column */}

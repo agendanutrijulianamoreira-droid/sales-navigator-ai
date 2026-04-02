@@ -56,7 +56,7 @@ export default function Conversion() {
   const { generateContent, isLoading, streamedContent } = useAISpecialist();
   const { saveGeneration } = useGenerations();
   const { products } = useProducts();
-  const [activeTab, setActiveTab] = useState("vip");
+  const [activeTab, setActiveTab] = useState("roteiros");
   const [messageType, setMessageType] = useState("levantada_mao");
   const [context, setContext] = useState("");
   const [selectedProduct, setSelectedProduct] = useState("");
@@ -191,11 +191,182 @@ export default function Conversion() {
   return (
     <AppLayout title="Acelerador de Vendas" description="Scripts de Elite & Propostas High Ticket">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="roteiros">Roteiros Prontos</TabsTrigger>
           <TabsTrigger value="vip">Lista VIP</TabsTrigger>
-          <TabsTrigger value="scripts">Scripts de Vendas</TabsTrigger>
+          <TabsTrigger value="scripts">Scripts IA</TabsTrigger>
           <TabsTrigger value="proposals">Propostas Elite</TabsTrigger>
         </TabsList>
+
+        {/* Roteiros Prontos (Operação 26) */}
+        <TabsContent value="roteiros" className="space-y-6">
+          <div className="text-center mb-4">
+            <h2 className="text-xl font-bold">Roteiros de Vendas Prontos</h2>
+            <p className="text-sm text-muted-foreground">Scripts testados e validados. Copie, personalize e use.</p>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Script 1: Roteiro de Vendas Completo */}
+            <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+              <CardHeader>
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge className="bg-primary/10 text-primary border-none text-[10px]">Alta Conversão</Badge>
+                </div>
+                <CardTitle className="text-lg">Roteiro de Primeiro Contato</CardTitle>
+                <CardDescription>Use no WhatsApp quando o lead entrar em contato</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="p-3 bg-muted/50 rounded-xl">
+                    <p className="text-[10px] font-bold uppercase text-primary mb-1">1. Saudação</p>
+                    <p className="text-sm text-foreground">"Olá [Nome], tudo bem? Que bom que você entrou em contato! Sou a [Seu Nome] e estou aqui para te ajudar a alcançar seus objetivos na nutrição."</p>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-xl">
+                    <p className="text-[10px] font-bold uppercase text-amber-600 mb-1">2. Situação (Identificar dores)</p>
+                    <p className="text-sm text-foreground">"Para eu entender melhor como posso te ajudar, me conta um pouco: qual o seu principal objetivo hoje? Você já tentou algum acompanhamento antes? O que mais te trava hoje na alimentação?"</p>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-xl">
+                    <p className="text-[10px] font-bold uppercase text-blue-600 mb-1">3. Identificação (Autoridade)</p>
+                    <p className="text-sm text-foreground">"Entendo perfeitamente, [Nome]. Muitos pacientes chegam até mim com essa mesma dificuldade. Isso acontece porque [explicação técnica rápida e simples]."</p>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-xl">
+                    <p className="text-[10px] font-bold uppercase text-emerald-600 mb-1">4. Solução (O Método)</p>
+                    <p className="text-sm text-foreground">"No meu método, a gente não foca apenas em 'passar uma dieta'. Trabalhamos com [seus pilares]. O objetivo é que você não se sinta sozinha no processo."</p>
+                  </div>
+                  <div className="p-3 bg-primary/10 rounded-xl border border-primary/20">
+                    <p className="text-[10px] font-bold uppercase text-primary mb-1">5. Oferta</p>
+                    <p className="text-sm text-foreground">"Para o seu caso, recomendo o Plano de Acompanhamento [Trimestral/Semestral]. Inclui: consulta inicial detalhada, ajustes semanais, suporte via WhatsApp e [benefícios]. O investimento é de R$ [valor]."</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    const script = `ROTEIRO DE PRIMEIRO CONTATO\n\n1. SAUDAÇÃO\n"Olá [Nome], tudo bem? Que bom que você entrou em contato! Sou a [Seu Nome] e estou aqui para te ajudar a alcançar seus objetivos na nutrição."\n\n2. SITUAÇÃO\n"Para eu entender melhor como posso te ajudar, me conta um pouco: qual o seu principal objetivo hoje? Você já tentou algum acompanhamento antes? O que mais te trava hoje na alimentação?"\n\n3. IDENTIFICAÇÃO\n"Entendo perfeitamente, [Nome]. Muitos pacientes chegam até mim com essa mesma dificuldade. Isso acontece porque [explicação técnica]."\n\n4. SOLUÇÃO\n"No meu método, a gente não foca apenas em 'passar uma dieta'. Trabalhamos com [seus pilares]. O objetivo é que você não se sinta sozinha no processo."\n\n5. OFERTA\n"Para o seu caso, recomendo o Plano de Acompanhamento [Trimestral/Semestral]. Inclui: consulta detalhada, ajustes semanais, suporte WhatsApp e [benefícios]. Investimento: R$ [valor]."`;
+                    navigator.clipboard.writeText(script);
+                    toast.success("Roteiro copiado!");
+                  }}
+                >
+                  <Copy className="h-4 w-4 mr-2" /> Copiar Roteiro Completo
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Script 2: Pós-Consulta */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge variant="secondary" className="text-[10px]">Retenção</Badge>
+                </div>
+                <CardTitle className="text-lg">Mensagens de Suporte</CardTitle>
+                <CardDescription>Use após consultas e durante o acompanhamento</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="p-3 bg-muted/50 rounded-xl">
+                    <p className="text-[10px] font-bold uppercase text-emerald-600 mb-1">Pós-Consulta (imediata)</p>
+                    <p className="text-sm text-foreground">"Olá [Nome]! Foi um prazer te atender hoje. Já estou finalizando seu plano alimentar e em breve te envio aqui. Lembre-se: o segredo está na constância, não na perfeição. Vamos juntas!"</p>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-xl">
+                    <p className="text-[10px] font-bold uppercase text-blue-600 mb-1">Primeiro Feedback (3-7 dias)</p>
+                    <p className="text-sm text-foreground">"Oi [Nome], como foi sua primeira semana? Conseguiu fazer as compras e iniciar a rotina? Teve alguma dificuldade com as substituições que combinamos?"</p>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-xl">
+                    <p className="text-[10px] font-bold uppercase text-amber-600 mb-1">Demanda Complexa (gestão de tempo)</p>
+                    <p className="text-sm text-foreground">"Bom dia, [Nome]! Que bom que trouxe essa dúvida! Como é uma alteração mais técnica, eu reservo as quintas-feiras para ajustes finos. Na quinta já te mando o plano atualizado, ok?"</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    const msgs = `MENSAGENS DE SUPORTE\n\nPÓS-CONSULTA (imediata):\n"Olá [Nome]! Foi um prazer te atender hoje. Já estou finalizando seu plano alimentar e em breve te envio aqui. Lembre-se: o segredo está na constância, não na perfeição. Vamos juntas!"\n\nPRIMEIRO FEEDBACK (3-7 dias):\n"Oi [Nome], como foi sua primeira semana? Conseguiu fazer as compras e iniciar a rotina? Teve alguma dificuldade com as substituições que combinamos?"\n\nDEMANDA COMPLEXA:\n"Bom dia, [Nome]! Que bom que trouxe essa dúvida! Como é uma alteração mais técnica, eu reservo as quintas-feiras para ajustes finos. Na quinta já te mando o plano atualizado, ok?"`;
+                    navigator.clipboard.writeText(msgs);
+                    toast.success("Mensagens copiadas!");
+                  }}
+                >
+                  <Copy className="h-4 w-4 mr-2" /> Copiar Todas as Mensagens
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Script 3: Recuperação de Leads */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge variant="outline" className="text-[10px] border-amber-300 text-amber-600">Recuperação</Badge>
+                </div>
+                <CardTitle className="text-lg">Recuperação de Leads</CardTitle>
+                <CardDescription>Reaborde contatos que não fecharam</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="p-3 bg-muted/50 rounded-xl">
+                    <p className="text-[10px] font-bold uppercase text-amber-600 mb-1">Abordagem Direta (3-7 dias depois)</p>
+                    <p className="text-sm text-foreground">"Oi [Nome], tudo bem? Estive pensando no que conversamos sobre [citar a dor]. Queria saber se conseguiu resolver ou se ainda precisa de ajuda com isso. Tenho uma condição especial essa semana que pode te ajudar."</p>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-xl">
+                    <p className="text-[10px] font-bold uppercase text-purple-600 mb-1">Empurrãozinho (lead morno)</p>
+                    <p className="text-sm text-foreground">"[Nome], vi que uma paciente com situação muito parecida com a sua acabou de completar 30 dias de acompanhamento e já [resultado]. Se quiser conversar sobre como podemos fazer o mesmo por você, estou aqui!"</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    const recovery = `RECUPERAÇÃO DE LEADS\n\nABORDAGEM DIRETA (3-7 dias):\n"Oi [Nome], tudo bem? Estive pensando no que conversamos sobre [citar a dor]. Queria saber se conseguiu resolver ou se ainda precisa de ajuda com isso. Tenho uma condição especial essa semana que pode te ajudar."\n\nEMPURRÃOZINHO:\n"[Nome], vi que uma paciente com situação parecida acabou de completar 30 dias e já [resultado]. Se quiser conversar sobre como podemos fazer o mesmo por você, estou aqui!"`;
+                    navigator.clipboard.writeText(recovery);
+                    toast.success("Scripts copiados!");
+                  }}
+                >
+                  <Copy className="h-4 w-4 mr-2" /> Copiar Scripts
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Script 4: Levantada de Mão Stories */}
+            <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50/50 to-transparent">
+              <CardHeader>
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge className="bg-purple-100 text-purple-600 border-none text-[10px]">Stories</Badge>
+                </div>
+                <CardTitle className="text-lg">Levantada de Mão (Stories)</CardTitle>
+                <CardDescription>Sequência de 4 stories para gerar leads</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="p-3 bg-purple-50/50 rounded-xl border border-purple-100">
+                    <p className="text-[10px] font-bold uppercase text-purple-600 mb-1">Story 1 — Prova Social</p>
+                    <p className="text-sm text-foreground">Foto de resultado real (antes/depois ou depoimento de paciente)</p>
+                  </div>
+                  <div className="p-3 bg-purple-50/50 rounded-xl border border-purple-100">
+                    <p className="text-[10px] font-bold uppercase text-purple-600 mb-1">Story 2 — Método</p>
+                    <p className="text-sm text-foreground">"Esse resultado não veio do acaso. Trabalhamos em 3 pilares: [Pilar 1], [Pilar 2] e [Pilar 3]."</p>
+                  </div>
+                  <div className="p-3 bg-purple-50/50 rounded-xl border border-purple-100">
+                    <p className="text-[10px] font-bold uppercase text-purple-600 mb-1">Story 3 — Desejo</p>
+                    <p className="text-sm text-foreground">"Você gostaria de passar por uma transformação que mudasse sua vida e autoestima dessa forma?"</p>
+                  </div>
+                  <div className="p-3 bg-primary/10 rounded-xl border border-primary/20">
+                    <p className="text-[10px] font-bold uppercase text-primary mb-1">Story 4 — CTA</p>
+                    <p className="text-sm text-foreground">Enquete ou CTA: "Comenta 'EU QUERO' ou clica no link da bio para conversarmos."</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    const stories = `LEVANTADA DE MÃO — STORIES\n\nSTORY 1: Foto de resultado real (antes/depois ou depoimento)\n\nSTORY 2: "Esse resultado não veio do acaso. Trabalhamos em 3 pilares: [Pilar 1], [Pilar 2] e [Pilar 3]."\n\nSTORY 3: "Você gostaria de passar por uma transformação que mudasse sua vida e autoestima dessa forma?"\n\nSTORY 4: Enquete ou CTA: "Comenta 'EU QUERO' ou clica no link da bio para conversarmos."`;
+                    navigator.clipboard.writeText(stories);
+                    toast.success("Sequência copiada!");
+                  }}
+                >
+                  <Copy className="h-4 w-4 mr-2" /> Copiar Sequência
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         <TabsContent value="vip" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
