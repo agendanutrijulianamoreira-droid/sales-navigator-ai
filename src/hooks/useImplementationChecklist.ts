@@ -115,13 +115,13 @@ export function useImplementationChecklist() {
 
     try {
       if (isCompleted) {
-        await supabase
+        await (supabase as any)
           .from("implementation_checklist")
           .delete()
           .eq("user_id", user.id)
           .eq("task_key", taskKey);
       } else {
-        await supabase
+        await (supabase as any)
           .from("implementation_checklist")
           .upsert({
             user_id: user.id,
