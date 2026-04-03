@@ -126,9 +126,10 @@ export default function BusinessLab() {
         }
 
         // Search for product prices by ladder_stage with safety fallbacks
-        const pTrip = products?.find(p => (p as any)?.ladder_stage === 'entrada')?.ticket || 47;
-        const pCore = products?.find(p => (p as any)?.ladder_stage === 'core')?.ticket || 497;
-        const pPremium = products?.find(p => (p as any)?.ladder_stage === 'premium')?.ticket || 2500;
+        const sorted = [...(products || [])].sort((a, b) => a.ticket - b.ticket);
+        const pTrip = sorted[0]?.ticket || 47;
+        const pCore = sorted[Math.floor(sorted.length / 2)]?.ticket || 497;
+        const pPremium = sorted[sorted.length - 1]?.ticket || 2500;
 
         const cCore = convLeadToCore[0] / 100;
         const cPremium = convCoreToPremium[0] / 100;
