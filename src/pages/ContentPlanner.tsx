@@ -31,7 +31,7 @@ import { Link } from "react-router-dom";
 import {
   Calendar, Grid3X3, Plus, ChevronLeft, ChevronRight,
   FileText, ArrowLeft, Trash2, Loader2, Sparkles,
-  Copy, Download, Search, MoreHorizontal, Zap
+  Copy, Download, Search, MoreHorizontal, Zap, Columns3, StickyNote
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -43,6 +43,16 @@ const CONTENT_TYPES = {
   levantada: { label: "Levantada de Mão", icon: FileText, color: "bg-pink-500" },
 };
 
+const PIPELINE_STATUS = {
+  planejado: { label: "Planejado", color: "bg-gray-400", textColor: "text-gray-600", bgLight: "bg-gray-50", border: "border-gray-200" },
+  rascunho: { label: "Rascunho", color: "bg-amber-400", textColor: "text-amber-700", bgLight: "bg-amber-50", border: "border-amber-200" },
+  pronto: { label: "Pronto", color: "bg-blue-500", textColor: "text-blue-700", bgLight: "bg-blue-50", border: "border-blue-200" },
+  agendado: { label: "Agendado", color: "bg-purple-500", textColor: "text-purple-700", bgLight: "bg-purple-50", border: "border-purple-200" },
+  publicado: { label: "Publicado", color: "bg-emerald-500", textColor: "text-emerald-700", bgLight: "bg-emerald-50", border: "border-emerald-200" },
+} as const;
+
+const STATUS_ORDER = ["planejado", "rascunho", "pronto", "agendado", "publicado"] as const;
+
 const DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const MONTHS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
@@ -50,7 +60,7 @@ function ContentPlanner() {
   const { profile } = useProfile();
   const { items, isLoading, addItem, deleteItem, updateItem, getItemsForDate } = useCalendarItems();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<"month" | "week">("month");
+  const [view, setView] = useState<"month" | "week" | "pipeline">("month");
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedPost, setSelectedPost] = useState<CalendarItem | undefined>();
@@ -315,6 +325,14 @@ function ContentPlanner() {
               >
                 Semana
               </Button>
+              <Button
+                variant={view === "pipeline" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-8 text-xs font-semibold px-3 gap-1"
+                onClick={() => setView("pipeline")}
+              >
+                <Columns3 className="h-3.5 w-3.5" /> Pipeline
+              </Button>
             </div>
 
             <Select value={filterType || "todos"} onValueChange={(v) => setFilterType(v === "todos" ? null : v)}>
@@ -358,6 +376,101 @@ function ContentPlanner() {
 
         <div className="flex-1 flex overflow-hidden">
           <main className="flex-1 overflow-hidden flex flex-col">
+
+            {view === "pipeline" ? (
+              /* ═══ PIPELINE / KANBAN VIEW ═══ */
+              <ScrollArea className="flex-1 p-4">
+                <div className="grid grid-cols-5 gap-3 min-h-[600px]">
+                  {STATUS_ORDER.map((statusKey) => {
+                    const status = PIPELINE_STATUS[statusKey];
+                    const columnItems = filteredItems
+                      .filter(item => {
+                        const itemDate = new Date(item.data);
+                        const inMonth = itemDate.getFullYear() === currentYear && itemDate.getMonth() === currentMonth;
+                        // Backward compat: treat 'criado' as 'pronto'
+                        const itemStatus = item.status === "criado" ? "pronto" : (item.status || "planejado");
+                        return inMonth && itemStatus === statusKey;
+                      })
+                      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+
+                    return (
+                      <div key={statusKey} className={`rounded-xl ${status.bgLight} ${status.border} border p-3 flex flex-col`}>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2.5 h-2.5 rounded-full ${status.color}`} />
+                            <span className={`text-xs font-bold uppercase tracking-wider ${status.textColor}`}>{status.label}</span>
+                          </div>
+                          <span className="text-xs font-semibold text-gray-400 bg-white rounded-full w-6 h-6 flex items-center justify-center">
+                            {columnItems.length}
+                          </span>
+                        </div>
+
+                        <div className="space-y-2 flex-1">
+                          {columnItems.length === 0 ? (
+                            <div className="text-center py-8 text-xs text-gray-400">Nenhum conteúdo</div>
+                          ) : (
+                            columnItems.map((item) => {
+                              const typeConfig = CONTENT_TYPES[item.tipo as keyof typeof CONTENT_TYPES];
+                              const nextStatus = STATUS_ORDER[Math.min(STATUS_ORDER.indexOf(statusKey) + 1, STATUS_ORDER.length - 1)];
+                              const prevStatus = STATUS_ORDER[Math.max(STATUS_ORDER.indexOf(statusKey) - 1, 0)];
+
+                              return (
+                                <div
+                                  key={item.id}
+                                  className="bg-white rounded-lg border border-gray-100 p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
+                                  onClick={() => setSelectedPost(item)}
+                                >
+                                  <div className="flex items-start justify-between mb-1.5">
+                                    <span className={`inline-block text-[9px] font-bold uppercase px-1.5 py-0.5 rounded text-white ${typeConfig?.color || "bg-gray-400"}`}>
+                                      {typeConfig?.label || item.tipo}
+                                    </span>
+                                    <span className="text-[10px] text-gray-400">
+                                      {new Date(item.data + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm font-medium text-gray-800 line-clamp-2 mb-1">
+                                    {item.titulo || "Sem título"}
+                                  </p>
+                                  {item.notas && (
+                                    <p className="text-[11px] text-gray-400 line-clamp-1 flex items-center gap-1 mb-2">
+                                      <StickyNote className="h-3 w-3 shrink-0" /> {item.notas}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center gap-1 pt-1.5 border-t border-gray-50 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {statusKey !== "planejado" && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 text-[10px] px-2 text-gray-500"
+                                        onClick={(e) => { e.stopPropagation(); updateItem(item.id, { status: prevStatus }); }}
+                                      >
+                                        ← {PIPELINE_STATUS[prevStatus].label}
+                                      </Button>
+                                    )}
+                                    {statusKey !== "publicado" && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className={`h-6 text-[10px] px-2 ml-auto font-semibold ${PIPELINE_STATUS[nextStatus].textColor}`}
+                                        onClick={(e) => { e.stopPropagation(); updateItem(item.id, { status: nextStatus }); }}
+                                      >
+                                        {PIPELINE_STATUS[nextStatus].label} →
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            ) : (
+            /* ═══ CALENDAR VIEW (month/week) ═══ */
+            <>
             {/* Calendar Grid Header (Days Name) */}
             <div className="grid grid-cols-7 border-b border-gray-100 bg-white">
               {DAYS.map((day) => (
@@ -449,6 +562,8 @@ function ContentPlanner() {
                 )}
               </div>
             </ScrollArea>
+            </>
+            )}
           </main>
 
           {showTrends && (
@@ -467,6 +582,7 @@ function ContentPlanner() {
               titulo: data.titulo,
               tipo: data.tipo,
               notas: data.notas,
+              status: data.status || undefined,
               data: data.date
             });
             setSelectedPost(undefined);
