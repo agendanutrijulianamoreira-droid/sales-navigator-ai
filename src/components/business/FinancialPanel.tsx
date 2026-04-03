@@ -49,6 +49,22 @@ export function FinancialPanel() {
 
   const [isSaving, setIsSaving] = useState(false);
 
+  // Funnel metrics
+  const [funnelInvestimento, setFunnelInvestimento] = useState("");
+  const [funnelComentarios, setFunnelComentarios] = useState("");
+  const [funnelConversas, setFunnelConversas] = useState("");
+  const [funnelVendas, setFunnelVendas] = useState("");
+
+  const funnelCustoComentario = Number(funnelInvestimento) > 0 && Number(funnelComentarios) > 0
+    ? (Number(funnelInvestimento) / Number(funnelComentarios))
+    : null;
+  const funnelTaxaResposta = Number(funnelComentarios) > 0 && Number(funnelConversas) > 0
+    ? ((Number(funnelConversas) / Number(funnelComentarios)) * 100)
+    : null;
+  const funnelConversao = Number(funnelConversas) > 0 && Number(funnelVendas) > 0
+    ? ((Number(funnelVendas) / Number(funnelConversas)) * 100)
+    : null;
+
   const monthlyGoal = settings?.monthly_income_goal || 10000;
   const goalProgress = monthlyGoal > 0 ? Math.min((dre.receita_bruta / monthlyGoal) * 100, 100) : 0;
 
@@ -477,37 +493,43 @@ export function FinancialPanel() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">R$</span>
-                    <Input type="number" placeholder="140" className="h-8 text-xs" />
+                    <Input type="number" placeholder="140" className="h-8 text-xs" value={funnelInvestimento} onChange={(e) => setFunnelInvestimento(e.target.value)} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <span className="text-[10px] text-muted-foreground">Comentários</span>
-                    <Input type="number" placeholder="20" className="h-8 text-xs mt-1" />
+                    <Input type="number" placeholder="20" className="h-8 text-xs mt-1" value={funnelComentarios} onChange={(e) => setFunnelComentarios(e.target.value)} />
                   </div>
                   <div>
                     <span className="text-[10px] text-muted-foreground">Custo/comentário</span>
-                    <div className="h-8 flex items-center px-2 bg-muted/50 rounded-md text-xs font-semibold mt-1">R$ 7,00</div>
+                    <div className={cn("h-8 flex items-center px-2 rounded-md text-xs font-semibold mt-1", funnelCustoComentario !== null && funnelCustoComentario <= 7 ? "bg-emerald-50 text-emerald-600" : funnelCustoComentario !== null ? "bg-red-50 text-red-600" : "bg-muted/50")}>
+                      {funnelCustoComentario !== null ? `R$ ${funnelCustoComentario.toFixed(2)}` : "—"}
+                    </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <span className="text-[10px] text-muted-foreground">Conversas iniciadas</span>
-                    <Input type="number" placeholder="10" className="h-8 text-xs mt-1" />
+                    <Input type="number" placeholder="10" className="h-8 text-xs mt-1" value={funnelConversas} onChange={(e) => setFunnelConversas(e.target.value)} />
                   </div>
                   <div>
                     <span className="text-[10px] text-muted-foreground">Taxa resposta</span>
-                    <div className="h-8 flex items-center px-2 bg-muted/50 rounded-md text-xs font-semibold mt-1">50%</div>
+                    <div className={cn("h-8 flex items-center px-2 rounded-md text-xs font-semibold mt-1", funnelTaxaResposta !== null && funnelTaxaResposta >= 50 ? "bg-emerald-50 text-emerald-600" : funnelTaxaResposta !== null ? "bg-amber-50 text-amber-600" : "bg-muted/50")}>
+                      {funnelTaxaResposta !== null ? `${funnelTaxaResposta.toFixed(0)}%` : "—"}
+                    </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <span className="text-[10px] text-muted-foreground">Vendas fechadas</span>
-                    <Input type="number" placeholder="1" className="h-8 text-xs mt-1" />
+                    <Input type="number" placeholder="1" className="h-8 text-xs mt-1" value={funnelVendas} onChange={(e) => setFunnelVendas(e.target.value)} />
                   </div>
                   <div>
                     <span className="text-[10px] text-muted-foreground">Conversão</span>
-                    <div className="h-8 flex items-center px-2 bg-emerald-50 rounded-md text-xs font-bold text-emerald-600 mt-1">11%</div>
+                    <div className={cn("h-8 flex items-center px-2 rounded-md text-xs font-bold mt-1", funnelConversao !== null && funnelConversao >= 10 ? "bg-emerald-50 text-emerald-600" : funnelConversao !== null ? "bg-amber-50 text-amber-600" : "bg-muted/50")}>
+                      {funnelConversao !== null ? `${funnelConversao.toFixed(0)}%` : "—"}
+                    </div>
                   </div>
                 </div>
                 <div className="p-2 bg-primary/5 rounded-lg text-[10px] text-primary/70">
