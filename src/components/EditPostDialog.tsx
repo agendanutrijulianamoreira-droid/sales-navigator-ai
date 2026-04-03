@@ -25,7 +25,7 @@ import { toast } from "sonner";
 interface EditPostDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUpdate: (id: string, data: { date: string; tipo: string; titulo: string; notas?: string }) => Promise<void>;
+  onUpdate: (id: string, data: { date: string; tipo: string; titulo: string; notas?: string; status?: string }) => Promise<void>;
   onDuplicate?: (post: CalendarItem) => Promise<void>;
   post?: CalendarItem;
 }
@@ -49,6 +49,7 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
   const [titulo, setTitulo] = useState("");
   const [tipo, setTipo] = useState("carrossel");
   const [notas, setNotas] = useState("");
+  const [status, setStatus] = useState("planejado");
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -59,6 +60,7 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
     titulo: post?.titulo || "",
     tipo: post?.tipo || "carrossel",
     notas: post?.notas || "",
+    status: post?.status || "planejado",
     date: post?.data || "",
   }), [post]);
 
@@ -68,6 +70,7 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
       setTitulo(original.titulo);
       setTipo(original.tipo);
       setNotas(original.notas);
+      setStatus(original.status);
       setSelectedDate(new Date(original.date));
       setHasChanges(false);
       setShowCalendar(false);
@@ -87,9 +90,10 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
       titulo !== original.titulo ||
       tipo !== original.tipo ||
       notas !== original.notas ||
+      status !== original.status ||
       (selectedDate && format(selectedDate, "yyyy-MM-dd") !== original.date);
     setHasChanges(changed);
-  }, [titulo, tipo, notas, selectedDate, originalData]);
+  }, [titulo, tipo, notas, status, selectedDate, originalData]);
 
   const handleUpdate = async () => {
     if (!selectedDate || !post || !titulo.trim()) {
@@ -104,6 +108,7 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
         tipo,
         titulo: titulo.trim(),
         notas: notas.trim() || undefined,
+        status,
       });
       toast.success("Post atualizado com sucesso");
       onOpenChange(false);
@@ -259,6 +264,22 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
                 </Button>
               )
             )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select value={status} onValueChange={setStatus} disabled={isUpdating || isDuplicating}>
+              <SelectTrigger id="status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="planejado">⚪ Planejado</SelectItem>
+                <SelectItem value="rascunho">🟡 Rascunho</SelectItem>
+                <SelectItem value="pronto">🔵 Pronto</SelectItem>
+                <SelectItem value="agendado">🟣 Agendado</SelectItem>
+                <SelectItem value="publicado">🟢 Publicado</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

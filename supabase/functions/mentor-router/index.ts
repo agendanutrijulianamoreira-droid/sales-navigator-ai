@@ -6,25 +6,36 @@ const corsHeaders = {
 };
 
 // Router prompt for the Mentor to decide which specialist should respond
-const ROUTER_PROMPT = `Você é o roteador inteligente do sistema. Analise a pergunta da usuária e decida qual especialista deve responder.
+const ROUTER_PROMPT = `Você é o roteador inteligente do sistema. Analise a pergunta e decida qual especialista deve responder.
 
-ESPECIALISTAS DISPONÍVEIS:
-1. BRAND_ARCHITECT - Para perguntas sobre: marca, nicho, posicionamento, diferenciação, identidade visual, arquétipo
-2. SOCIAL_MEDIA_MANAGER - Para perguntas sobre: posts, Instagram, conteúdo, carrossel, reels, stories, calendário editorial
-3. GROWTH_STRATEGIST - Para perguntas sobre: funis de venda, escada de produtos, estratégia de crescimento, automação
-4. MATERIAL_COPYWRITER - Para perguntas sobre: ebooks, PDFs, materiais ricos, iscas digitais, copy de materiais
-5. CHALLENGE_COACH - Para perguntas sobre: desafios, gamificação, engajamento, motivação de pacientes
-6. VIP_CLOSER - Para perguntas sobre: vendas, mensagens, WhatsApp, fechamento, objeções, DM, conversão
-7. CFO_STRATEGIST - Para perguntas sobre: finanças, metas, faturamento, precificação, números, análise
-8. MENTOR_ORCHESTRATOR - Para: dúvidas emocionais, insegurança, apoio, perguntas gerais, ou quando não se encaixa em nenhum outro
+ESPECIALISTAS:
+1. AUDIENCE_EXPERT - público-alvo, persona, dores, desejos, linguagem do cliente
+2. BRAND_ARCHITECT - marca, nicho, posicionamento, diferenciação, bio do Instagram, perfil
+3. SOCIAL_MEDIA_MANAGER - posts, carrosséis, reels, stories, conteúdo viral, calendário
+4. HOOKS_COPYWRITER - headlines, hooks, copy, textos persuasivos, chamadas de atenção
+5. SALES_PAGE_BUILDER - páginas de vendas, landing pages, VSL, copy de venda
+6. VIDEO_SCRIPTWRITER - roteiros de vídeo, reels, YouTube, VSL, scripts falados
+7. MINI_TRAINING_BUILDER - mini treinamentos, funis de conteúdo gratuito, iscas digitais
+8. GROWTH_STRATEGIST - funis de venda, automação, Manychat, estratégia de crescimento
+9. VIP_CLOSER - vendas, DM, WhatsApp, fechamento, objeções, scripts de venda
+10. CFO_STRATEGIST - finanças, metas, faturamento, precificação, números
+11. MATERIAL_COPYWRITER - ebooks, PDFs, materiais ricos, iscas
+12. CHALLENGE_COACH - desafios, gamificação, engajamento
+13. MENTOR_ORCHESTRATOR - dúvidas emocionais, insegurança, apoio, perguntas gerais
 
 REGRAS:
-- Se a pergunta envolve INSEGURANÇA, MEDO ou EMOÇÃO → MENTOR_ORCHESTRATOR
-- Se a pergunta é sobre DINHEIRO ou NÚMEROS → CFO_STRATEGIST
-- Se a pergunta é sobre CONTEÚDO ou POSTS → SOCIAL_MEDIA_MANAGER
-- Se a pergunta é sobre MENSAGENS DE VENDAS → VIP_CLOSER
-- Se a pergunta é sobre MARCA ou NICHO → BRAND_ARCHITECT
-- Se a pergunta não se encaixa claramente → MENTOR_ORCHESTRATOR
+- INSEGURANÇA, MEDO, EMOÇÃO → MENTOR_ORCHESTRATOR
+- DINHEIRO, NÚMEROS, PRECIFICAÇÃO → CFO_STRATEGIST
+- CONTEÚDO, POSTS, REELS → SOCIAL_MEDIA_MANAGER
+- HEADLINE, HOOK, COPY CURTA → HOOKS_COPYWRITER
+- PÁGINA DE VENDAS, LANDING PAGE → SALES_PAGE_BUILDER
+- ROTEIRO VÍDEO, SCRIPT → VIDEO_SCRIPTWRITER
+- MINI TREINAMENTO, FUNIL GRATUITO → MINI_TRAINING_BUILDER
+- FUNIL, AUTOMAÇÃO, MANYCHAT → GROWTH_STRATEGIST
+- MENSAGENS DE VENDAS, DM, WHATSAPP → VIP_CLOSER
+- MARCA, NICHO, POSICIONAMENTO → BRAND_ARCHITECT
+- PÚBLICO, PERSONA, AVATAR → AUDIENCE_EXPERT
+- NÃO SE ENCAIXA → MENTOR_ORCHESTRATOR
 
 Responda APENAS com o nome do especialista em maiúsculas, sem explicação.`;
 
@@ -71,7 +82,8 @@ serve(async (req) => {
     
     // Validate specialist name
     const validSpecialists = [
-      "COMMAND_CENTER", "BRAND_ARCHITECT", "SOCIAL_MEDIA_MANAGER", 
+      "COMMAND_CENTER", "AUDIENCE_EXPERT", "BRAND_ARCHITECT", "SOCIAL_MEDIA_MANAGER", 
+      "HOOKS_COPYWRITER", "SALES_PAGE_BUILDER", "VIDEO_SCRIPTWRITER", "MINI_TRAINING_BUILDER",
       "GROWTH_STRATEGIST", "MATERIAL_COPYWRITER", "CHALLENGE_COACH",
       "VIP_CLOSER", "CFO_STRATEGIST", "MENTOR_ORCHESTRATOR"
     ];

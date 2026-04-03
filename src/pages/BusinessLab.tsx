@@ -1,20 +1,17 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProducts } from "@/hooks/useProducts";
-import { useAISpecialist } from "@/hooks/useAISpecialist";
-import { useGenerations } from "@/hooks/useGenerations";
 import { Badge } from "@/components/ui/badge";
 import {
-    Loader2, Sparkles, Package, FileText, Trophy,
-    Plus, Trash2, Copy, Check, BarChart3, Target, TrendingUp,
-    AlertTriangle, Info, Clock, Calculator, BrainCircuit, Wallet
+    Sparkles, Package, Trophy,
+    Plus, Trash2, BarChart3, Target, TrendingUp,
+    AlertTriangle, Clock, Calculator, BrainCircuit, Wallet
 } from "lucide-react";
 import { toast } from "sonner";
 import { PricingCalculator } from "@/components/business/PricingCalculator";
@@ -27,12 +24,9 @@ import { Slider } from "@/components/ui/slider";
 
 export default function BusinessLab() {
     const { products, addProduct, deleteProduct } = useProducts();
-    const { generateContent, isLoading, streamedContent } = useAISpecialist();
-    const { saveGeneration } = useGenerations();
     const { settings } = useFinancialSettings();
     const [activeTab, setActiveTab] = useState("finance");
     const [showOfferBuilder, setShowOfferBuilder] = useState(false);
-    const [copied, setCopied] = useState(false);
 
     // Sliders for conversion
     const [convLeadToCore, setConvLeadToCore] = useState([10]);
@@ -54,14 +48,6 @@ export default function BusinessLab() {
         descricao: "",
         hours_spent: "0",
     });
-
-    // Material generator
-    const [materialType, setMaterialType] = useState("ebook");
-    const [materialTopic, setMaterialTopic] = useState("");
-
-    // Challenge generator
-    const [challengeDays, setChallengeDays] = useState("7");
-    const [challengeFocus, setChallengeFocus] = useState("");
 
     const handleAddProduct = async () => {
         if (!newProduct.nome || !newProduct.ticket) {
@@ -88,60 +74,6 @@ export default function BusinessLab() {
             hours_spent: "0"
         });
         toast.success("Produto adicionado!");
-    };
-
-    // Auto-save generated content
-    const prevContentRef = useRef<string | null>(null);
-    useEffect(() => {
-        if (streamedContent && streamedContent !== prevContentRef.current && !isLoading) {
-            prevContentRef.current = streamedContent;
-            const tipo = activeTab === 'factory' ? 'lab_content' : 'material';
-            const subtipo = materialType || 'desafio';
-            saveGeneration({
-                tipo,
-                subtipo,
-                specialist: 'material_copywriter',
-                output_content: streamedContent,
-                titulo: `${materialType || 'Desafio'} - ${materialTopic || challengeFocus || 'Business Lab'}`,
-                input_data: { materialType, materialTopic, challengeDays, challengeFocus },
-                favorito: false,
-                tags: ['business-lab'],
-            });
-            toast.success("Conteúdo salvo automaticamente na biblioteca!");
-        }
-    }, [streamedContent, isLoading]);
-
-    const handleGenerateMaterial = async () => {
-        if (!materialTopic) {
-            toast.error("Digite o tema do material");
-            return;
-        }
-        prevContentRef.current = null;
-        await generateContent("material_copywriter", materialType, {
-            tipo: materialType,
-            tema: materialTopic,
-        });
-    };
-
-    const handleGenerateChallenge = async () => {
-        if (!challengeFocus) {
-            toast.error("Digite o foco do desafio");
-            return;
-        }
-        prevContentRef.current = null;
-        await generateContent("challenge_coach", "desafio", {
-            dias: challengeDays,
-            foco: challengeFocus,
-        });
-    };
-
-    const handleCopy = () => {
-        if (streamedContent) {
-            navigator.clipboard.writeText(streamedContent);
-            setCopied(true);
-            toast.success("Copiado!");
-            setTimeout(() => setCopied(false), 2000);
-        }
     };
 
     const calculateViability = (salesNeeded: any) => {
@@ -194,22 +126,6 @@ export default function BusinessLab() {
         });
 
         toast.success("Estratégia calculada!");
-    };
-
-    const handleSave = async (tipo: string, subtipo: string, titulo: string) => {
-        if (streamedContent) {
-            await saveGeneration({
-                tipo,
-                subtipo,
-                specialist: tipo === "material" ? "material_copywriter" : "challenge_coach",
-                output_content: streamedContent,
-                titulo,
-                input_data: {},
-                favorito: false,
-                tags: [],
-            });
-            toast.success("Salvo com sucesso!");
-        }
     };
 
     return (

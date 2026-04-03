@@ -294,7 +294,7 @@ export type Database = {
       }
       implementation_checklist: {
         Row: {
-          completed: boolean | null
+          completed: boolean
           completed_at: string | null
           created_at: string
           fase: number
@@ -303,7 +303,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          completed?: boolean | null
+          completed?: boolean
           completed_at?: string | null
           created_at?: string
           fase: number
@@ -312,7 +312,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          completed?: boolean | null
+          completed?: boolean
           completed_at?: string | null
           created_at?: string
           fase?: number
