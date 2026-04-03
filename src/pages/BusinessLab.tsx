@@ -64,9 +64,7 @@ export default function BusinessLab() {
         ticket: "",
         tipo_produto: "consultoria",
         tipo_cliente: "frustrado",
-        ladder_stage: "core",
         descricao: "",
-        hours_spent: "0",
     });
 
     const handleAddProduct = async () => {
@@ -82,10 +80,9 @@ export default function BusinessLab() {
                 tipo_produto: newProduct.tipo_produto,
                 tipo_cliente: newProduct.tipo_cliente,
                 descricao: newProduct.descricao,
-                ladder_stage: newProduct.ladder_stage, // Campo obrigatório no banco!
                 ativo: true,
                 ordem: products?.length || 0,
-            } as any);
+            });
 
             if (error) throw error;
 
@@ -94,9 +91,7 @@ export default function BusinessLab() {
                 ticket: "",
                 tipo_produto: "consultoria",
                 tipo_cliente: "frustrado",
-                ladder_stage: "core",
                 descricao: "",
-                hours_spent: "0"
             });
             toast.success("Produto adicionado com sucesso!");
         } catch (e) {
@@ -131,9 +126,10 @@ export default function BusinessLab() {
         }
 
         // Search for product prices by ladder_stage with safety fallbacks
-        const pTrip = products?.find(p => (p as any)?.ladder_stage === 'entrada')?.ticket || 47;
-        const pCore = products?.find(p => (p as any)?.ladder_stage === 'core')?.ticket || 497;
-        const pPremium = products?.find(p => (p as any)?.ladder_stage === 'premium')?.ticket || 2500;
+        const sorted = [...(products || [])].sort((a, b) => a.ticket - b.ticket);
+        const pTrip = sorted[0]?.ticket || 47;
+        const pCore = sorted[Math.floor(sorted.length / 2)]?.ticket || 497;
+        const pPremium = sorted[sorted.length - 1]?.ticket || 2500;
 
         const cCore = convLeadToCore[0] / 100;
         const cPremium = convCoreToPremium[0] / 100;
@@ -408,11 +404,8 @@ export default function BusinessLab() {
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-bold text-sm">{product.nome}</span>
                                                                 <Badge className="text-[8px] h-4 uppercase tracking-tighter" variant="outline">
-                                                                    {String((product as any)?.ladder_stage || product?.tipo_produto || 'core')}
+                                                                    {product.tipo_produto || 'core'}
                                                                 </Badge>
-                                                                {(product as any).ladder_stage === 'premium' && (
-                                                                    <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
-                                                                )}
                                                             </div>
                                                             <p className="text-[10px] text-muted-foreground line-clamp-1">{product.descricao || 'Sem descrição'}</p>
                                                         </div>
@@ -518,26 +511,11 @@ export default function BusinessLab() {
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Papel na Escada</Label>
-                                    <Select value={newProduct.ladder_stage} onValueChange={(v) => setNewProduct({ ...newProduct, ladder_stage: v })}>
-                                        <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="isca">Isca (Grátis/Baixo)</SelectItem>
-                                            <SelectItem value="entrada">Entrada (Tripwire)</SelectItem>
-                                            <SelectItem value="core">Core (Serviço Principal)</SelectItem>
-                                            <SelectItem value="premium">Premium (VIP/High Ticket)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Horas por Atendimento</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Descrição (opcional)</Label>
                                     <Input
-                                        type="number"
-                                        value={newProduct.hours_spent}
-                                        onChange={(e) => setNewProduct({ ...newProduct, hours_spent: e.target.value })}
-                                        placeholder="2"
+                                        value={newProduct.descricao}
+                                        onChange={(e) => setNewProduct({ ...newProduct, descricao: e.target.value })}
+                                        placeholder="Descrição do produto"
                                         className="h-12 bg-white/5 border-white/10 focus:ring-primary rounded-xl"
                                     />
                                 </div>

@@ -392,10 +392,10 @@ export function FinancialPanel() {
                   {products && products.length > 0 && (
                     <div className="space-y-1.5">
                       <Label className="text-xs font-semibold">Produto (opcional)</Label>
-                      <Select value={revProdutoId} onValueChange={setRevProdutoId}>
+                      <Select value={revProdutoId || "none"} onValueChange={(v) => setRevProdutoId(v === "none" ? "" : v)}>
                         <SelectTrigger><SelectValue placeholder="Vincular produto" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Nenhum</SelectItem>
+                          <SelectItem value="none">Nenhum</SelectItem>
                           {products.map(p => (
                             <SelectItem key={p.id} value={p.id}>{p.nome} — R$ {p.ticket}</SelectItem>
                           ))}
