@@ -64,9 +64,7 @@ export default function BusinessLab() {
         ticket: "",
         tipo_produto: "consultoria",
         tipo_cliente: "frustrado",
-        ladder_stage: "core",
         descricao: "",
-        hours_spent: "0",
     });
 
     const handleAddProduct = async () => {
