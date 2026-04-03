@@ -65,7 +65,7 @@ export default function Dashboard() {
   const profileCompleteness = useMemo(() => {
     if (!profile) return 0;
     const fields = ['nome', 'nicho', 'persona_ideal', 'mecanismo_unico', 'promessa_principal', 'tom_voz', 'dor_principal'];
-    const filled = fields.filter(f => !!(profile as any)[f]).length;
+    const filled = fields.filter(f => !!(profile as Record<string, unknown>)[f]).length;
     return Math.round((filled / fields.length) * 100);
   }, [profile]);
 
@@ -80,6 +80,23 @@ export default function Dashboard() {
     if (h < 18) return "Boa tarde";
     return "Boa noite";
   };
+
+  const stats = useMemo(() => {
+    // Conteúdo gerado pela IA (posts, carrosséis, etc)
+    const criados = generations?.length || 0;
+    
+    // Itens no calendário que ainda não foram publicados
+    const agendados = calendarItems?.filter(i => 
+      i.status === 'agendado' || 
+      i.status === 'planejado' || 
+      (!i.status && new Date(i.data) > new Date())
+    ).length || 0;
+    
+    // Itens marcados explicitamente como publicados
+    const publicados = calendarItems?.filter(i => i.status === 'publicado').length || 0;
+    
+    return { criados, agendados, publicados };
+  }, [generations, calendarItems]);
 
   return (
     <div className="space-y-8">
@@ -109,30 +126,135 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Create — 4 Formatos */}
-      <div>
-        <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" /> Criar Agora
+      {/* Seu Planejamento (Métricas) */}
+      <section className="space-y-4">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+          <Target className="h-4 w-4 text-primary" /> Seu Planejamento
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {QUICK_ACTIONS.map((action) => (
-            <button
-              key={action.format}
-              onClick={() => handleQuickCreate(action.format)}
-              className="group relative overflow-hidden rounded-2xl p-5 text-left transition-all hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] border border-border/50 bg-card"
-            >
-              <div className={cn("absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br", action.color)} />
-              <div className="relative z-10">
-                <span className="text-3xl mb-3 block">{action.emoji}</span>
-                <p className="font-bold text-sm group-hover:text-white transition-colors">{action.label}</p>
-                <p className="text-xs text-muted-foreground group-hover:text-white/70 transition-colors mt-0.5">Criar com IA</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="bg-white border-primary/10 shadow-sm relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
+            <CardContent className="p-6 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Criados</p>
+                <h3 className="text-3xl font-black text-foreground">{stats.criados}</h3>
               </div>
-            </button>
-          ))}
+              <div className="p-3 bg-blue-50 rounded-2xl group-hover:scale-110 transition-transform">
+                <Sparkles className="h-6 w-6 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-white border-primary/10 shadow-sm relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-1 h-full bg-amber-500" />
+            <CardContent className="p-6 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Agendados</p>
+                <h3 className="text-3xl font-black text-foreground">{stats.agendados}</h3>
+              </div>
+              <div className="p-3 bg-amber-50 rounded-2xl group-hover:scale-110 transition-transform">
+                <Calendar className="h-6 w-6 text-amber-500" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-white border-primary/10 shadow-sm relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
+            <CardContent className="p-6 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-muted-foreground uppercase mb-1">Publicados</p>
+                <h3 className="text-3xl font-black text-foreground">{stats.publicados}</h3>
+              </div>
+              <div className="p-3 bg-emerald-50 rounded-2xl group-hover:scale-110 transition-transform">
+                <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
+      </section>
+
+      {/* Ações por Categoria (Quadrantes) */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Quadrante 1: Posts */}
+        <Card className="border-primary/10 shadow-md">
+          <CardHeader className="pb-3 border-b border-gray-50 mb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Layers className="h-4 w-4 text-primary" /> Posts e Conteúdo
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-3 pt-2">
+            {QUICK_ACTIONS.map((action) => (
+              <button
+                key={action.format}
+                onClick={() => handleQuickCreate(action.format)}
+                className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-primary/30 hover:bg-primary/[0.02] transition-all group"
+              >
+                <span className="text-2xl group-hover:scale-110 transition-transform">{action.emoji}</span>
+                <span className="text-xs font-bold text-gray-700">{action.label}</span>
+              </button>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Quadrante 2: Mentoria e Estratégia */}
+        <Card className="border-primary/10 shadow-md">
+          <CardHeader className="pb-3 border-b border-gray-50 mb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-purple-500" /> Mentoria e Estratégia
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-3 pt-2">
+            <Link to="/mentor" className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-purple-300 hover:bg-purple-50 transition-all group">
+              <Zap className="h-6 w-6 text-purple-500 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-gray-700">Mentor IA</span>
+            </Link>
+            <Link to="/brand-hub" className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-purple-300 hover:bg-purple-50 transition-all group">
+              <Crown className="h-6 w-6 text-purple-500 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-gray-700">Brand Hub</span>
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* Quadrante 3: Desafios */}
+        <Card className="border-primary/10 shadow-md">
+          <CardHeader className="pb-3 border-b border-gray-50 mb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-orange-500" /> Desafios
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-3 pt-2">
+            <Link to="/challenge-creator" className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-orange-300 hover:bg-orange-50 transition-all group">
+              <Trophy className="h-6 w-6 text-orange-500 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-gray-700">Criar Desafio</span>
+            </Link>
+            <div className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 opacity-50 cursor-not-allowed">
+              <Zap className="h-6 w-6 text-orange-300" />
+              <span className="text-xs font-bold text-gray-400">Gamificação</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Quadrante 4: CRM e Vendas */}
+        <Card className="border-primary/10 shadow-md">
+          <CardHeader className="pb-3 border-b border-gray-50 mb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Users className="h-4 w-4 text-emerald-500" /> CRM e Vendas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-3 pt-2">
+            <Link to="/vip-list" className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-emerald-300 hover:bg-emerald-50 transition-all group">
+              <Users className="h-6 w-6 text-emerald-500 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-gray-700">Lista VIP</span>
+            </Link>
+            <Link to="/results" className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-emerald-300 hover:bg-emerald-50 transition-all group">
+              <BarChart3 className="h-6 w-6 text-emerald-500 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-gray-700">Resultados</span>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* GPS de Implementação */}
+      {/* GPS do Consultório */}
       <ImplementationGPS />
 
       <div className="grid lg:grid-cols-3 gap-6">

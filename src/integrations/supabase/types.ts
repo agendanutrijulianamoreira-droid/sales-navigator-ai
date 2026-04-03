@@ -292,6 +292,36 @@ export type Database = {
         }
         Relationships: []
       }
+      implementation_checklist: {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string
+          fase: number
+          id: string
+          task_key: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string
+          fase: number
+          id?: string
+          task_key: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string
+          fase?: number
+          id?: string
+          task_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           ativo: boolean | null
