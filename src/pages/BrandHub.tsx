@@ -114,7 +114,7 @@ export default function BrandHub() {
     };
 
     return (
-        <AppLayout title="Brand Hub" description="Identidade & Estratégia de Elite">
+        <AppLayout title="Central da Marca" description="Identidade & Estratégia de Elite">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="ai" className="gap-2 text-primary font-bold">

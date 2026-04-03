@@ -74,6 +74,13 @@ export default function BusinessLab() {
         }
 
         try {
+            console.log("Adicionando produto:", {
+                nome: newProduct.nome,
+                ticket: parseFloat(newProduct.ticket),
+                tipo_produto: newProduct.tipo_produto,
+                tipo_cliente: newProduct.tipo_cliente,
+            });
+
             const { error } = await addProduct({
                 nome: newProduct.nome,
                 ticket: parseFloat(newProduct.ticket),
@@ -84,8 +91,12 @@ export default function BusinessLab() {
                 ordem: products?.length || 0,
             });
 
-            if (error) throw error;
+            if (error) {
+                console.error("Erro retornado pelo addProduct:", error);
+                throw error;
+            }
 
+            toast.success("Produto adicionado com sucesso!");
             setNewProduct({
                 nome: "",
                 ticket: "",
@@ -93,11 +104,12 @@ export default function BusinessLab() {
                 tipo_cliente: "frustrado",
                 descricao: "",
             });
-            toast.success("Produto adicionado com sucesso!");
-        } catch (e) {
-            console.error("Erro ao adicionar produto:", e);
-            toast.error("Erro ao salvar produto. Verifique se todos os campos estão preenchidos.");
+        } catch (e: any) {
+            console.error("Erro detalhado ao adicionar produto:", e);
+            const errorMessage = e.message || "Erro ao salvar produto. Verifique se todos os campos estão preenchidos.";
+            toast.error(`Falha ao salvar: ${errorMessage}`);
         }
+
     };
 
     const calculateViability = (salesNeeded: any) => {
@@ -153,7 +165,7 @@ export default function BusinessLab() {
     };
 
     return (
-        <AppLayout title="Business Lab" description="Venda o Invisível. Preocupe-se com a Estratégia, não com a Planilha.">
+        <AppLayout title="Laboratório" description="Produtos, finanças e estratégia de preço.">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(120,119,198,0.1),transparent)] pointer-events-none" />
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8 relative z-10">

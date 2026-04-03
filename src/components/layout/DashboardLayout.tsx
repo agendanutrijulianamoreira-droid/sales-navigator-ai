@@ -11,27 +11,52 @@ import { Button } from "@/components/ui/button";
 import { AIAssistantSidebar } from "./AIAssistantSidebar";
 import { CreditTopUpModal } from "../CreditTopUpModal";
 
-const NAV_ITEMS = [
-    { title: "Command Center", icon: Home, href: "/" },
-    { title: "Brand Hub", icon: Crown, href: "/brand-hub" },
-    { title: "Business Lab", icon: ShoppingBag, href: "/business-lab" },
-    { title: "Calendário", icon: Calendar, href: "/planner" },
-    { title: "Criar Conteúdo", icon: Sparkles, href: "/carousel-creator" },
-    { title: "Funis de Vendas", icon: Target, href: "/funnels" },
-    { title: "Lista VIP", icon: MessageSquare, href: "/vip-list" },
-    { title: "Acelerador de Vendas", icon: TrendingUp, href: "/conversion" },
-    { title: "Fábrica de Desafios", icon: Trophy, href: "/challenge-creator" },
-    { title: "Estúdio de Fotos", icon: Camera, href: "/photo-studio" },
-    { title: "Resultados", icon: BarChart3, href: "/results" },
-    { title: "Mentor IA", icon: Zap, href: "/mentor" },
+const NAV_GROUPS = [
+    {
+        label: null,
+        items: [
+            { title: "Início", icon: Home, href: "/" },
+        ],
+    },
+    {
+        label: "Estratégia",
+        items: [
+            { title: "Central da Marca", icon: Crown, href: "/brand-hub" },
+            { title: "Laboratório", icon: ShoppingBag, href: "/business-lab" },
+        ],
+    },
+    {
+        label: "Conteúdo",
+        items: [
+            { title: "Calendário", icon: Calendar, href: "/planner" },
+            { title: "Criar Conteúdo", icon: Sparkles, href: "/carousel-creator" },
+            { title: "Estúdio de Fotos", icon: Camera, href: "/photo-studio" },
+        ],
+    },
+    {
+        label: "Vendas",
+        items: [
+            { title: "Funis de Vendas", icon: Target, href: "/funnels" },
+            { title: "Acelerador", icon: TrendingUp, href: "/conversion" },
+            { title: "Lista VIP", icon: MessageSquare, href: "/vip-list" },
+            { title: "Desafios", icon: Trophy, href: "/challenge-creator" },
+        ],
+    },
+    {
+        label: "Análise",
+        items: [
+            { title: "Resultados", icon: BarChart3, href: "/results" },
+            { title: "Mentor IA", icon: Zap, href: "/mentor" },
+        ],
+    },
 ];
 
 const MOBILE_NAV_ITEMS = [
     { title: "Início", icon: Home, href: "/" },
     { title: "Criar", icon: Sparkles, href: "/carousel-creator" },
     { title: "Calendário", icon: Calendar, href: "/planner" },
-    { title: "Funis", icon: Target, href: "/funnels" },
-    { title: "Mentor", icon: MessageSquare, href: "/mentor" },
+    { title: "Vendas", icon: Target, href: "/funnels" },
+    { title: "Mentor", icon: Zap, href: "/mentor" },
 ];
 
 export default function DashboardLayout({ children }: { children?: React.ReactNode }) {
@@ -58,25 +83,36 @@ export default function DashboardLayout({ children }: { children?: React.ReactNo
                 </div>
 
                 {/* Nav */}
-                <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-                    {NAV_ITEMS.map((item) => {
-                        const isActive = location.pathname === item.href;
-                        return (
-                            <Link
-                                key={item.href}
-                                to={item.href}
-                                className={cn(
-                                    "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300",
-                                    isActive
-                                        ? "glass-card-elevated neon-border text-primary shadow-lg"
-                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                                )}
-                            >
-                                <item.icon className={cn("h-[18px] w-[18px] transition-colors", isActive && "text-primary")} />
-                                {item.title}
-                            </Link>
-                        );
-                    })}
+                <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
+                    {NAV_GROUPS.map((group, groupIndex) => (
+                        <div key={groupIndex} className={cn(group.label && "mt-4 first:mt-0")}>
+                            {group.label && (
+                                <div className="px-4 pt-2 pb-1.5">
+                                    <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60">
+                                        {group.label}
+                                    </span>
+                                </div>
+                            )}
+                            {group.items.map((item) => {
+                                const isActive = location.pathname === item.href;
+                                return (
+                                    <Link
+                                        key={item.href}
+                                        to={item.href}
+                                        className={cn(
+                                            "flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300",
+                                            isActive
+                                                ? "glass-card-elevated neon-border text-primary shadow-lg"
+                                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                        )}
+                                    >
+                                        <item.icon className={cn("h-[18px] w-[18px] transition-colors", isActive && "text-primary")} />
+                                        {item.title}
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    ))}
                 </nav>
 
                 {/* Bottom */}

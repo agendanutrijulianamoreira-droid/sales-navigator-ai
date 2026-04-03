@@ -27,12 +27,12 @@ const QUICK_ACTIONS = [
 ];
 
 const MODULES = [
-  { title: "Brand Hub", description: "Marca e Estratégia", icon: Crown, href: "/brand-hub", color: "text-primary", bg: "bg-primary/10" },
-  { title: "Business Lab", description: "Produtos e Finanças", icon: ShoppingBag, href: "/business-lab", color: "text-purple-500", bg: "bg-purple-500/10" },
+  { title: "Central da Marca", description: "Identidade e posicionamento", icon: Crown, href: "/brand-hub", color: "text-primary", bg: "bg-primary/10" },
+  { title: "Laboratório", description: "Produtos e finanças", icon: ShoppingBag, href: "/business-lab", color: "text-indigo-500", bg: "bg-indigo-500/10" },
   { title: "Funis de Vendas", description: "Captação e conversão", icon: Target, href: "/funnels", color: "text-rose-500", bg: "bg-rose-500/10" },
-  { title: "Lista VIP", description: "Leads e DMs", icon: Users, href: "/vip-list", color: "text-amber-500", bg: "bg-amber-500/10" },
-  { title: "Resultados", description: "GPS Financeiro", icon: BarChart3, href: "/results", color: "text-emerald-500", bg: "bg-emerald-500/10" },
-  { title: "Desafios", description: "Gamificação", icon: Trophy, href: "/challenge-creator", color: "text-orange-500", bg: "bg-orange-500/10" },
+  { title: "Lista VIP", description: "Leads e contatos", icon: Users, href: "/vip-list", color: "text-amber-500", bg: "bg-amber-500/10" },
+  { title: "Resultados", description: "Métricas e finanças", icon: BarChart3, href: "/results", color: "text-emerald-500", bg: "bg-emerald-500/10" },
+  { title: "Desafios", description: "Engajamento e gamificação", icon: Trophy, href: "/challenge-creator", color: "text-orange-500", bg: "bg-orange-500/10" },
 ];
 
 export default function Dashboard() {
@@ -105,7 +105,7 @@ export default function Dashboard() {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <p className="text-primary-foreground/60 text-sm font-medium tracking-wide uppercase mb-1">Command Center</p>
+            <p className="text-primary-foreground/60 text-sm font-medium tracking-wide uppercase mb-1">Painel Principal</p>
             <h1 className="text-3xl md:text-4xl font-bold text-primary-foreground tracking-tight">
               {greeting()}, {profile?.nome?.split(" ")[0] || "Nutri"}!
             </h1>
@@ -196,59 +196,59 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Quadrante 2: Mentoria e Estratégia */}
+        {/* Quadrante 2: Estratégia */}
         <Card className="border-primary/10 shadow-md">
           <CardHeader className="pb-3 border-b border-gray-50 mb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-purple-500" /> Mentoria e Estratégia
+              <Crown className="h-4 w-4 text-primary" /> Estratégia
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-3 pt-2">
-            <Link to="/mentor" className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-purple-300 hover:bg-purple-50 transition-all group">
-              <Zap className="h-6 w-6 text-purple-500 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold text-gray-700">Mentor IA</span>
+            <Link to="/brand-hub" className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition-all group">
+              <Crown className="h-6 w-6 text-primary group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-gray-700">Central da Marca</span>
             </Link>
-            <Link to="/brand-hub" className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-purple-300 hover:bg-purple-50 transition-all group">
-              <Crown className="h-6 w-6 text-purple-500 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold text-gray-700">Brand Hub</span>
+            <Link to="/business-lab" className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-primary/30 hover:bg-primary/5 transition-all group">
+              <ShoppingBag className="h-6 w-6 text-indigo-500 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-gray-700">Laboratório</span>
             </Link>
           </CardContent>
         </Card>
 
-        {/* Quadrante 3: Desafios */}
+        {/* Quadrante 3: Vendas & Conversão */}
         <Card className="border-primary/10 shadow-md">
           <CardHeader className="pb-3 border-b border-gray-50 mb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-orange-500" /> Desafios
+              <TrendingUp className="h-4 w-4 text-rose-500" /> Vendas
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-3 pt-2">
-            <Link to="/challenge-creator" className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-orange-300 hover:bg-orange-50 transition-all group">
-              <Trophy className="h-6 w-6 text-orange-500 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold text-gray-700">Criar Desafio</span>
+            <Link to="/funnels" className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-rose-300 hover:bg-rose-50 transition-all group">
+              <Target className="h-6 w-6 text-rose-500 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-gray-700">Funis</span>
             </Link>
-            <div className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 opacity-50 cursor-not-allowed">
-              <Zap className="h-6 w-6 text-orange-300" />
-              <span className="text-xs font-bold text-gray-400">Gamificação</span>
-            </div>
+            <Link to="/conversion" className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-rose-300 hover:bg-rose-50 transition-all group">
+              <TrendingUp className="h-6 w-6 text-rose-500 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-gray-700">Acelerador</span>
+            </Link>
           </CardContent>
         </Card>
 
-        {/* Quadrante 4: CRM e Vendas */}
+        {/* Quadrante 4: Análise & Suporte */}
         <Card className="border-primary/10 shadow-md">
           <CardHeader className="pb-3 border-b border-gray-50 mb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <Users className="h-4 w-4 text-emerald-500" /> CRM e Vendas
+              <BarChart3 className="h-4 w-4 text-emerald-500" /> Análise
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-3 pt-2">
-            <Link to="/vip-list" className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-emerald-300 hover:bg-emerald-50 transition-all group">
-              <Users className="h-6 w-6 text-emerald-500 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold text-gray-700">Lista VIP</span>
-            </Link>
             <Link to="/results" className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-emerald-300 hover:bg-emerald-50 transition-all group">
               <BarChart3 className="h-6 w-6 text-emerald-500 group-hover:scale-110 transition-transform" />
               <span className="text-xs font-bold text-gray-700">Resultados</span>
+            </Link>
+            <Link to="/mentor" className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 hover:border-emerald-300 hover:bg-emerald-50 transition-all group">
+              <Zap className="h-6 w-6 text-emerald-500 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold text-gray-700">Mentor IA</span>
             </Link>
           </CardContent>
         </Card>

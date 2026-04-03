@@ -99,7 +99,7 @@ export default function Results() {
   const remaining = goal ? goal.meta_mensal - goal.faturado : 0;
 
   return (
-    <AppLayout title="Resultados" description="GPS Financeiro">
+    <AppLayout title="Resultados" description="Métricas e acompanhamento financeiro">
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main Metrics */}
         <div className="lg:col-span-2 space-y-6">
