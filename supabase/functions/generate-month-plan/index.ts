@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { profile, products, startDate, daysCount = 30 } = await req.json();
+    const { profile, products, startDate, daysCount = 30, monthlyStrategy } = await req.json();
 
     const nicho = profile?.nicho || "nutrição";
     const subNicho = profile?.sub_nicho || "";
@@ -38,6 +38,14 @@ CONTEXTO DO PROFISSIONAL:
 - Tom de voz: ${tomVoz}
 - Inimigo comum: ${inimigoComum}
 - Produtos: ${productsList || "não definidos"}
+
+ESTRATÉGIA ESPECÍFICA DESTE MÊS:
+${monthlyStrategy ? `
+- Tema: ${monthlyStrategy.theme}
+- Objetivo: ${monthlyStrategy.goal}
+- Ganchos Sugeridos: ${monthlyStrategy.hooks?.join(", ")}
+- Produto Foco: ${products?.find((p: any) => p.id === monthlyStrategy.product_id)?.nome || "Geral"}
+` : "Siga o fluxo padrão do Funil Infinito."}
 
 MISSÃO: Criar um plano editorial de ${daysCount} dias seguindo o framework "Funil Infinito":
 - Semana 1: ATRAIR (alcance, viralização, dor/evento)

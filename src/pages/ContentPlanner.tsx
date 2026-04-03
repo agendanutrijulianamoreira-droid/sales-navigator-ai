@@ -6,6 +6,7 @@ import { useCalendarItems, CalendarItem } from "@/hooks/useCalendarItems";
 import { useAISpecialist } from "@/hooks/useAISpecialist";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useProducts } from "@/hooks/useProducts";
+import { useMarketingStrategy } from "@/hooks/useMarketingStrategy";
 import { supabase } from "@/integrations/supabase/client";
 import { ScheduleDialog } from "@/components/ScheduleDialog";
 import { EditPostDialog } from "@/components/EditPostDialog";
@@ -160,6 +161,7 @@ function ContentPlanner() {
   const { addBatchItems } = useCalendarItems();
   const { hasPremiumAccess, isLoading: isRoleLoading } = useUserRole();
   const { products } = useProducts();
+  const { strategy } = useMarketingStrategy();
 
   const isPremium = hasPremiumAccess();
 
@@ -183,12 +185,18 @@ function ContentPlanner() {
 
       setMonthProgress("O Maestro está criando seu plano editorial...");
 
+      // Encontrar a estratégia específica para o mês atual no calendário
+      // MONTHS é 0-indexed, strategy month é 1-indexed (geralmente) ou 1-12.
+      // Vamos assumir que strategy[currentMonth] mapeia para o mês visível.
+      const monthlyStrategy = strategy?.find(s => s.month === currentMonth + 1);
+
       const { data, error } = await supabase.functions.invoke("generate-month-plan", {
         body: {
           profile,
           products,
           startDate: startDate.toISOString().split("T")[0],
           daysCount: 30,
+          monthlyStrategy
         },
       });
 

@@ -8,19 +8,39 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProducts } from "@/hooks/useProducts";
 import { Badge } from "@/components/ui/badge";
-import {
-    Sparkles, Package, Trophy,
-    Plus, Trash2, BarChart3, Target, TrendingUp,
-    AlertTriangle, Clock, Calculator, BrainCircuit, Wallet
+import { 
+  Calculator, 
+  TrendingUp, 
+  Target, 
+  BarChart3, 
+  Sparkles, 
+  ChevronRight, 
+  DollarSign, 
+  Package, 
+  LayoutDashboard,
+  Calendar,
+  MessageSquare,
+  Zap,
+  Info,
+  ArrowRight,
+  BrainCircuit,
+  Wallet,
+  Clock,
+  Plus,
+  Trash2,
+  Trophy,
+  AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
 import { PricingCalculator } from "@/components/business/PricingCalculator";
 import { CFOConsultant } from "@/components/business/CFOConsultant";
 import { FinancialPanel } from "@/components/business/FinancialPanel";
 import { OfferBuilder } from "@/components/business/OfferBuilder";
+import { AnnualStrategyPanel } from "@/components/business/AnnualStrategyPanel";
 import { useFinancialSettings } from "@/hooks/useFinancialSettings";
 import { cn } from "@/lib/utils";
 import { Slider } from "@/components/ui/slider";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function BusinessLab() {
     const { products, addProduct, deleteProduct } = useProducts();
@@ -64,6 +84,18 @@ export default function BusinessLab() {
             ordem: products?.length || 0,
             ladder_stage: newProduct.ladder_stage,
         } as any);
+
+        await addProduct({
+            nome: newProduct.nome,
+            ticket: parseFloat(newProduct.ticket),
+            tipo_produto: newProduct.tipo_produto,
+            tipo_cliente: newProduct.tipo_cliente,
+            descricao: newProduct.descricao,
+            ativo: true,
+            ordem: products?.length || 0,
+            ladder_stage: newProduct.ladder_stage,
+        } as any);
+
         setNewProduct({
             nome: "",
             ticket: "",
@@ -77,7 +109,6 @@ export default function BusinessLab() {
     };
 
     const calculateViability = (salesNeeded: any) => {
-        // Mocking hours if not in product object yet, but preparing for schema
         // We'll use a default of 2h for core and 10h for premium if hours_spent is missing
         const hTrip = 0.5;
         const hCore = 2;
@@ -142,6 +173,10 @@ export default function BusinessLab() {
                         <TabsTrigger value="ladder" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
                             <Package className="h-4 w-4" />
                             <span className="font-bold hidden sm:inline">Escada de Ofertas</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="annual" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
+                            <Calendar className="h-4 w-4" />
+                            <span className="font-bold hidden sm:inline">Planejamento Anual</span>
                         </TabsTrigger>
                         <TabsTrigger value="simulator" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
                             <Calculator className="h-4 w-4" />
@@ -511,6 +546,11 @@ export default function BusinessLab() {
                     </Card>
                     </>
                     )}
+                </TabsContent>
+
+                {/* Planejamento Anual */}
+                <TabsContent value="annual" className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <AnnualStrategyPanel />
                 </TabsContent>
 
                 {/* Simulador (PricingCalculator) */}
