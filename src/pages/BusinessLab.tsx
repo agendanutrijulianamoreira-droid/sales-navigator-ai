@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useProducts } from "@/hooks/useProducts";
 import { Badge } from "@/components/ui/badge";
 import {
-    Sparkles, Package,
+    Sparkles, Package, Trophy,
     Plus, Trash2, BarChart3, Target, TrendingUp,
     AlertTriangle, Clock, Calculator, BrainCircuit, Wallet
 } from "lucide-react";
