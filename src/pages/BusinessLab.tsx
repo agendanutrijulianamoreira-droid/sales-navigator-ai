@@ -513,26 +513,11 @@ export default function BusinessLab() {
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Papel na Escada</Label>
-                                    <Select value={newProduct.ladder_stage} onValueChange={(v) => setNewProduct({ ...newProduct, ladder_stage: v })}>
-                                        <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="isca">Isca (Grátis/Baixo)</SelectItem>
-                                            <SelectItem value="entrada">Entrada (Tripwire)</SelectItem>
-                                            <SelectItem value="core">Core (Serviço Principal)</SelectItem>
-                                            <SelectItem value="premium">Premium (VIP/High Ticket)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Horas por Atendimento</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Descrição (opcional)</Label>
                                     <Input
-                                        type="number"
-                                        value={newProduct.hours_spent}
-                                        onChange={(e) => setNewProduct({ ...newProduct, hours_spent: e.target.value })}
-                                        placeholder="2"
+                                        value={newProduct.descricao}
+                                        onChange={(e) => setNewProduct({ ...newProduct, descricao: e.target.value })}
+                                        placeholder="Descrição do produto"
                                         className="h-12 bg-white/5 border-white/10 focus:ring-primary rounded-xl"
                                     />
                                 </div>
