@@ -91,20 +91,29 @@ export function useMarketingStrategy() {
         }
       });
 
-      if (error) throw error;
+      console.log("Resposta da Edge Function:", data);
 
-      // O ai-specialist streama a resposta, mas aqui precisamos esperar o final para o JSON
-      // Como o invoke não suporta stream nativo de forma simples em hooks sem custom reader:
-      // Vamos assumir que recebemos o JSON final (ou tratar o texto)
-      const text = data; // Texto bruto retornado
-      const jsonMatch = text.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) throw new Error("IA não retornou plano válido");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      const text = data?.content || "";
+      // Regex melhorado para encontrar o array JSON ignorando blocos markdown ou textos extras
+      const jsonMatch = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      
+      if (!jsonMatch) {
+        console.error("Texto bruto da IA:", text);
+        throw new Error("IA não retornou um formato de plano válido. Tente preencher mais seu perfil.");
+      }
 
       const generatedStrategy = JSON.parse(jsonMatch[0]);
+      console.log("Estratégia processada:", generatedStrategy);
+      
+      setStrategy(generatedStrategy);
       await saveStrategy(generatedStrategy);
-    } catch (e) {
-      console.error("Erro ao gerar:", e);
-      toast.error("Erro ao gerar estratégia com IA.");
+      toast.success("Plano estratégico gerado com sucesso!");
+    } catch (err: any) {
+      console.error("Erro na geração da estratégia:", err);
+      toast.error(err.message || "Falha ao gerar estratégia");
     } finally {
       setIsLoading(false);
     }

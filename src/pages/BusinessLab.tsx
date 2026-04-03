@@ -74,38 +74,35 @@ export default function BusinessLab() {
             toast.error("Preencha nome e valor do produto");
             return;
         }
-        await addProduct({
-            nome: newProduct.nome,
-            ticket: parseFloat(newProduct.ticket),
-            tipo_produto: newProduct.tipo_produto,
-            tipo_cliente: newProduct.tipo_cliente,
-            descricao: newProduct.descricao,
-            ativo: true,
-            ordem: products?.length || 0,
-            ladder_stage: newProduct.ladder_stage,
-        } as any);
 
-        await addProduct({
-            nome: newProduct.nome,
-            ticket: parseFloat(newProduct.ticket),
-            tipo_produto: newProduct.tipo_produto,
-            tipo_cliente: newProduct.tipo_cliente,
-            descricao: newProduct.descricao,
-            ativo: true,
-            ordem: products?.length || 0,
-            ladder_stage: newProduct.ladder_stage,
-        } as any);
+        try {
+            const { error } = await addProduct({
+                nome: newProduct.nome,
+                ticket: parseFloat(newProduct.ticket),
+                tipo_produto: newProduct.tipo_produto,
+                tipo_cliente: newProduct.tipo_cliente,
+                descricao: newProduct.descricao,
+                ladder_stage: newProduct.ladder_stage, // Campo obrigatório no banco!
+                ativo: true,
+                ordem: products?.length || 0,
+            } as any);
 
-        setNewProduct({
-            nome: "",
-            ticket: "",
-            tipo_produto: "consultoria",
-            tipo_cliente: "frustrado",
-            ladder_stage: "core",
-            descricao: "",
-            hours_spent: "0"
-        });
-        toast.success("Produto adicionado!");
+            if (error) throw error;
+
+            setNewProduct({
+                nome: "",
+                ticket: "",
+                tipo_produto: "consultoria",
+                tipo_cliente: "frustrado",
+                ladder_stage: "core",
+                descricao: "",
+                hours_spent: "0"
+            });
+            toast.success("Produto adicionado com sucesso!");
+        } catch (e) {
+            console.error("Erro ao adicionar produto:", e);
+            toast.error("Erro ao salvar produto. Verifique se todos os campos estão preenchidos.");
+        }
     };
 
     const calculateViability = (salesNeeded: any) => {
@@ -133,10 +130,10 @@ export default function BusinessLab() {
             return;
         }
 
-        // Search for product prices by ladder_stage
-        const pTrip = products?.find(p => (p as any).ladder_stage === 'entrada')?.ticket || 47;
-        const pCore = products?.find(p => (p as any).ladder_stage === 'core')?.ticket || 497;
-        const pPremium = products?.find(p => (p as any).ladder_stage === 'premium')?.ticket || 2500;
+        // Search for product prices by ladder_stage with safety fallbacks
+        const pTrip = products?.find(p => (p as any)?.ladder_stage === 'entrada')?.ticket || 47;
+        const pCore = products?.find(p => (p as any)?.ladder_stage === 'core')?.ticket || 497;
+        const pPremium = products?.find(p => (p as any)?.ladder_stage === 'premium')?.ticket || 2500;
 
         const cCore = convLeadToCore[0] / 100;
         const cPremium = convCoreToPremium[0] / 100;
@@ -165,7 +162,7 @@ export default function BusinessLab() {
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8 relative z-10">
                 <div className="flex justify-center mb-8">
-                    <TabsList className="grid grid-cols-4 w-full max-w-3xl bg-muted/30 backdrop-blur-md border border-white/10 p-1 rounded-2xl h-14">
+                    <TabsList className="flex flex-wrap md:grid md:grid-cols-5 w-full max-w-4xl bg-muted/30 backdrop-blur-md border border-white/10 p-1 rounded-2xl h-auto md:h-14">
                         <TabsTrigger value="finance" className="gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all duration-300">
                             <Wallet className="h-4 w-4" />
                             <span className="font-bold hidden sm:inline">Painel Financeiro</span>
@@ -411,7 +408,7 @@ export default function BusinessLab() {
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-bold text-sm">{product.nome}</span>
                                                                 <Badge className="text-[8px] h-4 uppercase tracking-tighter" variant="outline">
-                                                                    {(product as any).ladder_stage || product.tipo_produto}
+                                                                    {String((product as any)?.ladder_stage || product?.tipo_produto || 'core')}
                                                                 </Badge>
                                                                 {(product as any).ladder_stage === 'premium' && (
                                                                     <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
@@ -443,7 +440,14 @@ export default function BusinessLab() {
                                     </div>
 
                                     {/* Add Product Inline Trigger/Form */}
-                                    <Button variant="outline" className="w-full border-dashed py-6 gap-2 hover:bg-primary/5 hover:border-primary/50 transition-all rounded-2xl" onClick={() => setActiveTab("ladder")} onClickCapture={() => document.getElementById('product-form-section')?.scrollIntoView({ behavior: 'smooth' })}>
+                                    <Button 
+                                      variant="outline" 
+                                      className="w-full border-dashed py-6 gap-2 hover:bg-primary/5 hover:border-primary/50 transition-all rounded-2xl" 
+                                      onClick={() => {
+                                        const el = document.getElementById('product-form-section');
+                                        el?.scrollIntoView({ behavior: 'smooth' });
+                                      }}
+                                    >
                                         <Plus className="h-4 w-4" />
                                         <span className="text-xs font-bold uppercase tracking-widest">Adicionar Nova Oferta</span>
                                     </Button>
@@ -502,11 +506,13 @@ export default function BusinessLab() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="consultoria">Consultoria</SelectItem>
+                                            <SelectItem value="acompanhamento">Acompanhamento</SelectItem>
+                                            <SelectItem value="avaliacao">Avaliação Profissional</SelectItem>
+                                            <SelectItem value="teste_genetico">Teste Genético</SelectItem>
                                             <SelectItem value="mentoria">Mentoria</SelectItem>
-                                            <SelectItem value="curso">Curso</SelectItem>
-                                            <SelectItem value="grupo">Grupo</SelectItem>
-                                            <SelectItem value="desafio">Desafio</SelectItem>
-                                            <SelectItem value="ebook">E-book / PDF</SelectItem>
+                                            <SelectItem value="curso">Curso Online</SelectItem>
+                                            <SelectItem value="grupo">Grupo de Desafio</SelectItem>
+                                            <SelectItem value="ebook">Infoproduto (E-book/PDF)</SelectItem>
                                             <SelectItem value="outro">Outro</SelectItem>
                                         </SelectContent>
                                     </Select>

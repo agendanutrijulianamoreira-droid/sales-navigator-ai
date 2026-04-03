@@ -217,7 +217,7 @@ serve(async (req) => {
   }
 
   try {
-    const { specialist, prompt, profile, products, conversationHistory } = await req.json();
+    const { specialist, prompt, profile, products, conversationHistory, stream: requestStream } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -227,6 +227,9 @@ serve(async (req) => {
     // Get the persona for this specialist
     const personaKey = specialist?.toUpperCase() || "MENTOR_ORCHESTRATOR";
     const systemPrompt = PERSONAS[personaKey] || PERSONAS.MENTOR_ORCHESTRATOR;
+
+    // Force stream: false for structured data or if requested
+    const shouldStream = personaKey === "ANNUAL_PLANNER" ? false : (requestStream ?? true);
 
     // Build user context
     const userContext = buildUserContext(profile, products);
@@ -256,9 +259,9 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.0-flash",
         messages,
-        stream: true,
+        stream: shouldStream,
       }),
     });
 
@@ -279,6 +282,14 @@ serve(async (req) => {
       console.error("AI gateway error:", response.status, errorText);
       return new Response(JSON.stringify({ error: "Erro ao conectar com a IA. Tente novamente." }), {
         status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!shouldStream) {
+      const data = await response.json();
+      const content = data.choices[0].message.content;
+      return new Response(JSON.stringify({ content }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
