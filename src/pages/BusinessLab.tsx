@@ -80,10 +80,9 @@ export default function BusinessLab() {
                 tipo_produto: newProduct.tipo_produto,
                 tipo_cliente: newProduct.tipo_cliente,
                 descricao: newProduct.descricao,
-                ladder_stage: newProduct.ladder_stage, // Campo obrigatório no banco!
                 ativo: true,
                 ordem: products?.length || 0,
-            } as any);
+            });
 
             if (error) throw error;
 
@@ -92,9 +91,7 @@ export default function BusinessLab() {
                 ticket: "",
                 tipo_produto: "consultoria",
                 tipo_cliente: "frustrado",
-                ladder_stage: "core",
                 descricao: "",
-                hours_spent: "0"
             });
             toast.success("Produto adicionado com sucesso!");
         } catch (e) {
