@@ -124,9 +124,59 @@ const FUNNEL_BLUEPRINTS: FunnelBlueprint[] = [
     },
 ];
 
+// 3 Funis Estratégicos (Cilindro de Vendas)
+const STRATEGIC_FUNNELS: FunnelBlueprint[] = [
+    {
+        id: "s_mini",
+        category: "attract",
+        title: "Mini Treinamento",
+        promise: "Qualifique leads e venda no automático.",
+        description: "Funil de 3-5 aulas curtas (5-15min) que educa, gera autoridade e termina com oferta. Automação via Manychat → WhatsApp. Entrega 80% do 'o quê' e 20% do 'como'.",
+        icon: Zap,
+        gradient: "from-violet-500 to-indigo-700",
+        outputFormat: "roteiro_stories",
+        questions: [
+            { id: "q1", label: "Qual o tema do mini treinamento?", placeholder: "Ex: 3 Passos para Regular Hormônios pela Alimentação" },
+            { id: "q2", label: "Qual produto você oferta no final?", placeholder: "Ex: Plano de Acompanhamento Trimestral - R$ 1.497" },
+            { id: "q3", label: "Qual o principal problema que resolve?", placeholder: "Ex: Mulheres com desequilíbrio hormonal que não conseguem emagrecer" },
+        ],
+    },
+    {
+        id: "s_aula",
+        category: "sell",
+        title: "Aula Milionária (VSL)",
+        promise: "Venda no automático com vídeo estratégico.",
+        description: "Vídeo de vendas estruturado em 3 atos: Lead (gancho + promessa) → Conteúdo (problema + solução) → Oferta (preço + garantia + CTA). Hospede no Vturb e automatize com Manychat.",
+        icon: Target,
+        gradient: "from-rose-500 to-red-700",
+        outputFormat: "roteiro_stories",
+        questions: [
+            { id: "q1", label: "Qual a grande promessa da aula?", placeholder: "Ex: Como emagrecer 8kg em 90 dias sem dieta restritiva" },
+            { id: "q2", label: "Qual o produto ofertado?", placeholder: "Ex: Mentoria Individual 6 meses - R$ 2.997" },
+            { id: "q3", label: "Qual a principal objeção do público?", placeholder: 'Ex: "Já tentei de tudo e nada funciona"' },
+        ],
+    },
+    {
+        id: "s_followers",
+        category: "attract",
+        title: "Funil de Seguidores",
+        promise: "Converta novos seguidores em leads quentes.",
+        description: "Automação de boas-vindas: quando alguém segue, recebe uma mensagem automática que inicia conversa e qualifica. Fluxo: Seguiu → DM automática → Pergunta qualificadora → Oferta ou conteúdo.",
+        icon: Users,
+        gradient: "from-cyan-500 to-teal-700",
+        outputFormat: "script_whatsapp",
+        questions: [
+            { id: "q1", label: "Qual a primeira mensagem de boas-vindas?", placeholder: "Ex: Oi! Que bom ter você aqui 🙌 O que te trouxe ao meu perfil?" },
+            { id: "q2", label: "Qual conteúdo/isca oferecer na DM?", placeholder: "Ex: E-book '10 Receitas Anti-inflamatórias' gratuito" },
+        ],
+    },
+];
+
+const ALL_BLUEPRINTS = [...FUNNEL_BLUEPRINTS, ...STRATEGIC_FUNNELS];
+
 const CATEGORY_LABELS: Record<string, { label: string; description: string }> = {
-    attract: { label: "Atração & Validação", description: "Construa sua audiência qualificada" },
-    sell: { label: "Conversão Diária", description: "Transforme seguidores em clientes" },
+    attract: { label: "Atração & Captação", description: "Construa sua audiência qualificada" },
+    sell: { label: "Conversão & Vendas", description: "Transforme seguidores em clientes" },
     cashbox: { label: "Caixa Rápido", description: "Faturamento imediato e escala" },
 };
 
@@ -348,7 +398,7 @@ export default function Funnels() {
 
             {/* Funnel Grid by Category */}
             {categories.map((cat) => {
-                const funnels = FUNNEL_BLUEPRINTS.filter((f) => f.category === cat);
+                const funnels = ALL_BLUEPRINTS.filter((f) => f.category === cat);
                 const categoryInfo = CATEGORY_LABELS[cat];
 
                 return (

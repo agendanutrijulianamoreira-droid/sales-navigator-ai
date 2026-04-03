@@ -168,9 +168,14 @@ export function AIAssistantSidebar() {
 
   const SPECIALIST_LABELS: Record<string, string> = {
     COMMAND_CENTER: 'Mentor Estratégico',
+    AUDIENCE_EXPERT: 'Especialista em Público',
     BRAND_ARCHITECT: 'Arquiteto de Marca',
-    SOCIAL_MEDIA_MANAGER: 'Social Media',
-    GROWTH_STRATEGIST: 'Estrategista',
+    SOCIAL_MEDIA_MANAGER: 'Conteúdo Viral',
+    HOOKS_COPYWRITER: 'Hooks & Copy',
+    SALES_PAGE_BUILDER: 'Páginas de Vendas',
+    VIDEO_SCRIPTWRITER: 'Roteiros de Vídeo',
+    MINI_TRAINING_BUILDER: 'Mini Treinamentos',
+    GROWTH_STRATEGIST: 'Estrategista de Funis',
     MATERIAL_COPYWRITER: 'Copywriter',
     CHALLENGE_COACH: 'Coach de Desafios',
     VIP_CLOSER: 'Closer de Vendas',
@@ -180,9 +185,11 @@ export function AIAssistantSidebar() {
 
   const QUICK_PROMPTS = [
     "O que devo postar hoje?",
-    "Me ajuda a criar uma oferta",
-    "Como melhorar meu perfil?",
-    "Ideia de carrossel viral",
+    "Cria 5 hooks para meu próximo post",
+    "Me ajuda a montar uma oferta de acompanhamento",
+    "Quem é meu público ideal?",
+    "Monta um mini treinamento sobre meu nicho",
+    "Roteiro de Reels de 30 segundos",
   ];
 
   return (

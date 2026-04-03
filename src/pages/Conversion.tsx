@@ -56,7 +56,7 @@ export default function Conversion() {
   const { generateContent, isLoading, streamedContent } = useAISpecialist();
   const { saveGeneration } = useGenerations();
   const { products } = useProducts();
-  const [activeTab, setActiveTab] = useState("roteiros");
+  const [activeTab, setActiveTab] = useState("caixa_rapido");
   const [messageType, setMessageType] = useState("levantada_mao");
   const [context, setContext] = useState("");
   const [selectedProduct, setSelectedProduct] = useState("");
@@ -191,12 +191,121 @@ export default function Conversion() {
   return (
     <AppLayout title="Acelerador de Vendas" description="Scripts de Elite & Propostas High Ticket">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="caixa_rapido">Caixa Rápido</TabsTrigger>
           <TabsTrigger value="roteiros">Roteiros Prontos</TabsTrigger>
           <TabsTrigger value="vip">Lista VIP</TabsTrigger>
           <TabsTrigger value="scripts">Scripts IA</TabsTrigger>
           <TabsTrigger value="proposals">Propostas Elite</TabsTrigger>
         </TabsList>
+
+        {/* Caixa Rápido */}
+        <TabsContent value="caixa_rapido" className="space-y-6">
+          <div className="text-center mb-4">
+            <h2 className="text-xl font-bold">Caixa Rápido</h2>
+            <p className="text-sm text-muted-foreground">Recupere seu investimento gerando receita imediata — com ou sem audiência.</p>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* SEM Audiência */}
+            <Card className="border-2 border-amber-200 bg-gradient-to-br from-amber-50/50 to-transparent">
+              <CardHeader>
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge className="bg-amber-100 text-amber-700 border-none text-[10px]">Sem Audiência</Badge>
+                </div>
+                <CardTitle className="text-lg">Caixa Rápido — Começando do Zero</CardTitle>
+                <CardDescription>Gere suas primeiras vendas mesmo sem seguidores no Instagram</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="p-4 bg-white rounded-xl border shadow-sm">
+                    <p className="text-[10px] font-bold uppercase text-amber-600 mb-2">Passo 1 — Ativação de Network</p>
+                    <p className="text-sm text-foreground mb-2">Envie esta mensagem para todos os seus contatos:</p>
+                    <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-sm italic">
+                      "Estou iniciando um novo projeto onde eu [problema que você resolve]. Se você conhece alguém que poderia se interessar, peço que encaminhe essa mensagem."
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">Separe os contatos em 2 grupos: quem É seu público-alvo e quem pode te INDICAR.</p>
+                  </div>
+
+                  <div className="p-4 bg-white rounded-xl border shadow-sm">
+                    <p className="text-[10px] font-bold uppercase text-amber-600 mb-2">Passo 2 — Participação Ativa em Grupos</p>
+                    <p className="text-sm text-foreground">Gere valor nos grupos de WhatsApp que você participa. Não é fazer propaganda — é se apresentar, responder dúvidas e construir autoridade no grupo.</p>
+                  </div>
+
+                  <div className="p-4 bg-white rounded-xl border shadow-sm">
+                    <p className="text-[10px] font-bold uppercase text-amber-600 mb-2">Passo 3 — Base de Clientes Existente</p>
+                    <p className="text-sm text-foreground">Use sua base atual: faça um aulão gratuito, use o script de ativação no WhatsApp, faça parceria com profissionais que atendem o mesmo público.</p>
+                  </div>
+                </div>
+
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`CAIXA RÁPIDO — SEM AUDIÊNCIA\n\n1. ATIVAÇÃO DE NETWORK\nEnvie para seus contatos:\n"Estou iniciando um novo projeto onde eu [problema que resolve]. Se você conhece alguém que poderia se interessar, peço que encaminhe essa mensagem."\n\n2. PARTICIPAÇÃO EM GRUPOS\n- Se apresente nos grupos de WhatsApp\n- Responda dúvidas com valor (sem propaganda)\n- Construa autoridade com constância\n\n3. BASE DE CLIENTES\n- Faça um aulão gratuito para seus clientes\n- Use o script de ativação no WhatsApp\n- Faça parcerias com profissionais complementares`);
+                    toast.success("Estratégia copiada!");
+                  }}
+                >
+                  <Copy className="h-4 w-4 mr-2" /> Copiar Estratégia Completa
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* COM Audiência */}
+            <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-transparent">
+              <CardHeader>
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge className="bg-emerald-100 text-emerald-700 border-none text-[10px]">Com Audiência</Badge>
+                </div>
+                <CardTitle className="text-lg">Caixa Rápido — Monetizar Audiência</CardTitle>
+                <CardDescription>Transforme seus seguidores em vendas imediatas</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="p-4 bg-white rounded-xl border shadow-sm">
+                    <p className="text-[10px] font-bold uppercase text-emerald-600 mb-2">Estratégia 1 — Levantada de Mão</p>
+                    <p className="text-sm text-foreground mb-1"><strong>Regra de ouro:</strong> esperar os stories zerarem SEMPRE.</p>
+                    <p className="text-sm text-foreground">Poste no primeiro story a oferta com botão de "toque aqui". Na sequência, coloque depoimentos. Opcional: turbinar por 24h.</p>
+                    <div className="mt-2 p-2 bg-emerald-50 rounded-lg text-xs text-emerald-700 border border-emerald-200">
+                      Levantadas de mão já faturaram R$ 20k em um único dia.
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-white rounded-xl border shadow-sm">
+                    <p className="text-[10px] font-bold uppercase text-emerald-600 mb-2">Estratégia 2 — Empurrãozinho</p>
+                    <p className="text-sm text-foreground">Envie mensagem para leads mornos com prova social de resultado recente. Exemplo: "Vi que uma paciente com situação parecida com a sua acabou de [resultado]. Se quiser conversar, estou aqui!"</p>
+                  </div>
+
+                  <div className="p-4 bg-white rounded-xl border shadow-sm">
+                    <p className="text-[10px] font-bold uppercase text-emerald-600 mb-2">Estratégia 3 — Caixinha 3x1</p>
+                    <p className="text-sm text-foreground">Abra caixinha de perguntas e a cada 3 respostas com valor, coloque 1 link (infoproduto, formulário, WhatsApp ou vídeo de vendas).</p>
+                  </div>
+
+                  <div className="p-4 bg-white rounded-xl border shadow-sm">
+                    <p className="text-[10px] font-bold uppercase text-emerald-600 mb-2">Script de Abordagem (DM)</p>
+                    <div className="space-y-1.5 text-sm">
+                      <p><Badge variant="outline" className="text-[9px] mr-1">1</Badge> <strong>Acionamento:</strong> "Oi [Nome], tudo bem?"</p>
+                      <p><Badge variant="outline" className="text-[9px] mr-1">2</Badge> <strong>Conexão:</strong> "Pode me contar um pouco do seu momento e objetivo?"</p>
+                      <p><Badge variant="outline" className="text-[9px] mr-1">3</Badge> <strong>Contexto:</strong> "O que te impede de chegar nesse objetivo?"</p>
+                      <p><Badge variant="outline" className="text-[9px] mr-1">4</Badge> <strong>Oferta:</strong> "Consigo te ajudar através do [produto]. Posso te mandar mais detalhes?"</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`CAIXA RÁPIDO — COM AUDIÊNCIA\n\n1. LEVANTADA DE MÃO (Stories)\n- Esperar stories zerarem SEMPRE\n- Postar oferta com botão "toque aqui"\n- Colocar depoimentos na sequência\n- Opcional: turbinar por 24h\n\n2. EMPURRÃOZINHO\n- Enviar DM para leads mornos com prova social recente\n- "Vi que uma paciente parecida acabou de [resultado]. Se quiser conversar, estou aqui!"\n\n3. CAIXINHA 3x1\n- Abrir caixinha de perguntas\n- A cada 3 respostas com valor, colocar 1 link\n\n4. SCRIPT DE ABORDAGEM (DM)\n① Acionamento: "Oi [Nome], tudo bem?"\n② Conexão: "Pode me contar do seu momento e objetivo?"\n③ Contexto: "O que te impede de chegar lá?"\n④ Oferta: "Consigo te ajudar com [produto]. Posso mandar detalhes?"`);
+                    toast.success("Estratégia copiada!");
+                  }}
+                >
+                  <Copy className="h-4 w-4 mr-2" /> Copiar Estratégia Completa
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         {/* Roteiros Prontos (Operação 26) */}
         <TabsContent value="roteiros" className="space-y-6">

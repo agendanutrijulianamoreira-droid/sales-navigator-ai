@@ -464,6 +464,59 @@ export function FinancialPanel() {
             </CardContent>
           </Card>
 
+          {/* Métricas de Funil */}
+          <Card className="border-primary/20">
+            <CardContent className="p-4">
+              <p className="text-xs font-semibold text-primary/70 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <Target className="h-3.5 w-3.5" /> Métricas de Funil
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="text-muted-foreground">Investimento em tráfego</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">R$</span>
+                    <Input type="number" placeholder="140" className="h-8 text-xs" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-[10px] text-muted-foreground">Comentários</span>
+                    <Input type="number" placeholder="20" className="h-8 text-xs mt-1" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground">Custo/comentário</span>
+                    <div className="h-8 flex items-center px-2 bg-muted/50 rounded-md text-xs font-semibold mt-1">R$ 7,00</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-[10px] text-muted-foreground">Conversas iniciadas</span>
+                    <Input type="number" placeholder="10" className="h-8 text-xs mt-1" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground">Taxa resposta</span>
+                    <div className="h-8 flex items-center px-2 bg-muted/50 rounded-md text-xs font-semibold mt-1">50%</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-[10px] text-muted-foreground">Vendas fechadas</span>
+                    <Input type="number" placeholder="1" className="h-8 text-xs mt-1" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground">Conversão</span>
+                    <div className="h-8 flex items-center px-2 bg-emerald-50 rounded-md text-xs font-bold text-emerald-600 mt-1">11%</div>
+                  </div>
+                </div>
+                <div className="p-2 bg-primary/5 rounded-lg text-[10px] text-primary/70">
+                  <strong>Referência:</strong> Custo/comentário {'<'} R$7 · Taxa resposta {'>'} 50% · Conversão {'>'} 10%
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Despesas por Categoria */}
           {Object.keys(dre.despesa_por_categoria).length > 0 && (
             <Card>
