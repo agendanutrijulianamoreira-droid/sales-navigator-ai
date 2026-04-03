@@ -404,11 +404,8 @@ export default function BusinessLab() {
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-bold text-sm">{product.nome}</span>
                                                                 <Badge className="text-[8px] h-4 uppercase tracking-tighter" variant="outline">
-                                                                    {String((product as any)?.ladder_stage || product?.tipo_produto || 'core')}
+                                                                    {product.tipo_produto || 'core'}
                                                                 </Badge>
-                                                                {(product as any).ladder_stage === 'premium' && (
-                                                                    <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
-                                                                )}
                                                             </div>
                                                             <p className="text-[10px] text-muted-foreground line-clamp-1">{product.descricao || 'Sem descrição'}</p>
                                                         </div>
