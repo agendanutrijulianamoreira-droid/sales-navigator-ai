@@ -1,55 +1,63 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-// Default values for BrandPalette
-const defaultBrandPalette = {
-  primaryColor: '#000',
-  secondaryColor: '#fff',
+export interface BrandPalette {
+  primary: string;
+  secondary: string;
+  fontHeading: string;
+  fontBody: string;
+}
+
+export interface BrandContextType {
+  brand: BrandPalette;
+  updateBrand: (newPalette: Partial<BrandPalette>) => void;
+}
+
+const defaultBrandPalette: BrandPalette = {
+  primary: '#1A1A1A',
+  secondary: '#E2E8F0',
+  fontHeading: 'Inter',
+  fontBody: 'Inter',
 };
 
-const BrandContext = createContext();
+const BrandContext = createContext<BrandContextType | undefined>(undefined);
 
-export const BrandProvider = ({ children }) => {
-  const [brandPalette, setBrandPalette] = useState(defaultBrandPalette);
-
-  useEffect(() => {
-    const fetchBrandPalette = () => {
+export const BrandProvider = ({ children }: { children: ReactNode }) => {
+  const [brandPalette, setBrandPalette] = useState<BrandPalette>(() => {
+    if (typeof localStorage !== 'undefined') {
       try {
-        const storedPalette = localStorage.getItem('brandPalette');
-        if (storedPalette) {
-          // Attempt to parse stored data
-          const parsedPalette = JSON.parse(storedPalette);
-          // Validate parsed data structure
-          if (validateBrandPalette(parsedPalette)) {
-            setBrandPalette(parsedPalette);
-          } else {
-            console.error('Invalid BrandPalette structure, reverting to defaults.');
-            setBrandPalette(defaultBrandPalette);
-          }
+        const stored = localStorage.getItem('brandPalette');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          return { ...defaultBrandPalette, ...parsed };
         }
       } catch (error) {
-        console.error('Failed to parse brandPalette from localStorage:', error);
-        setBrandPalette(defaultBrandPalette);
+        console.error('Falha ao parsear brandPalette do localStorage:', error);
       }
-    };
-
-    const validateBrandPalette = (palette) => {
-      // Simple type validation for BrandPalette object
-      return (typeof palette.primaryColor === 'string' && typeof palette.secondaryColor === 'string');
-    };
-
-    // Check for localStorage availability
-    if (typeof localStorage !== 'undefined') {
-      fetchBrandPalette();
-    } else {
-      console.warn('localStorage is not available. Default values will be used.');
     }
-  }, []);
+    return defaultBrandPalette;
+  });
+
+  const updateBrand = (newPalette: Partial<BrandPalette>) => {
+    setBrandPalette(prev => {
+      const updated = { ...prev, ...newPalette };
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('brandPalette', JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
 
   return (
-    <BrandContext.Provider value={brandPalette}>
+    <BrandContext.Provider value={{ brand: brandPalette, updateBrand }}>
       {children}
     </BrandContext.Provider>
   );
 };
 
-export const useBrand = () => useContext(BrandContext);
+export const useBrand = () => {
+  const context = useContext(BrandContext);
+  if (context === undefined) {
+    throw new Error('useBrand deve ser usado dentro de um BrandProvider');
+  }
+  return context;
+};
