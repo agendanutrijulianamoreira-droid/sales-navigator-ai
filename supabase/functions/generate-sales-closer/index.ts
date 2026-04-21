@@ -36,7 +36,7 @@ serve(async (req) => {
             throw new Error("API key não configurada");
         }
 
-        let systemPrompt = `${PERSONAS.SALES_CLOSER_ELITE}
+        const systemPrompt = `${PERSONAS.SALES_CLOSER_ELITE}
 
 CONTEXTO DA NUTRICIONISTA:
 - Nome: ${profile?.nome || "Nutricionista"}
