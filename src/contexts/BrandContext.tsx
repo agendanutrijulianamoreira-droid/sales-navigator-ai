@@ -1,73 +1,55 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
-interface BrandPalette {
-    primary: string;
-    secondary: string;
-    background: string;
-    fontHeading: string;
-    fontBody: string;
-}
-
-const defaultPalette: BrandPalette = {
-    primary: '#7c3aed', // Purple-600 (Magic Writer theme)
-    secondary: '#10b981', // Emerald-500
-    background: '#ffffff',
-    fontHeading: 'Inter',
-    fontBody: 'Inter'
+// Default values for BrandPalette
+const defaultBrandPalette = {
+  primaryColor: '#000',
+  secondaryColor: '#fff',
 };
 
-const BrandContext = createContext<{
-    brand: BrandPalette;
-    updateBrand: (newBrand: Partial<BrandPalette>) => void;
-} | undefined>(undefined);
+const BrandContext = createContext();
 
-export function BrandProvider({ children }: { children: ReactNode }) {
-    const [brand, setBrand] = useState<BrandPalette>(defaultPalette);
+export const BrandProvider = ({ children }) => {
+  const [brandPalette, setBrandPalette] = useState(defaultBrandPalette);
 
-    // Carregar do LocalStorage ao iniciar
-    useEffect(() => {
-        const saved = localStorage.getItem('user_brand_kit');
-        if (saved) {
-            try {
-                setBrand(JSON.parse(saved));
-            } catch (e) {
-                console.error("Erro ao carregar kit de marca:", e);
-            }
+  useEffect(() => {
+    const fetchBrandPalette = () => {
+      try {
+        const storedPalette = localStorage.getItem('brandPalette');
+        if (storedPalette) {
+          // Attempt to parse stored data
+          const parsedPalette = JSON.parse(storedPalette);
+          // Validate parsed data structure
+          if (validateBrandPalette(parsedPalette)) {
+            setBrandPalette(parsedPalette);
+          } else {
+            console.error('Invalid BrandPalette structure, reverting to defaults.');
+            setBrandPalette(defaultBrandPalette);
+          }
         }
-    }, []);
-
-    const updateBrand = (newBrand: Partial<BrandPalette>) => {
-        setBrand(prev => {
-            const updated = { ...prev, ...newBrand };
-            localStorage.setItem('user_brand_kit', JSON.stringify(updated));
-
-            // Atualizar variáveis CSS globais
-            document.documentElement.style.setProperty('--brand-primary', updated.primary);
-            document.documentElement.style.setProperty('--brand-secondary', updated.secondary);
-            document.documentElement.style.setProperty('--brand-background', updated.background);
-
-            return updated;
-        });
+      } catch (error) {
+        console.error('Failed to parse brandPalette from localStorage:', error);
+        setBrandPalette(defaultBrandPalette);
+      }
     };
 
-    // Efeito inicial para setar as variáveis CSS
-    useEffect(() => {
-        document.documentElement.style.setProperty('--brand-primary', brand.primary);
-        document.documentElement.style.setProperty('--brand-secondary', brand.secondary);
-        document.documentElement.style.setProperty('--brand-background', brand.background);
-    }, [brand]);
+    const validateBrandPalette = (palette) => {
+      // Simple type validation for BrandPalette object
+      return (typeof palette.primaryColor === 'string' && typeof palette.secondaryColor === 'string');
+    };
 
-    return (
-        <BrandContext.Provider value={{ brand, updateBrand }}>
-            {children}
-        </BrandContext.Provider>
-    );
-}
-
-export const useBrand = () => {
-    const context = useContext(BrandContext);
-    if (!context) {
-        throw new Error("useBrand deve ser usado dentro de BrandProvider");
+    // Check for localStorage availability
+    if (typeof localStorage !== 'undefined') {
+      fetchBrandPalette();
+    } else {
+      console.warn('localStorage is not available. Default values will be used.');
     }
-    return context;
+  }, []);
+
+  return (
+    <BrandContext.Provider value={brandPalette}>
+      {children}
+    </BrandContext.Provider>
+  );
 };
+
+export const useBrand = () => useContext(BrandContext);
