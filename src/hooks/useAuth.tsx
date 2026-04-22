@@ -1,88 +1,104 @@
-import { useState, useEffect, createContext, useContext, useRef } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import type { Session, User, AuthError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Session } from "@supabase/supabase-js";
 
-interface AuthContextType {
-  session: Session | null;
+interface AuthContextValue {
   user: User | null;
+  session: Session | null;
   loading: boolean;
-  error: string | null;
-  signOut: () => Promise<void>;
+  error: AuthError | Error | null;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: AuthError | null }>;
+  signOut: () => Promise<{ error: AuthError | null }>;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  session: null,
-  user: null,
-  loading: true,
-  error: null,
-  signOut: async () => {},
-});
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [session, setSession] = useState<Session | null>(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const mountedRef = useRef(true);
+  const [error, setError] = useState<AuthError | Error | null>(null);
 
   useEffect(() => {
-    mountedRef.current = true;
+    let isMounted = true;
 
-    const initAuth = async () => {
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) throw sessionError;
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!isMounted) return;
 
-        if (mountedRef.current) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-        }
-      } catch (err: any) {
-        if (mountedRef.current) {
-          setError(err.message || "Erro ao inicializar sessão");
-          setLoading(false);
-        }
+      if (error) {
+        setError(error);
       }
-    };
 
-    initAuth();
+      setSession(data.session ?? null);
+      setUser(data.session?.user ?? null);
+      setLoading(false);
+    });
 
-    // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (mountedRef.current) {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!isMounted) return;
+      setSession(nextSession ?? null);
+      setUser(nextSession?.user ?? null);
+      setLoading(false);
     });
 
     return () => {
-      mountedRef.current = false;
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
-  const signOut = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (err: any) {
-      setError(err.message || "Erro ao sair");
-    }
-  };
+  const signIn = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setError(error);
+    return { error };
+  }, []);
 
-  return (
-    <AuthContext.Provider value={{ session, user, loading, error, signOut }}>
-      {children}
-    </AuthContext.Provider>
+  const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: fullName ? { full_name: fullName } : undefined,
+      },
+    });
+
+    setError(error);
+    return { error };
+  }, []);
+
+  const signOut = useCallback(async () => {
+    const { error } = await supabase.auth.signOut();
+    setError(error);
+    return { error };
+  }, []);
+
+  const value = useMemo<AuthContextValue>(
+    () => ({ user, session, loading, error, signIn, signUp, signOut }),
+    [user, session, loading, error, signIn, signUp, signOut],
   );
-};
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error("useAuth deve ser usado dentro de AuthProvider");
+  }
+
+  return context;
+}
 
 export default useAuth;
