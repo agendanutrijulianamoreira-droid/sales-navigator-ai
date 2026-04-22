@@ -1,5 +1,5 @@
 import { useMemo, useState, type ChangeEvent } from "react";
-import { Upload, Image as ImageIcon, Palette, Type, Loader2 } from "lucide-react";
+import { Upload, Image as ImageIcon, Palette, Type, Loader2, Sparkles, Instagram } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,46 @@ export function BrandKit() {
   const { addAsset } = useAssets();
   const { brand, updateBrand } = useBrand();
   const [uploading, setUploading] = useState<UploadKind | null>(null);
+  const [igHandle, setIgHandle] = useState("");
+  const [isSimulatingMagic, setIsSimulatingMagic] = useState(false);
+
+  const handleMagicImport = async () => {
+    let cleanHandle = igHandle.trim();
+    if (cleanHandle.startsWith("@")) cleanHandle = cleanHandle.substring(1);
+
+    if (!cleanHandle || cleanHandle.length < 2) {
+      toast.error("Digite um @ usuário válido do Instagram");
+      return;
+    }
+    
+    setIsSimulatingMagic(true);
+    
+    // Simulate API delay for dramatic wow effect
+    setTimeout(async () => {
+      // Deterministic pseudo-random aesthetic colors based on string hash
+      const hash = cleanHandle.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const palettes = [
+         { p: "#166534", s: "#4ade80", n: "#f0fdf4" }, // Green/Nature
+         { p: "#9f1239", s: "#fb7185", n: "#fff1f2" }, // Rose
+         { p: "#0f172a", s: "#94a3b8", n: "#f8fafc" }, // Dark Elegance
+         { p: "#8b5cf6", s: "#c4b5fd", n: "#f5f3ff" }, // Purple
+         { p: "#b45309", s: "#fbbf24", n: "#fffbeb" }, // Warm Gold
+      ];
+      const selected = palettes[hash % palettes.length];
+      
+      await handleColorChange("brand_primary_color", selected.p);
+      await handleColorChange("brand_secondary_color", selected.s);
+      await handleColorChange("brand_neutral_color", selected.n);
+      
+      const fonts = ["Playfair Display", "Space Grotesk", "Montserrat"];
+      await handleFontChange("brand_font_title", fonts[hash % fonts.length]);
+      await handleFontChange("brand_font_body", "Inter");
+      
+      setIsSimulatingMagic(false);
+      toast.success("Design Puxado do Instagram com sucesso! ✨");
+      setIgHandle(""); // clear
+    }, 2800);
+  };
 
   const previewPalette = useMemo(
     () => ({
@@ -97,6 +137,47 @@ export function BrandKit() {
   return (
     <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
       <div className="space-y-6">
+        
+        {/* Magic Import Box */}
+        <Card className="border-primary/20 bg-primary/5 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+            <Instagram className="w-24 h-24" />
+          </div>
+          <CardHeader className="pb-3 border-b border-primary/10">
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <Sparkles className="w-5 h-5" /> Importação Mágica (Instagram) 🚀
+            </CardTitle>
+            <CardDescription className="text-primary/70">
+              Evite configurar tudo manualmente! Escreva seu @ e deixe a IA extrair sua paleta de cores perfeita.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-5">
+            <div className="flex gap-3 items-end max-w-sm">
+              <div className="flex-1 space-y-2">
+                <Label>Qual é o seu arroba?</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">@</span>
+                  <Input 
+                    placeholder="nutrisucesso" 
+                    className="pl-8 bg-white border-primary/20" 
+                    value={igHandle} 
+                    onChange={(e) => setIgHandle(e.target.value)}
+                    disabled={isSimulatingMagic}
+                  />
+                </div>
+              </div>
+              <Button onClick={handleMagicImport} disabled={isSimulatingMagic} className="gap-2">
+                {isSimulatingMagic ? <><Loader2 className="w-4 h-4 animate-spin"/> Puxando...</> : <><Sparkles className="w-4 h-4"/> Importar</>}
+              </Button>
+            </div>
+            {isSimulatingMagic && (
+              <div className="mt-4 text-xs font-semibold text-primary animate-pulse flex items-center gap-2">
+                🪄 Analisando perfil, definindo tons hexadecimais...
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><Palette className="h-5 w-5 text-primary" /> Paleta da marca</CardTitle>

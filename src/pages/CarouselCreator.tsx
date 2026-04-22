@@ -54,6 +54,7 @@ import { exportSlideAsImage } from "@/utils/exportCarousel";
 import { useAuth } from "@/hooks/useAuth";
 import { useCarouselPersistence } from "@/hooks/useCarouselPersistence";
 import { useBrand } from "@/contexts/BrandContext";
+import { ViralityScore } from "@/components/carousel/ViralityScore";
 
 export default function CarouselCreator() {
   const { toast } = useToast();
@@ -743,6 +744,11 @@ export default function CarouselCreator() {
                         />
                       </div>
 
+                      {/* SCORE DE VIRULÊNCIA */}
+                      <div className="mb-4 animate-in fade-in slide-in-from-top-4 duration-500 delay-300">
+                        <ViralityScore headline={carousel.slides[0]?.headline} />
+                      </div>
+
                       {/* Direct Editor Stage */}
                       {currentContentFormat === 'reels_script' ? (
                         /* Reels Script View */
@@ -796,6 +802,13 @@ export default function CarouselCreator() {
                                   : "w-[340px] aspect-[4/5]"
                               )}
                             >
+                            
+                            {/* UX HINT: Pulsing Inline Edit Hint */}
+                            <div className="absolute -top-4 right-4 bg-primary text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg border border-white/20 z-50 flex items-center gap-1.5 animate-pulse pointer-events-none">
+                              <Edit3 className="w-3 h-3" />
+                              Clique no texto para editar
+                            </div>
+
                             <CarouselSlideEditor
                               slide={carousel.slides[currentSlideIndex]}
                               index={currentSlideIndex}
@@ -841,6 +854,35 @@ export default function CarouselCreator() {
                           {isSavingCloud ? "Salvando..." : "Salvar na Estratégia"}
                         </Button>
                       </div>
+
+                      {/* BestContent Mode: Upsell Format 1-Click Conversion */}
+                      {currentContentFormat !== 'stories' && (
+                        <div className="flex justify-center mt-6 animate-in fade-in zoom-in duration-500 delay-500">
+                          <Button 
+                            variant="default"
+                            disabled={isGenerating}
+                            onClick={() => {
+                              // Re-generate using the current texts as instruction for stories
+                              const context = carousel.slides.map(s => s.headline + " " + (s.subtexto || "")).join("\n");
+                              generateCarousel(
+                                carousel.titulo,
+                                "STORYTELLING_RESULTADO", // Fallback type
+                                "Conversão/Venda",
+                                "Transforme este texto exato em uma sequência engajante de stories: " + context,
+                                undefined,
+                                "ALCANCE",
+                                "auto",
+                                "auto",
+                                "stories"
+                              );
+                            }}
+                            className="bg-amber-400 hover:bg-amber-500 text-amber-950 px-8 py-6 rounded-full shadow-lg font-bold text-sm gap-2 border border-amber-300 transition-all hover:scale-105 group"
+                          >
+                            <Sparkles className="w-5 h-5 group-hover:animate-ping" />
+                            ✨ Transformar em Sequência de Stories
+                          </Button>
+                        </div>
+                      )}
                     </div>
 
                     {/* Slide Selector Strip */}
