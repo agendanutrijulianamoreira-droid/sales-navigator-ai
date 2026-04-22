@@ -172,17 +172,17 @@ export function BrandKit() {
                     className="pl-8 bg-white border-primary/20" 
                     value={igHandle} 
                     onChange={(e) => setIgHandle(e.target.value)}
-                    disabled={isSimulatingMagic}
+                    disabled={isImporting}
                   />
                 </div>
               </div>
-              <Button onClick={handleMagicImport} disabled={isSimulatingMagic} className="gap-2">
-                {isSimulatingMagic ? <><Loader2 className="w-4 h-4 animate-spin"/> Puxando...</> : <><Sparkles className="w-4 h-4"/> Importar</>}
+              <Button onClick={handleMagicImport} disabled={isImporting} className="gap-2">
+                {isImporting ? <><Loader2 className="w-4 h-4 animate-spin"/> Gerando...</> : <><Sparkles className="w-4 h-4"/> Importar</>}
               </Button>
             </div>
-            {isSimulatingMagic && (
+            {isImporting && (
               <div className="mt-4 text-xs font-semibold text-primary animate-pulse flex items-center gap-2">
-                🪄 Analisando perfil, definindo tons hexadecimais...
+                🪄 A IA está analisando seu nicho e criando a paleta perfeita...
               </div>
             )}
           </CardContent>
