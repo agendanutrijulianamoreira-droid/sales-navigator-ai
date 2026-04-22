@@ -25,7 +25,7 @@ export function BrandKit() {
   const { brand, updateBrand } = useBrand();
   const [uploading, setUploading] = useState<UploadKind | null>(null);
   const [igHandle, setIgHandle] = useState("");
-  const [isSimulatingMagic, setIsSimulatingMagic] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   const handleMagicImport = async () => {
     let cleanHandle = igHandle.trim();
@@ -35,34 +35,44 @@ export function BrandKit() {
       toast.error("Digite um @ usuário válido do Instagram");
       return;
     }
-    
-    setIsSimulatingMagic(true);
-    
-    // Simulate API delay for dramatic wow effect
-    setTimeout(async () => {
-      // Deterministic pseudo-random aesthetic colors based on string hash
-      const hash = cleanHandle.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      const palettes = [
-         { p: "#166534", s: "#4ade80", n: "#f0fdf4" }, // Green/Nature
-         { p: "#9f1239", s: "#fb7185", n: "#fff1f2" }, // Rose
-         { p: "#0f172a", s: "#94a3b8", n: "#f8fafc" }, // Dark Elegance
-         { p: "#8b5cf6", s: "#c4b5fd", n: "#f5f3ff" }, // Purple
-         { p: "#b45309", s: "#fbbf24", n: "#fffbeb" }, // Warm Gold
-      ];
-      const selected = palettes[hash % palettes.length];
-      
-      await handleColorChange("brand_primary_color", selected.p);
-      await handleColorChange("brand_secondary_color", selected.s);
-      await handleColorChange("brand_neutral_color", selected.n);
-      
-      const fonts = ["Playfair Display", "Space Grotesk", "Montserrat"];
-      await handleFontChange("brand_font_title", fonts[hash % fonts.length]);
-      await handleFontChange("brand_font_body", "Inter");
-      
-      setIsSimulatingMagic(false);
-      toast.success("Design Puxado do Instagram com sucesso! ✨");
-      setIgHandle(""); // clear
-    }, 2800);
+
+    setIsImporting(true);
+
+    try {
+      const nicho = profile?.nicho || "";
+      const subNicho = profile?.sub_nicho || "";
+      const persona = profile?.persona_ideal || "";
+      const nome = profile?.nome || "";
+
+      const { data, error } = await supabase.functions.invoke("generate-brand-palette", {
+        body: {
+          instagram_handle: cleanHandle,
+          nicho,
+          sub_nicho: subNicho,
+          persona,
+          nome,
+        },
+      });
+
+      if (error) throw error;
+
+      const palette = data?.palette;
+      if (!palette) throw new Error("Resposta inválida da IA");
+
+      await handleColorChange("brand_primary_color", palette.primary);
+      await handleColorChange("brand_secondary_color", palette.secondary);
+      await handleColorChange("brand_neutral_color", palette.neutral);
+      await handleFontChange("brand_font_title", palette.font_title || "Space Grotesk");
+      await handleFontChange("brand_font_body", palette.font_body || "Inter");
+
+      toast.success("Paleta gerada pela IA com sucesso! ✨");
+      setIgHandle("");
+    } catch (err) {
+      console.error("Erro na importação mágica:", err);
+      toast.error("Não foi possível gerar a paleta. Tente novamente.");
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const previewPalette = useMemo(
