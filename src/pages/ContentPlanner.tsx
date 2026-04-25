@@ -663,7 +663,12 @@ function ContentPlanner() {
                 })}
               </div>
 
-              {/* Extra generation buttons floating or at bottom */}
+            </ScrollArea>
+            </>
+            )}
+
+            {/* Floating generation buttons (visible on month/week views) */}
+            {view !== "pipeline" && (
               <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-[60]">
                 <Button
                   variant="outline"
@@ -674,10 +679,25 @@ function ContentPlanner() {
                   <Plus className="h-5 w-5 mr-3" />
                   Sugestão Manual
                 </Button>
+                {isPremium && view === "week" && (
+                  <Button
+                    variant="outline"
+                    className="rounded-full shadow-lg bg-white border-primary/30 hover:bg-primary/5 text-primary font-bold pr-6 pl-4 py-6"
+                    onClick={() => handleGenerateAIPlan(7)}
+                    disabled={isGeneratingMonth}
+                  >
+                    {isGeneratingMonth ? (
+                      <Loader2 className="h-5 w-5 mr-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-5 w-5 mr-3" />
+                    )}
+                    {isGeneratingMonth ? (monthProgress || "Gerando...") : "Gerar Semana com IA"}
+                  </Button>
+                )}
                 {isPremium && (
                   <Button
                     className="rounded-full shadow-lg bg-primary hover:bg-primary/90 text-white font-bold pr-6 pl-4 py-6"
-                    onClick={handleGenerateMonth}
+                    onClick={() => handleGenerateAIPlan(30)}
                     disabled={isGeneratingMonth}
                   >
                     {isGeneratingMonth ? (
@@ -689,8 +709,6 @@ function ContentPlanner() {
                   </Button>
                 )}
               </div>
-            </ScrollArea>
-            </>
             )}
           </main>
 
