@@ -569,8 +569,57 @@ function ContentPlanner() {
                   })}
                 </div>
               </ScrollArea>
+            ) : view === "week" ? (
+            /* ═══ WEEK VIEW ═══ */
+            <>
+            <div className="grid grid-cols-7 border-b border-gray-100 bg-white">
+              {weekDates.map((d, i) => {
+                const isToday =
+                  d.getDate() === new Date().getDate() &&
+                  d.getMonth() === new Date().getMonth() &&
+                  d.getFullYear() === new Date().getFullYear();
+                return (
+                  <div
+                    key={i}
+                    className={`px-3 py-2 border-r border-gray-50 last:border-r-0 ${isToday ? "bg-primary/5" : ""}`}
+                  >
+                    <p className="text-[10px] font-bold text-gray-400 uppercase">{DAYS[i]}</p>
+                    <p className={`text-lg font-bold ${isToday ? "text-primary" : "text-gray-700"}`}>
+                      {d.getDate()}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+            <ScrollArea className="flex-1">
+              <div className="grid grid-cols-7 h-full min-h-[600px]">
+                {weekDates.map((d, i) => {
+                  const posts = getItemsForDate(d);
+                  const isToday =
+                    d.getDate() === new Date().getDate() &&
+                    d.getMonth() === new Date().getMonth() &&
+                    d.getFullYear() === new Date().getFullYear();
+                  return (
+                    <CalendarDayCell
+                      key={i}
+                      date={d}
+                      dayNumber={d.getDate()}
+                      isToday={isToday}
+                      posts={posts}
+                      holiday={getHolidayForDate(d.getDate(), d.getMonth())}
+                      onAddClick={(date) => { setSelectedDate(date); setShowScheduleDialog(true); }}
+                      onEditPost={handleEditPost}
+                      onDeletePost={deleteItem}
+                      onDropPost={handleDropPost}
+                      variant="week"
+                    />
+                  );
+                })}
+              </div>
+            </ScrollArea>
+            </>
             ) : (
-            /* ═══ CALENDAR VIEW (month/week) ═══ */
+            /* ═══ MONTH VIEW ═══ */
             <>
             {/* Calendar Grid Header (Days Name) */}
             <div className="grid grid-cols-7 border-b border-gray-100 bg-white">
@@ -609,7 +658,6 @@ function ContentPlanner() {
                       onEditPost={handleEditPost}
                       onDeletePost={deleteItem}
                       onDropPost={handleDropPost}
-                      onQuickAction={handleQuickAction}
                     />
                   );
                 })}
