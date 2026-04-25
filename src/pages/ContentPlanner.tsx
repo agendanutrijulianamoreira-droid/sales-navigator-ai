@@ -165,14 +165,14 @@ function ContentPlanner() {
 
   const isPremium = hasPremiumAccess();
 
-  const handleGenerateMonth = async () => {
+  const handleGenerateAIPlan = async (daysCount: number = 30) => {
     if (!isPremium) {
       toast.error("Funcionalidade exclusiva para usuários Elite, Teste e Admin!");
       return;
     }
 
     if (items.length > 5) {
-      const confirm = window.confirm("Isso irá gerar ~30 novos itens no seu calendário. Deseja continuar?");
+      const confirm = window.confirm(`Isso irá gerar ~${daysCount} novos itens no seu calendário. Deseja continuar?`);
       if (!confirm) return;
     }
 
@@ -180,14 +180,11 @@ function ContentPlanner() {
     setMonthProgress("Analisando seu perfil e produtos...");
 
     try {
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() + 1);
+      const startDate = view === "week" ? weekDates[0] : new Date();
+      if (view !== "week") startDate.setDate(startDate.getDate() + 1);
 
       setMonthProgress("O Maestro está criando seu plano editorial...");
 
-      // Encontrar a estratégia específica para o mês atual no calendário
-      // MONTHS é 0-indexed, strategy month é 1-indexed (geralmente) ou 1-12.
-      // Vamos assumir que strategy[currentMonth] mapeia para o mês visível.
       const monthlyStrategy = strategy?.find(s => s.month === currentMonth + 1);
 
       const { data, error } = await supabase.functions.invoke("generate-month-plan", {
@@ -195,7 +192,7 @@ function ContentPlanner() {
           profile,
           products,
           startDate: startDate.toISOString().split("T")[0],
-          daysCount: 30,
+          daysCount,
           monthlyStrategy
         },
       });
@@ -210,7 +207,7 @@ function ContentPlanner() {
       await addBatchItems(data);
       toast.success(`🎯 ${data.length} posts agendados pelo Maestro!`);
     } catch (error) {
-      console.error("Erro ao gerar mês:", error);
+      console.error("Erro ao gerar plano:", error);
       toast.error(error instanceof Error ? error.message : "Erro ao gerar planejamento");
     } finally {
       setIsGeneratingMonth(false);
