@@ -165,14 +165,14 @@ function ContentPlanner() {
 
   const isPremium = hasPremiumAccess();
 
-  const handleGenerateMonth = async () => {
+  const handleGenerateAIPlan = async (daysCount: number = 30) => {
     if (!isPremium) {
       toast.error("Funcionalidade exclusiva para usuários Elite, Teste e Admin!");
       return;
     }
 
     if (items.length > 5) {
-      const confirm = window.confirm("Isso irá gerar ~30 novos itens no seu calendário. Deseja continuar?");
+      const confirm = window.confirm(`Isso irá gerar ~${daysCount} novos itens no seu calendário. Deseja continuar?`);
       if (!confirm) return;
     }
 
@@ -180,14 +180,11 @@ function ContentPlanner() {
     setMonthProgress("Analisando seu perfil e produtos...");
 
     try {
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() + 1);
+      const startDate = view === "week" ? weekDates[0] : new Date();
+      if (view !== "week") startDate.setDate(startDate.getDate() + 1);
 
       setMonthProgress("O Maestro está criando seu plano editorial...");
 
-      // Encontrar a estratégia específica para o mês atual no calendário
-      // MONTHS é 0-indexed, strategy month é 1-indexed (geralmente) ou 1-12.
-      // Vamos assumir que strategy[currentMonth] mapeia para o mês visível.
       const monthlyStrategy = strategy?.find(s => s.month === currentMonth + 1);
 
       const { data, error } = await supabase.functions.invoke("generate-month-plan", {
@@ -195,7 +192,7 @@ function ContentPlanner() {
           profile,
           products,
           startDate: startDate.toISOString().split("T")[0],
-          daysCount: 30,
+          daysCount,
           monthlyStrategy
         },
       });
@@ -210,7 +207,7 @@ function ContentPlanner() {
       await addBatchItems(data);
       toast.success(`🎯 ${data.length} posts agendados pelo Maestro!`);
     } catch (error) {
-      console.error("Erro ao gerar mês:", error);
+      console.error("Erro ao gerar plano:", error);
       toast.error(error instanceof Error ? error.message : "Erro ao gerar planejamento");
     } finally {
       setIsGeneratingMonth(false);
@@ -569,8 +566,57 @@ function ContentPlanner() {
                   })}
                 </div>
               </ScrollArea>
+            ) : view === "week" ? (
+            /* ═══ WEEK VIEW ═══ */
+            <>
+            <div className="grid grid-cols-7 border-b border-gray-100 bg-white">
+              {weekDates.map((d, i) => {
+                const isToday =
+                  d.getDate() === new Date().getDate() &&
+                  d.getMonth() === new Date().getMonth() &&
+                  d.getFullYear() === new Date().getFullYear();
+                return (
+                  <div
+                    key={i}
+                    className={`px-3 py-2 border-r border-gray-50 last:border-r-0 ${isToday ? "bg-primary/5" : ""}`}
+                  >
+                    <p className="text-[10px] font-bold text-gray-400 uppercase">{DAYS[i]}</p>
+                    <p className={`text-lg font-bold ${isToday ? "text-primary" : "text-gray-700"}`}>
+                      {d.getDate()}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+            <ScrollArea className="flex-1">
+              <div className="grid grid-cols-7 h-full min-h-[600px]">
+                {weekDates.map((d, i) => {
+                  const posts = getItemsForDate(d);
+                  const isToday =
+                    d.getDate() === new Date().getDate() &&
+                    d.getMonth() === new Date().getMonth() &&
+                    d.getFullYear() === new Date().getFullYear();
+                  return (
+                    <CalendarDayCell
+                      key={i}
+                      date={d}
+                      dayNumber={d.getDate()}
+                      isToday={isToday}
+                      posts={posts}
+                      holiday={getHolidayForDate(d.getDate(), d.getMonth())}
+                      onAddClick={(date) => { setSelectedDate(date); setShowScheduleDialog(true); }}
+                      onEditPost={handleEditPost}
+                      onDeletePost={deleteItem}
+                      onDropPost={handleDropPost}
+                      variant="week"
+                    />
+                  );
+                })}
+              </div>
+            </ScrollArea>
+            </>
             ) : (
-            /* ═══ CALENDAR VIEW (month/week) ═══ */
+            /* ═══ MONTH VIEW ═══ */
             <>
             {/* Calendar Grid Header (Days Name) */}
             <div className="grid grid-cols-7 border-b border-gray-100 bg-white">
@@ -609,13 +655,17 @@ function ContentPlanner() {
                       onEditPost={handleEditPost}
                       onDeletePost={deleteItem}
                       onDropPost={handleDropPost}
-                      onQuickAction={handleQuickAction}
                     />
                   );
                 })}
               </div>
 
-              {/* Extra generation buttons floating or at bottom */}
+            </ScrollArea>
+            </>
+            )}
+
+            {/* Floating generation buttons (visible on month/week views) */}
+            {view !== "pipeline" && (
               <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-[60]">
                 <Button
                   variant="outline"
@@ -626,10 +676,25 @@ function ContentPlanner() {
                   <Plus className="h-5 w-5 mr-3" />
                   Sugestão Manual
                 </Button>
+                {isPremium && view === "week" && (
+                  <Button
+                    variant="outline"
+                    className="rounded-full shadow-lg bg-white border-primary/30 hover:bg-primary/5 text-primary font-bold pr-6 pl-4 py-6"
+                    onClick={() => handleGenerateAIPlan(7)}
+                    disabled={isGeneratingMonth}
+                  >
+                    {isGeneratingMonth ? (
+                      <Loader2 className="h-5 w-5 mr-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-5 w-5 mr-3" />
+                    )}
+                    {isGeneratingMonth ? (monthProgress || "Gerando...") : "Gerar Semana com IA"}
+                  </Button>
+                )}
                 {isPremium && (
                   <Button
                     className="rounded-full shadow-lg bg-primary hover:bg-primary/90 text-white font-bold pr-6 pl-4 py-6"
-                    onClick={handleGenerateMonth}
+                    onClick={() => handleGenerateAIPlan(30)}
                     disabled={isGeneratingMonth}
                   >
                     {isGeneratingMonth ? (
@@ -641,8 +706,6 @@ function ContentPlanner() {
                   </Button>
                 )}
               </div>
-            </ScrollArea>
-            </>
             )}
           </main>
 
