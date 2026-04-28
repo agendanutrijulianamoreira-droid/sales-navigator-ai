@@ -346,7 +346,15 @@ function ContentPlanner() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-gray-500"
-                  onClick={() => setCurrentDate(new Date(currentYear, currentMonth - 1, 1))}
+                  onClick={() => {
+                    if (view === "week") {
+                      const d = new Date(currentDate);
+                      d.setDate(d.getDate() - 7);
+                      setCurrentDate(d);
+                    } else {
+                      setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
+                    }
+                  }}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -354,7 +362,15 @@ function ContentPlanner() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-gray-500"
-                  onClick={() => setCurrentDate(new Date(currentYear, currentMonth + 1, 1))}
+                  onClick={() => {
+                    if (view === "week") {
+                      const d = new Date(currentDate);
+                      d.setDate(d.getDate() + 7);
+                      setCurrentDate(d);
+                    } else {
+                      setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
+                    }
+                  }}
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -362,7 +378,9 @@ function ContentPlanner() {
             </div>
 
             <span className="text-lg font-semibold text-gray-700 capitalize">
-              {MONTHS[currentMonth]} de {currentYear}
+              {view === "week"
+                ? `${weekDates[0].toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} – ${weekDates[6].toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}`
+                : `${MONTHS[currentMonth]} de ${currentYear}`}
             </span>
           </div>
 
