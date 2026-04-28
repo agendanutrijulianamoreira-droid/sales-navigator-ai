@@ -24,7 +24,6 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const BrandHub = lazy(() => import("./pages/BrandHub"));
 const BusinessLab = lazy(() => import("./pages/BusinessLab"));
-const CalendarPage = lazy(() => import("./pages/CalendarPage"));
 const ContentPlanner = lazy(() => import("./pages/ContentPlanner"));
 const CarouselCreator = lazy(() => import("./pages/CarouselCreator"));
 const Conversion = lazy(() => import("./pages/Conversion"));
