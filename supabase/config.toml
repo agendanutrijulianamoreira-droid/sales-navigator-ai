@@ -36,48 +36,72 @@ enable_anonymous_sign_ins = false
 [auth.email]
 enable_signup = true
 double_confirm_changes = true
-enable_confirmations = false
+enable_confirmations = true
+
+[auth.password]
+hibp_enabled = true
 
 [functions.ai-specialist]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 
 [functions.mentor-router]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-photo]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-design]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-carousel]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-business-plan]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-strategy]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-month-plan]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-carousel-text]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 
 [functions.get-viral-ideas]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 
+[functions.generate-challenge]
+enabled = true
+verify_jwt = true
+
+[functions.generate-funnel-content]
+enabled = true
+verify_jwt = true
+
+[functions.generate-sales-closer]
+enabled = true
+verify_jwt = true
+
+[functions.generate-vip-strategy]
+enabled = true
+verify_jwt = true
+
+[functions.generate-brand-palette]
+enabled = true
+verify_jwt = true
+
+# stripe-webhook é chamado pelo Stripe sem JWT — autenticado via constructEvent
 [functions.stripe-webhook]
 enabled = true
 verify_jwt = false

@@ -205,6 +205,7 @@ function ContentPlanner() {
 
       setMonthProgress(`Agendando ${data.length} posts no calendário...`);
       await addBatchItems(data);
+      if (daysCount <= 7) setView("week");
       toast.success(`🎯 ${data.length} posts agendados pelo Maestro!`);
     } catch (error) {
       console.error("Erro ao gerar plano:", error);
@@ -587,6 +588,28 @@ function ContentPlanner() {
             ) : view === "week" ? (
             /* ═══ WEEK VIEW ═══ */
             <>
+            {/* Weekly summary bar */}
+            {(() => {
+              const weekPosts = weekDates.flatMap(d => getItemsForDate(d));
+              const typeCounts = weekPosts.reduce((acc, p) => {
+                acc[p.tipo] = (acc[p.tipo] || 0) + 1;
+                return acc;
+              }, {} as Record<string, number>);
+              const typeLabels: Record<string, string> = {
+                carrossel: "Carrossel", post_unico: "Post Único",
+                reels: "Reels", stories: "Stories", levantada: "Levantada"
+              };
+              return weekPosts.length > 0 ? (
+                <div className="flex items-center gap-3 px-4 py-2 bg-primary/5 border-b border-primary/10 text-xs font-medium text-primary/80 flex-wrap">
+                  <span className="font-bold">{weekPosts.length} post{weekPosts.length > 1 ? "s" : ""} esta semana</span>
+                  {Object.entries(typeCounts).map(([tipo, count]) => (
+                    <span key={tipo} className="text-gray-500">
+                      {typeLabels[tipo] ?? tipo}: <span className="font-bold text-gray-700">{count}</span>
+                    </span>
+                  ))}
+                </div>
+              ) : null;
+            })()}
             <div className="grid grid-cols-7 border-b border-gray-100 bg-white">
               {weekDates.map((d, i) => {
                 const isToday =

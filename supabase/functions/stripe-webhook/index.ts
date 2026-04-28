@@ -6,35 +6,47 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
     apiVersion: '2022-11-15',
 })
 
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
 serve(async (req) => {
     if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: corsHeaders })
+        return new Response('ok', { status: 200 })
     }
 
+    const signature = req.headers.get('stripe-signature')
+    if (!signature) {
+        return new Response(JSON.stringify({ error: 'Missing stripe-signature header' }), { status: 400 })
+    }
+
+    const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')
+    if (!webhookSecret) {
+        return new Response(JSON.stringify({ error: 'Webhook secret not configured' }), { status: 500 })
+    }
+
+    let event: Stripe.Event
     try {
-        const signature = req.headers.get('stripe-signature')
         const body = await req.text()
-
-        // Validar evento do Stripe
-        // const event = stripe.webhooks.constructEvent(body, signature, Deno.env.get('STRIPE_WEBHOOK_SECRET'))
-
-        // Simulação do processamento de checkout.session.completed
-        // Aqui atualizaríamos a tabela user_credits baseado no stripe_customer_id ou client_reference_id
-
-        return new Response(JSON.stringify({ received: true }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200,
-        })
-    } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Unknown error';
-        return new Response(JSON.stringify({ error: message }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
-        })
+        event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret)
+    } catch (err) {
+        const message = err instanceof Error ? err.message : 'Invalid signature'
+        return new Response(JSON.stringify({ error: message }), { status: 400 })
     }
+
+    const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    )
+
+    if (event.type === 'checkout.session.completed') {
+        const session = event.data.object as Stripe.Checkout.Session
+        const userId = session.client_reference_id
+        if (userId) {
+            await supabase
+                .from('user_roles')
+                .upsert({ user_id: userId, role: 'elite' }, { onConflict: 'user_id' })
+        }
+    }
+
+    return new Response(JSON.stringify({ received: true }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+    })
 })
