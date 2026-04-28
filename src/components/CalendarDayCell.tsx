@@ -74,16 +74,38 @@ export function CalendarDayCell({
       </div>
 
       <DroppableDay date={date} onDrop={onDropPost} onAddClick={onAddClick}>
-        <div className={cn("flex flex-col px-1.5 pb-2 gap-1", isWeek ? "px-2 gap-2" : "px-1.5 gap-1")}>
-          {posts.map((post) => (
-            <DraggablePostCard
-              key={post.id}
-              post={post}
-              onEdit={onEditPost}
-              onDelete={onDeletePost}
-              variant={variant}
-            />
-          ))}
+        <div className={cn("flex flex-col pb-2", isWeek ? "px-2 gap-2" : "px-1.5 gap-1")}>
+          {isWeek ? (
+            posts.map((post) => (
+              <DraggablePostCard
+                key={post.id}
+                post={post}
+                onEdit={onEditPost}
+                onDelete={onDeletePost}
+                variant="week"
+              />
+            ))
+          ) : (
+            <>
+              {posts.slice(0, 3).map((post) => (
+                <DraggablePostCard
+                  key={post.id}
+                  post={post}
+                  onEdit={onEditPost}
+                  onDelete={onDeletePost}
+                  variant="month"
+                />
+              ))}
+              {posts.length > 3 && (
+                <button
+                  onClick={() => onAddClick(date)}
+                  className="text-[9px] font-semibold text-primary/70 hover:text-primary text-left px-1 py-0.5 rounded hover:bg-primary/5 transition-colors"
+                >
+                  +{posts.length - 3} mais
+                </button>
+              )}
+            </>
+          )}
           {posts.length === 0 && (
             <button
               onClick={() => onAddClick(date)}

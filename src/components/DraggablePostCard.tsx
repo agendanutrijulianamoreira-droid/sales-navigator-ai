@@ -87,10 +87,15 @@ export function DraggablePostCard({ post, onEdit, onDuplicate, onDelete, variant
               <span className="text-[9px] text-gray-400">{statusConfig.label}</span>
             </span>
           </div>
-          <p className="text-xs font-semibold text-gray-800 line-clamp-2 leading-snug mb-2">
+          <p className="text-xs font-semibold text-gray-800 line-clamp-2 leading-snug">
             {post.titulo || "Sem título"}
           </p>
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {post.notas && (
+            <p className="text-[10px] text-gray-400 line-clamp-2 mt-0.5 mb-1 leading-snug">
+              {post.notas}
+            </p>
+          )}
+          <div className="flex items-center gap-1 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
               variant="ghost"
               size="icon"
