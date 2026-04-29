@@ -36,11 +36,13 @@ import {
   CalendarDays,
   Target,
   Columns3,
-  StickyNote
+  StickyNote,
+  BarChart2
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { CalendarDayCell } from "@/components/CalendarDayCell";
+import { ReportsView } from "@/components/ReportsView";
 import { getHolidayForDate, COMMEMORATIVE_DATES } from "@/lib/constants/holidays";
 import {
   DropdownMenu,
@@ -77,7 +79,7 @@ function ContentPlanner() {
   const { profile } = useProfile();
   const { items, isLoading, addItem, deleteItem, updateItem, getItemsForDate } = useCalendarItems();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<"month" | "week" | "pipeline">("month");
+  const [view, setView] = useState<"month" | "week" | "pipeline" | "reports">("month");
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedPost, setSelectedPost] = useState<CalendarItem | undefined>();
@@ -113,8 +115,8 @@ function ContentPlanner() {
     return matchesSearch && matchesFilter;
   });
 
-  const handleSchedule = async (data: { date: string; tipo: string; titulo: string }) => {
-    await addItem({ data: data.date, tipo: data.tipo, titulo: data.titulo });
+  const handleSchedule = async (data: { date: string; tipo: string; titulo: string; notas?: string; status?: string; horario?: string }) => {
+    await addItem({ data: data.date, tipo: data.tipo, titulo: data.titulo, notas: data.notas });
   };
 
   const handleEditPost = (post: CalendarItem) => {
@@ -450,8 +452,17 @@ function ContentPlanner() {
               >
                 <Columns3 className="h-3.5 w-3.5" /> Pipeline
               </Button>
+              <Button
+                variant={view === "reports" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-8 text-xs font-semibold px-3 gap-1"
+                onClick={() => setView("reports")}
+              >
+                <BarChart2 className="h-3.5 w-3.5" /> Relatórios
+              </Button>
             </div>
 
+            {view !== "reports" && (
             <Select value={filterType || "todos"} onValueChange={(v) => setFilterType(v === "todos" ? null : v)}>
               <SelectTrigger className="w-[180px] h-9 bg-gray-50 border-none text-sm font-medium">
                 <SelectValue placeholder="Todos os eventos" />
@@ -463,7 +474,9 @@ function ContentPlanner() {
                 ))}
               </SelectContent>
             </Select>
+            )}
 
+            {view !== "reports" && (
             <Button
               className="bg-primary hover:bg-primary/90 text-white font-bold h-9"
               onClick={() => { setSelectedDate(new Date()); setShowScheduleDialog(true); }}
@@ -471,6 +484,7 @@ function ContentPlanner() {
               <Plus className="h-4 w-4 mr-2" />
               Adicionar
             </Button>
+            )}
 
             <div className="flex items-center gap-1 ml-2">
               <Button
@@ -494,7 +508,10 @@ function ContentPlanner() {
         <div className="flex-1 flex overflow-hidden">
           <main className="flex-1 overflow-hidden flex flex-col">
 
-            {view === "pipeline" ? (
+            {view === "reports" ? (
+              /* ═══ REPORTS VIEW ═══ */
+              <ReportsView items={items} />
+            ) : view === "pipeline" ? (
               /* ═══ PIPELINE / KANBAN VIEW ═══ */
               <ScrollArea className="flex-1 p-4">
                 <div className="grid grid-cols-5 gap-3 min-h-[600px]">
@@ -706,7 +723,7 @@ function ContentPlanner() {
             )}
 
             {/* Floating generation buttons (visible on month/week views) */}
-            {view !== "pipeline" && (
+            {view !== "pipeline" && view !== "reports" && (
               <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-[60]">
                 <Button
                   variant="outline"
