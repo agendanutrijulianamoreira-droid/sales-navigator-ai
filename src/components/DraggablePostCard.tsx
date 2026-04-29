@@ -5,6 +5,7 @@ import { CalendarItem } from "@/hooks/useCalendarItems";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { PostPreviewPopover } from "./PostPreviewPopover";
 
 const TYPE_CONFIG = {
   carrossel: { label: "Carrossel", color: "bg-violet-500", text: "text-violet-700", border: "border-l-violet-500" },
@@ -61,14 +62,15 @@ export function DraggablePostCard({ post, onEdit, onDuplicate, onDelete, variant
 
   if (variant === "week") {
     return (
-      <div
-        ref={drag}
-        className={cn(
-          "group rounded-lg border border-gray-100 bg-white shadow-sm overflow-hidden transition-all hover:shadow-md border-l-4 cursor-grab active:cursor-grabbing",
-          typeConfig.border,
-          isDragging && "opacity-30"
-        )}
-      >
+      <PostPreviewPopover post={post} thumbnail={thumbnail} side="right">
+        <div
+          ref={drag}
+          className={cn(
+            "group rounded-lg border border-gray-100 bg-white shadow-sm overflow-hidden transition-all hover:shadow-md border-l-4 cursor-grab active:cursor-grabbing",
+            typeConfig.border,
+            isDragging && "opacity-30"
+          )}
+        >
         {thumbnail && (
           <div className="relative h-20 overflow-hidden bg-muted">
             <img src={thumbnail} alt={post.titulo || ""} className="w-full h-full object-cover" />
@@ -115,19 +117,21 @@ export function DraggablePostCard({ post, onEdit, onDuplicate, onDelete, variant
           </div>
         </div>
       </div>
+      </PostPreviewPopover>
     );
   }
 
   // Month variant — compact
   return (
-    <div
-      ref={drag}
-      className={cn(
-        "group relative rounded border border-gray-100 bg-white overflow-hidden transition-all hover:shadow-sm border-l-[3px] cursor-grab active:cursor-grabbing",
-        typeConfig.border,
-        isDragging && "opacity-30"
-      )}
-    >
+    <PostPreviewPopover post={post} thumbnail={thumbnail} side="top">
+      <div
+        ref={drag}
+        className={cn(
+          "group relative rounded border border-gray-100 bg-white overflow-hidden transition-all hover:shadow-sm border-l-[3px] cursor-grab active:cursor-grabbing",
+          typeConfig.border,
+          isDragging && "opacity-30"
+        )}
+      >
       {thumbnail ? (
         <div className="flex items-center gap-1.5 p-1">
           <img src={thumbnail} alt="" className="w-6 h-6 rounded object-cover shrink-0" />
@@ -155,6 +159,7 @@ export function DraggablePostCard({ post, onEdit, onDuplicate, onDelete, variant
           <Trash2 className="h-2.5 w-2.5" />
         </Button>
       </div>
-    </div>
+      </div>
+    </PostPreviewPopover>
   );
 }
