@@ -62,14 +62,15 @@ const CONTENT_TYPES = {
 };
 
 const PIPELINE_STATUS = {
-  planejado: { label: "Planejado", color: "bg-gray-400", textColor: "text-gray-600", bgLight: "bg-gray-50", border: "border-gray-200" },
-  rascunho: { label: "Rascunho", color: "bg-amber-400", textColor: "text-amber-700", bgLight: "bg-amber-50", border: "border-amber-200" },
-  pronto: { label: "Pronto", color: "bg-blue-500", textColor: "text-blue-700", bgLight: "bg-blue-50", border: "border-blue-200" },
-  agendado: { label: "Agendado", color: "bg-purple-500", textColor: "text-purple-700", bgLight: "bg-purple-50", border: "border-purple-200" },
-  publicado: { label: "Publicado", color: "bg-emerald-500", textColor: "text-emerald-700", bgLight: "bg-emerald-50", border: "border-emerald-200" },
+  planejado:    { label: "Planejado",    color: "bg-gray-400",   textColor: "text-gray-600",   bgLight: "bg-gray-50",   border: "border-gray-200" },
+  rascunho:     { label: "Rascunho",     color: "bg-amber-400",  textColor: "text-amber-700",  bgLight: "bg-amber-50",  border: "border-amber-200" },
+  em_aprovacao: { label: "Em aprovação", color: "bg-sky-400",    textColor: "text-sky-700",    bgLight: "bg-sky-50",    border: "border-sky-200" },
+  aprovado:     { label: "Aprovado",     color: "bg-green-500",  textColor: "text-green-700",  bgLight: "bg-green-50",  border: "border-green-200" },
+  agendado:     { label: "Agendado",     color: "bg-purple-500", textColor: "text-purple-700", bgLight: "bg-purple-50", border: "border-purple-200" },
+  publicado:    { label: "Publicado",    color: "bg-emerald-500",textColor: "text-emerald-700",bgLight: "bg-emerald-50",border: "border-emerald-200" },
 } as const;
 
-const STATUS_ORDER = ["planejado", "rascunho", "pronto", "agendado", "publicado"] as const;
+const STATUS_ORDER = ["planejado", "rascunho", "em_aprovacao", "aprovado", "agendado", "publicado"] as const;
 
 const DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const MONTHS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
@@ -124,6 +125,22 @@ function ContentPlanner() {
 
   const handleEditPost = (post: CalendarItem) => {
     setSelectedPost(post);
+  };
+
+  const handleStatusChange = async (itemId: string, newStatus: string, itemData: string) => {
+    await updateItem(itemId, { status: newStatus });
+
+    if (newStatus === "aprovado") {
+      // Auto-advance to agendado after 1.5s
+      const formattedDate = new Date(itemData + "T12:00:00").toLocaleDateString("pt-BR", {
+        weekday: "long", day: "numeric", month: "long",
+      });
+      toast.success(`✅ Aprovado! Agendando automaticamente…`, { duration: 1500 });
+      setTimeout(async () => {
+        await updateItem(itemId, { status: "agendado" });
+        toast.success(`🗓️ Post agendado para ${formattedDate}`, { duration: 3000 });
+      }, 1500);
+    }
   };
 
   const handleUpdatePost = async (id: string, data: { date: string; tipo: string; titulo: string; notas?: string }) => {
@@ -623,7 +640,7 @@ function ContentPlanner() {
                                         variant="ghost"
                                         size="sm"
                                         className="h-6 text-[10px] px-2 text-gray-500"
-                                        onClick={(e) => { e.stopPropagation(); updateItem(item.id, { status: prevStatus }); }}
+                                        onClick={(e) => { e.stopPropagation(); handleStatusChange(item.id, prevStatus, item.data); }}
                                       >
                                         ← {PIPELINE_STATUS[prevStatus].label}
                                       </Button>
@@ -633,7 +650,7 @@ function ContentPlanner() {
                                         variant="ghost"
                                         size="sm"
                                         className={`h-6 text-[10px] px-2 ml-auto font-semibold ${PIPELINE_STATUS[nextStatus].textColor}`}
-                                        onClick={(e) => { e.stopPropagation(); updateItem(item.id, { status: nextStatus }); }}
+                                        onClick={(e) => { e.stopPropagation(); handleStatusChange(item.id, nextStatus, item.data); }}
                                       >
                                         {PIPELINE_STATUS[nextStatus].label} →
                                       </Button>
