@@ -31,7 +31,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Link } from "react-router-dom";
 import { 
   Calendar, Grid3X3, Plus, ChevronLeft, ChevronRight, Pencil, Trash2,
-  FileText, ArrowLeft, Trash2, Loader2, Sparkles,
+  FileText, ArrowLeft, Loader2, Sparkles,
   Copy, Download, Search, MoreHorizontal, Zap,
   CalendarDays,
   Target,
