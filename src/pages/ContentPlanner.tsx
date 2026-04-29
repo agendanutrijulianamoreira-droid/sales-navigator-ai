@@ -85,6 +85,7 @@ function ContentPlanner() {
   const [selectedPost, setSelectedPost] = useState<CalendarItem | undefined>();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [showStatistics, setShowStatistics] = useState(false);
   const [showTrends, setShowTrends] = useState(false);
 
@@ -112,7 +113,9 @@ function ContentPlanner() {
       item.titulo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.notas?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = !filterType || item.tipo === filterType;
-    return matchesSearch && matchesFilter;
+    const normalizedStatus = item.status === "criado" ? "pronto" : (item.status ?? "planejado");
+    const matchesStatus = !filterStatus || normalizedStatus === filterStatus;
+    return matchesSearch && matchesFilter && matchesStatus;
   });
 
   const handleSchedule = async (data: { date: string; tipo: string; titulo: string; notas?: string; status?: string; horario?: string }) => {
@@ -504,6 +507,50 @@ function ContentPlanner() {
             </div>
           </div>
         </header>
+
+
+        {/* ─── Status filter chips ─── */}
+        {view !== "reports" && (
+          <div className="flex items-center gap-1.5 px-4 py-2 bg-white border-b border-gray-100 overflow-x-auto">
+            {[
+              { key: null,            label: "Todos",          dot: "bg-gray-300" },
+              { key: "planejado",     label: "Planejado",      dot: "bg-gray-400" },
+              { key: "rascunho",      label: "Rascunho",       dot: "bg-amber-400" },
+              { key: "em_aprovacao",  label: "Em aprovação",   dot: "bg-sky-400" },
+              { key: "aprovado",      label: "Aprovado",       dot: "bg-green-500" },
+              { key: "pronto",        label: "Pronto",         dot: "bg-blue-500" },
+              { key: "agendado",      label: "Agendado",       dot: "bg-purple-500" },
+              { key: "publicado",     label: "Publicado",      dot: "bg-emerald-500" },
+            ].map(({ key, label, dot }) => {
+              const active = filterStatus === key;
+              const count = key === null
+                ? items.length
+                : items.filter(i => {
+                    const s = i.status === "criado" ? "pronto" : (i.status ?? "planejado");
+                    return s === key;
+                  }).length;
+              return (
+                <button
+                  key={String(key)}
+                  onClick={() => setFilterStatus(active && key !== null ? null : key)}
+                  className={`inline-flex items-center gap-1.5 shrink-0 text-[11px] font-semibold px-3 py-1 rounded-full border transition-all ${
+                    active
+                      ? "bg-primary text-white border-primary shadow-sm"
+                      : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700"
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-white/70" : dot}`} />
+                  {label}
+                  {count > 0 && (
+                    <span className={`text-[10px] font-bold ${active ? "text-white/80" : "text-gray-400"}`}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div className="flex-1 flex overflow-hidden">
           <main className="flex-1 overflow-hidden flex flex-col">
