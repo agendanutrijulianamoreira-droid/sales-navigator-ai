@@ -30,14 +30,16 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Link } from "react-router-dom";
 import { 
-  Calendar, Grid3X3, Plus, ChevronLeft, ChevronRight,
+  Calendar, Grid3X3, Plus, ChevronLeft, ChevronRight, Pencil, Trash2,
   FileText, ArrowLeft, Trash2, Loader2, Sparkles,
   Copy, Download, Search, MoreHorizontal, Zap,
   CalendarDays,
   Target,
   Columns3,
   StickyNote,
-  BarChart2
+  BarChart2,
+  List,
+  LayoutGrid
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -89,6 +91,7 @@ function ContentPlanner() {
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [showStatistics, setShowStatistics] = useState(false);
   const [showTrends, setShowTrends] = useState(false);
+  const [pipelineView, setPipelineView] = useState<"kanban" | "list">("kanban");
 
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
@@ -577,8 +580,131 @@ function ContentPlanner() {
               <ReportsView items={items} />
             ) : view === "pipeline" ? (
               /* ═══ PIPELINE / KANBAN VIEW ═══ */
+              <>
+              {/* Pipeline sub-toolbar */}
+              <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100 bg-gray-50/50">
+                <span className="text-xs font-semibold text-gray-500 mr-1">Visualizar como:</span>
+                <button
+                  onClick={() => setPipelineView("kanban")}
+                  className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${
+                    pipelineView === "kanban"
+                      ? "bg-primary text-white border-primary shadow-sm"
+                      : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" /> Kanban
+                </button>
+                <button
+                  onClick={() => setPipelineView("list")}
+                  className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${
+                    pipelineView === "list"
+                      ? "bg-primary text-white border-primary shadow-sm"
+                      : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <List className="h-3.5 w-3.5" /> Lista
+                </button>
+              </div>
+
+              {pipelineView === "list" ? (
+              /* ─── LIST VIEW ─── */
+              <ScrollArea className="flex-1">
+                <div className="p-4 space-y-1">
+                  {(() => {
+                    const STATUS_DOT: Record<string, string> = {
+                      planejado: "bg-gray-400", rascunho: "bg-amber-400",
+                      em_aprovacao: "bg-sky-400", aprovado: "bg-green-500",
+                      agendado: "bg-purple-500", publicado: "bg-emerald-500",
+                    };
+                    const STATUS_LABEL: Record<string, string> = {
+                      planejado: "Planejado", rascunho: "Rascunho",
+                      em_aprovacao: "Em aprovação", aprovado: "Aprovado",
+                      agendado: "Agendado", publicado: "Publicado",
+                    };
+                    const TYPE_COLOR: Record<string, string> = {
+                      carrossel: "bg-violet-500", post_unico: "bg-emerald-500",
+                      reels: "bg-pink-500", stories: "bg-amber-500", levantada: "bg-red-500",
+                    };
+                    const TYPE_LABEL: Record<string, string> = {
+                      carrossel: "Carrossel", post_unico: "Post Único",
+                      reels: "Reels", stories: "Stories", levantada: "Levantada",
+                    };
+                    const listItems = filteredItems
+                      .filter(item => {
+                        const d = new Date(item.data);
+                        return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+                      })
+                      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+
+                    if (listItems.length === 0) {
+                      return <div className="text-center py-16 text-sm text-gray-400">Nenhum conteúdo neste mês</div>;
+                    }
+
+                    return listItems.map((item) => {
+                      const normalizedStatus = item.status === "criado" ? "pronto" : (item.status ?? "planejado");
+                      const dot = STATUS_DOT[normalizedStatus] ?? "bg-gray-400";
+                      const statusLabel = STATUS_LABEL[normalizedStatus] ?? normalizedStatus;
+                      const typeColor = TYPE_COLOR[item.tipo] ?? "bg-gray-400";
+                      const typeLabel = TYPE_LABEL[item.tipo] ?? item.tipo;
+                      const formattedDate = new Date(item.data + "T12:00:00").toLocaleDateString("pt-BR", {
+                        day: "2-digit", month: "short", weekday: "short",
+                      });
+                      return (
+                        <div
+                          key={item.id}
+                          className="flex items-center gap-3 bg-white rounded-lg border border-gray-100 px-4 py-3 hover:shadow-sm transition-all cursor-pointer group"
+                          onClick={() => setSelectedPost(item)}
+                        >
+                          {/* Status dot */}
+                          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dot}`} />
+
+                          {/* Date */}
+                          <span className="text-[11px] font-semibold text-gray-400 w-24 shrink-0 capitalize">
+                            {formattedDate}
+                          </span>
+
+                          {/* Format badge */}
+                          <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded text-white shrink-0 ${typeColor}`}>
+                            {typeLabel}
+                          </span>
+
+                          {/* Title */}
+                          <p className="text-sm font-medium text-gray-800 flex-1 line-clamp-1">
+                            {item.titulo || "Sem título"}
+                          </p>
+
+                          {/* Status label */}
+                          <span className="text-[11px] font-semibold text-gray-400 shrink-0">
+                            {statusLabel}
+                          </span>
+
+                          {/* Actions on hover */}
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                            <Button
+                              variant="ghost" size="icon"
+                              className="h-7 w-7 hover:bg-primary/10"
+                              onClick={(e) => { e.stopPropagation(); setSelectedPost(item); }}
+                            >
+                              <Pencil className="h-3.5 w-3.5 text-primary" />
+                            </Button>
+                            <Button
+                              variant="ghost" size="icon"
+                              className="h-7 w-7 hover:bg-red-50"
+                              onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </ScrollArea>
+              ) : (
+              /* ─── KANBAN VIEW ─── */
               <ScrollArea className="flex-1 p-4">
-                <div className="grid grid-cols-5 gap-3 min-h-[600px]">
+                <div className="grid grid-cols-6 gap-3 min-h-[600px]">
                   {STATUS_ORDER.map((statusKey) => {
                     const status = PIPELINE_STATUS[statusKey];
                     const columnItems = filteredItems
@@ -666,6 +792,8 @@ function ContentPlanner() {
                   })}
                 </div>
               </ScrollArea>
+              )}
+              </>
             ) : view === "week" ? (
             /* ═══ WEEK VIEW ═══ */
             <>
