@@ -48,7 +48,7 @@ REGRAS:
       const apiUrl = isLovableKey
         ? 'https://ai.gateway.lovable.dev/v1/chat/completions'
         : 'https://api.openai.com/v1/chat/completions';
-      const model = isLovableKey ? 'google/gemini-2.0-flash-exp' : 'gpt-4o-mini';
+      const model = isLovableKey ? 'google/gemini-3-flash-preview' : 'gpt-4o-mini';
 
       const response = await fetch(apiUrl, {
         method: 'POST',
