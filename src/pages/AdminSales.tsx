@@ -8,7 +8,8 @@ import { Navigate } from "react-router-dom";
 import { DollarSign, Users, TrendingUp, AlertCircle, Loader2 } from "lucide-react";
 
 export default function AdminSales() {
-  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { hasRole, isLoading: roleLoading } = useUserRole();
+  const isAdmin = hasRole("admin");
   const [stats, setStats] = useState({ mrr: 0, customers: 0, activeSubsCount: 0, churnedCount: 0 });
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [recentPayments, setRecentPayments] = useState<any[]>([]);
