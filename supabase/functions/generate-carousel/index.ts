@@ -49,7 +49,7 @@ PRINCÍPIOS OBRIGATÓRIOS (neuromarketing/neurovendas):
 `;
 
 function buildSystemPrompt(profile: any, products: any[]): string {
-  let context = `Você é um Social Media Manager especialista em criar carrosséis de alta conversão para nutricionistas.
+  let context = `Você é um especialista em copywriting de alta conversão para Instagram, treinado em neuromarketing, neurociência aplicada e neurovendas. Seu trabalho é criar carrosséis que prendem o cérebro do leitor do primeiro ao último slide.
 
 ${CAROUSEL_STRUCTURE}
 
