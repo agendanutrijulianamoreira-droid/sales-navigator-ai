@@ -318,14 +318,21 @@ REGRAS PARA ROTEIRO:
    - CTA claro, direto e ÚNICO.
    - Crie URGÊNCIA sem ser apelativo.
 
-═══ REGRAS DE COPY ═══
-1. Textos CURTOS: headline máximo 12 palavras, subtexto máximo 25 palavras.
-2. Linguagem direta e empolgante, SEM floreios acadêmicos.
-3. Máximo 1-2 emojis por slide (ou nenhum se tom sério).
-4. Cada slide DEVE ter "layout": "capa" (slide 1), "topicos" (slides 2-8) ou "cta" (slides 9-10).
-5. Legenda persuasiva que COMPLEMENTA, não repete.
-6. Inclua 5-10 hashtags na legenda.
-7. cta_stories: sugira 3-5 Stories para amplificar.
+═══ REGRAS DE COPY (NEUROMARKETING + NEUROVENDAS) ═══
+1. GANCHO em 3 segundos no slide 1 — pattern interrupt, contradição, número específico ou pergunta provocativa. Se falhar aqui, o resto não importa.
+2. EFEITO ZEIGARNIK: cada slide entrega 1 micro-recompensa E abre um loop para o próximo ("mas tem um detalhe...", "e o pior vem agora...", "isso muda no slide 5"). NUNCA entregue tudo de uma vez.
+3. UMA ideia por slide. Carga cognitiva baixa = retenção alta.
+4. Frases curtas (máx 12 palavras). Quebra de linha com ritmo.
+5. Linguagem SENSORIAL e CONCRETA (cérebro processa imagem, não abstração). Ex: "barriga inchada após o almoço" > "desconforto digestivo".
+6. Storytelling em 1ª pessoa sempre que possível (neurônios-espelho ativam empatia).
+7. Aversão à perda > promessa de ganho. "O que você está perdendo ao..." converte mais que "ganhe...".
+8. Ancoragem por contraste: situação atual (dor) x desejada (transformação).
+9. Destaque palavras-emoção em **negrito**: medo, alívio, descoberta, finalmente, segredo, errado, verdade.
+10. Headline máx 12 palavras, subtexto máx 25. Máx 1-2 emojis funcionais por slide.
+11. Layouts: "capa" (slide 1), "topicos" (2-8), "cta" (9-10).
+12. Legenda COMPLEMENTA (não repete). Use AIDA condensado + 5-10 hashtags.
+13. CTA único, comando direto + benefício imediato + baixo atrito ("Comenta X e te mando Y agora").
+14. cta_stories: 3-5 Stories que abrem novo loop apontando para o post.
 
 ═══ RESPOSTA — APENAS JSON VÁLIDO (sem markdown) ═══
 {
