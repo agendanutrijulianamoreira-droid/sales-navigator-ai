@@ -34,6 +34,9 @@ const PhotoStudio = lazy(() => import("./pages/PhotoStudio"));
 const Funnels = lazy(() => import("./pages/Funnels"));
 const VipListManager = lazy(() => import("./pages/VipListManager"));
 const ChallengeCreator = lazy(() => import("./pages/ChallengeCreator"));
+const Billing = lazy(() => import("./pages/Billing"));
+const BillingSuccess = lazy(() => import("./pages/BillingSuccess"));
+const AdminSales = lazy(() => import("./pages/AdminSales"));
 
 const queryClient = new QueryClient();
 
@@ -48,10 +51,32 @@ const App = () => (
             <Routes>
               <Route path="/auth" element={<Auth />} />
 
+              {/* Billing routes - require auth+onboarding but NOT subscription */}
+              <Route
+                path="/billing"
+                element={
+                  <ProtectedRoute requireSubscription={false}>
+                    <Suspense fallback={<PageLoader />}>
+                      <Billing />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/billing/success"
+                element={
+                  <ProtectedRoute requireSubscription={false}>
+                    <Suspense fallback={<PageLoader />}>
+                      <BillingSuccess />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+
               <Route
                 path="/onboarding"
                 element={
-                  <ProtectedRoute requireOnboarding={false}>
+                  <ProtectedRoute requireOnboarding={false} requireSubscription={false}>
                     <Suspense fallback={<PageLoader />}>
                       <Onboarding />
                     </Suspense>
@@ -84,6 +109,7 @@ const App = () => (
                 <Route path="/funnels" element={<Funnels />} />
                 <Route path="/vip-list" element={<VipListManager />} />
                 <Route path="/challenge-creator" element={<ChallengeCreator />} />
+                <Route path="/admin/sales" element={<AdminSales />} />
 
                 {/* Fallbacks/Redirects for old routes */}
                 <Route path="/calendar" element={<ContentPlanner />} />
