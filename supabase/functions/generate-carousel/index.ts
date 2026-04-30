@@ -92,6 +92,41 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // Verify subscription + consume credits
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader) {
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: { user } } = await userClient.auth.getUser();
+      if (user) {
+        const adminClient = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+        );
+        const { data: result } = await adminClient.rpc("consume_ai_credit", {
+          _user_id: user.id,
+          _feature: "generate_carousel",
+          _credits: 1,
+        });
+        if (!(result as any)?.ok) {
+          return new Response(JSON.stringify({
+            error: (result as any)?.reason === "insufficient_credits"
+              ? "Créditos AI esgotados. Faça upgrade do seu plano."
+              : (result as any)?.reason === "no_subscription" || (result as any)?.reason === "inactive"
+                ? "Assinatura inativa. Renove para continuar."
+                : "Sem permissão para gerar conteúdo.",
+            reason: (result as any)?.reason,
+          }), {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+    }
+
     const postTypeDescription = POST_TYPES[postType as keyof typeof POST_TYPES] || postType;
     
     const systemPrompt = buildSystemPrompt(profile, products);
