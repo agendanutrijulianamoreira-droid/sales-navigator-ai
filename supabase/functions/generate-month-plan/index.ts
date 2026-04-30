@@ -57,14 +57,20 @@ REGRAS:
 1. Distribua os tipos: carrossel (12-15), reels (6-8), stories (4-6), post_unico (3-4), levantada (2-3)
 2. Nunca repita o mesmo tipo 2 dias seguidos
 3. Fins de semana = conteúdo leve (conexão, bastidores, stories)
-4. Cada título deve ser um gancho irresistível, específico ao nicho
-5. Notas devem conter: objetivo do post, CTA sugerido e pilar de conteúdo
-6. Use linguagem de impacto: "inflamação subclínica", "fadiga adrenal", "clareza mental" (não genéricos como "saúde")
+4. Cada TÍTULO é um GANCHO NEURO de 3 segundos. Use:
+   - Pattern interrupt ("Pare de...", "Não faça isso se...")
+   - Loop aberto / curiosidade ("Descobri por acidente...", "O que ninguém te conta sobre...")
+   - Número específico ("Os 3 sinais de que...", "87% das mulheres ignoram...")
+   - Aversão à perda ("O que você está perdendo ao...")
+   - Contradição com o senso comum ("Beber mais água pode estar te atrapalhando")
+5. Notas devem conter: objetivo do post | gatilho neuro usado (curiosidade/escassez/prova/autoridade/aversão à perda) | CTA sugerido | pilar
+6. Linguagem sensorial e específica: "inflamação subclínica", "fadiga adrenal", "neblina mental" — nunca "saúde" ou "bem-estar" genéricos
 7. Inclua 2-3 posts de oferta direta dos produtos cadastrados
+8. Storytelling em 1ª pessoa sempre que possível (ativa neurônios-espelho)
 
 IMPORTANTE: Retorne APENAS um JSON array válido, sem markdown, sem texto antes ou depois.
 Formato exato:
-[{"data":"YYYY-MM-DD","tipo":"carrossel","titulo":"Título gancho","notas":"Objetivo: X | Pilar: Y | CTA: Z"}]`;
+[{"data":"YYYY-MM-DD","tipo":"carrossel","titulo":"Título gancho","notas":"Objetivo: X | Gatilho: curiosidade | CTA: Y | Pilar: Z"}]`;
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
@@ -76,7 +82,7 @@ Formato exato:
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
           {

@@ -19,25 +19,37 @@ const POST_TYPES = {
   ALCANCE: "Alcance - Conteúdo viral que atrai novos seguidores",
 };
 
-// Estrutura do carrossel baseada no exemplo
+// Estrutura do carrossel com princípios de neuromarketing
 const CAROUSEL_STRUCTURE = `
-ESTRUTURA DO CARROSSEL (5-7 slides):
-1. CAPA: Headline magnética + nome da profissional
-2-4. CONTEÚDO: Desenvolvimento do tema com bullets, checklists ou explicações
-5-6. PROVA/AUTORIDADE: Resultado, caso ou credencial
-7. CTA: Chamada para ação clara (comentar, salvar, seguir, ou oferta)
+ESTRUTURA NEURO-OTIMIZADA (5-7 slides):
+1. CAPA (Gancho 3s): Pattern interrupt + curiosidade. Use uma das técnicas:
+   - Contradição ("Pare de beber água em jejum se...")
+   - Número específico ("Os 3 erros que travam 87% das pacientes")
+   - Pergunta provocativa ("Por que sua dieta sempre falha na 3ª semana?")
+   - Loop aberto ("Descobri isso por acidente — e mudou tudo")
+2-4. CONTEÚDO (Dopamina + Zeigarnik): cada slide ENTREGA uma micro-recompensa E abre o próximo loop. Termine slides com cliffhangers ("mas tem um detalhe...", "e o pior vem agora...")
+5-6. PROVA SOCIAL + AUTORIDADE: caso real, número, transformação. Ative espelhamento neural com narrativa em 1ª pessoa.
+7. CTA NEURO: comando direto + benefício imediato + baixo atrito ("Comenta EU QUERO e te mando o passo 1 agora")
 
-REGRAS DE ESCRITA:
-- Cada slide deve ter no máximo 40-50 palavras
-- Use espaçamento entre parágrafos
-- Destaque palavras-chave em **negrito**
-- Use emojis com moderação (1-2 por slide)
-- Linguagem simples e direta
-- Tom: como uma conversa com uma amiga profissional
+PRINCÍPIOS OBRIGATÓRIOS (neuromarketing/neurovendas):
+- GANCHO em 3 segundos ou perde a pessoa
+- 1 ideia por slide (carga cognitiva baixa)
+- Frases curtas (máx 12 palavras). Quebre linha gerando ritmo.
+- Linguagem sensorial concreta (cérebro processa imagem, não abstração)
+- Gatilhos: curiosidade > escassez > prova social > autoridade > reciprocidade
+- Aversão à perda > ganho ("o que você está perdendo ao..." converte mais que "ganhe...")
+- Storytelling em 1ª pessoa (neurônios-espelho)
+- Ancoragem: contraste entre situação atual x desejada
+- Microcopy dopaminérgico: revelações progressivas, nunca entregue tudo no slide 1
+- Destaque palavras-emoção em **negrito** (medo, alívio, descoberta, finalmente, segredo)
+- Emojis funcionais (1-2 por slide), nunca decorativos
+- Cada slide DEVE dar vontade de arrastar para o próximo
+- Tom: amiga especialista — autoridade sem distância
+- Máx 40-50 palavras por slide
 `;
 
 function buildSystemPrompt(profile: any, products: any[]): string {
-  let context = `Você é um Social Media Manager especialista em criar carrosséis de alta conversão para nutricionistas.
+  let context = `Você é um especialista em copywriting de alta conversão para Instagram, treinado em neuromarketing, neurociência aplicada e neurovendas. Seu trabalho é criar carrosséis que prendem o cérebro do leitor do primeiro ao último slide.
 
 ${CAROUSEL_STRUCTURE}
 
