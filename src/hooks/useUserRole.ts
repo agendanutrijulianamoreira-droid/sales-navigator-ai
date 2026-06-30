@@ -37,16 +37,12 @@ export function useUserRole() {
   }, [fetchRoles]);
 
   const hasRole = useCallback((role: AppRole) => {
-    if (user?.email === 'agendanutrijulianamoreira@gmail.com') return true;
     return roles.includes(role);
-  }, [roles, user?.email]);
+  }, [roles]);
 
   const hasPremiumAccess = useCallback(
-    () => {
-      if (user?.email === 'agendanutrijulianamoreira@gmail.com') return true;
-      return roles.some((r) => ["admin", "elite", "teste"].includes(r));
-    },
-    [roles, user?.email]
+    () => roles.some((r) => ["admin", "elite", "teste"].includes(r)),
+    [roles]
   );
 
   return { roles, isLoading, hasRole, hasPremiumAccess, refetch: fetchRoles };

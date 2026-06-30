@@ -14,9 +14,7 @@ export function useCredits() {
     const { hasRole, isLoading: isRoleLoading } = useUserRole();
 
     // Check both systems for maximum reliability during transition
-    const isAdmin = (profile as any)?.role === 'admin' ||
-        hasRole('admin') ||
-        user?.email === 'agendanutrijulianamoreira@gmail.com';
+    const isAdmin = (profile as any)?.role === 'admin' || hasRole('admin');
 
     // Loading should wait for roles too
     const isActuallyLoading = loading || isRoleLoading;
@@ -53,7 +51,7 @@ export function useCredits() {
         if (!user || credits === null) return false;
 
         // Admins have infinite credits (bypass consumption)
-        if (isAdmin || user.email === 'agendanutrijulianamoreira@gmail.com') {
+        if (isAdmin) {
             return true;
         }
 
