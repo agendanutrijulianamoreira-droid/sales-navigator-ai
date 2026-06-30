@@ -37,6 +37,7 @@ const ChallengeCreator = lazy(() => import("./pages/ChallengeCreator"));
 const Billing = lazy(() => import("./pages/Billing"));
 const BillingSuccess = lazy(() => import("./pages/BillingSuccess"));
 const AdminSales = lazy(() => import("./pages/AdminSales"));
+const ContentCalendar = lazy(() => import("./pages/ContentCalendar"));
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,16 @@ const App = () => (
           <AuthProvider>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+
+              {/* Ferramenta standalone, sem autenticação, dados em localStorage */}
+              <Route
+                path="/content-calendar"
+                element={
+                  <Suspense fallback={<PageLoader />}>
+                    <ContentCalendar />
+                  </Suspense>
+                }
+              />
 
               {/* Billing routes - require auth+onboarding but NOT subscription */}
               <Route

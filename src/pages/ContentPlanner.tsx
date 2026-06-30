@@ -54,25 +54,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FORMAT_CONFIG } from "@/lib/constants/postFormat";
+import { STATUS_CONFIG, STATUS_ORDER, normalizeStatus } from "@/lib/constants/postStatus";
 
-const CONTENT_TYPES = {
-  carrossel: { label: "Carrossel", icon: Grid3X3, color: "bg-blue-500" },
-  post_unico: { label: "Post Único", icon: FileText, color: "bg-green-500" },
-  reels: { label: "Reels", icon: FileText, color: "bg-purple-500" },
-  stories: { label: "Stories", icon: FileText, color: "bg-orange-500" },
-  levantada: { label: "Levantada de Mão", icon: FileText, color: "bg-pink-500" },
-};
+const CONTENT_TYPES = Object.fromEntries(
+  Object.entries(FORMAT_CONFIG).map(([key, cfg]) => [key, { label: cfg.label, icon: cfg.icon, color: cfg.color }])
+);
 
-const PIPELINE_STATUS = {
-  planejado:    { label: "Planejado",    color: "bg-gray-400",   textColor: "text-gray-600",   bgLight: "bg-gray-50",   border: "border-gray-200" },
-  rascunho:     { label: "Rascunho",     color: "bg-amber-400",  textColor: "text-amber-700",  bgLight: "bg-amber-50",  border: "border-amber-200" },
-  em_aprovacao: { label: "Em aprovação", color: "bg-sky-400",    textColor: "text-sky-700",    bgLight: "bg-sky-50",    border: "border-sky-200" },
-  aprovado:     { label: "Aprovado",     color: "bg-green-500",  textColor: "text-green-700",  bgLight: "bg-green-50",  border: "border-green-200" },
-  agendado:     { label: "Agendado",     color: "bg-purple-500", textColor: "text-purple-700", bgLight: "bg-purple-50", border: "border-purple-200" },
-  publicado:    { label: "Publicado",    color: "bg-emerald-500",textColor: "text-emerald-700",bgLight: "bg-emerald-50",border: "border-emerald-200" },
-} as const;
-
-const STATUS_ORDER = ["planejado", "rascunho", "em_aprovacao", "aprovado", "agendado", "publicado"] as const;
+const PIPELINE_STATUS = Object.fromEntries(
+  Object.entries(STATUS_CONFIG).map(([key, cfg]) => [
+    key,
+    { label: cfg.label, color: cfg.dot, textColor: cfg.text, bgLight: cfg.bgLight, border: cfg.border },
+  ])
+) as Record<keyof typeof STATUS_CONFIG, { label: string; color: string; textColor: string; bgLight: string; border: string }>;
 
 const DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const MONTHS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
@@ -117,8 +111,7 @@ function ContentPlanner() {
       item.titulo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.notas?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = !filterType || item.tipo === filterType;
-    const normalizedStatus = item.status === "criado" ? "pronto" : (item.status ?? "planejado");
-    const matchesStatus = !filterStatus || normalizedStatus === filterStatus;
+    const matchesStatus = !filterStatus || normalizeStatus(item.status) === filterStatus;
     return matchesSearch && matchesFilter && matchesStatus;
   });
 
@@ -533,22 +526,13 @@ function ContentPlanner() {
         {view !== "reports" && (
           <div className="flex items-center gap-1.5 px-4 py-2 bg-white border-b border-gray-100 overflow-x-auto">
             {[
-              { key: null,            label: "Todos",          dot: "bg-gray-300" },
-              { key: "planejado",     label: "Planejado",      dot: "bg-gray-400" },
-              { key: "rascunho",      label: "Rascunho",       dot: "bg-amber-400" },
-              { key: "em_aprovacao",  label: "Em aprovação",   dot: "bg-sky-400" },
-              { key: "aprovado",      label: "Aprovado",       dot: "bg-green-500" },
-              { key: "pronto",        label: "Pronto",         dot: "bg-blue-500" },
-              { key: "agendado",      label: "Agendado",       dot: "bg-purple-500" },
-              { key: "publicado",     label: "Publicado",      dot: "bg-emerald-500" },
-            ].map(({ key, label, dot }) => {
+              { key: null, label: "Todos", hex: "#D1D5DB" },
+              ...STATUS_ORDER.map((key) => ({ key, label: STATUS_CONFIG[key].label, hex: STATUS_CONFIG[key].hex })),
+            ].map(({ key, label, hex }) => {
               const active = filterStatus === key;
               const count = key === null
                 ? items.length
-                : items.filter(i => {
-                    const s = i.status === "criado" ? "pronto" : (i.status ?? "planejado");
-                    return s === key;
-                  }).length;
+                : items.filter(i => normalizeStatus(i.status) === key).length;
               return (
                 <button
                   key={String(key)}
@@ -559,7 +543,7 @@ function ContentPlanner() {
                       : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700"
                   }`}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-white/70" : dot}`} />
+                  <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-white/70" : ""}`} style={active ? undefined : { backgroundColor: hex }} />
                   {label}
                   {count > 0 && (
                     <span className={`text-[10px] font-bold ${active ? "text-white/80" : "text-gray-400"}`}>
@@ -611,24 +595,6 @@ function ContentPlanner() {
               <ScrollArea className="flex-1">
                 <div className="p-4 space-y-1">
                   {(() => {
-                    const STATUS_DOT: Record<string, string> = {
-                      planejado: "bg-gray-400", rascunho: "bg-amber-400",
-                      em_aprovacao: "bg-sky-400", aprovado: "bg-green-500",
-                      agendado: "bg-purple-500", publicado: "bg-emerald-500",
-                    };
-                    const STATUS_LABEL: Record<string, string> = {
-                      planejado: "Planejado", rascunho: "Rascunho",
-                      em_aprovacao: "Em aprovação", aprovado: "Aprovado",
-                      agendado: "Agendado", publicado: "Publicado",
-                    };
-                    const TYPE_COLOR: Record<string, string> = {
-                      carrossel: "bg-violet-500", post_unico: "bg-emerald-500",
-                      reels: "bg-pink-500", stories: "bg-amber-500", levantada: "bg-red-500",
-                    };
-                    const TYPE_LABEL: Record<string, string> = {
-                      carrossel: "Carrossel", post_unico: "Post Único",
-                      reels: "Reels", stories: "Stories", levantada: "Levantada",
-                    };
                     const listItems = filteredItems
                       .filter(item => {
                         const d = new Date(item.data);
@@ -641,11 +607,8 @@ function ContentPlanner() {
                     }
 
                     return listItems.map((item) => {
-                      const normalizedStatus = item.status === "criado" ? "pronto" : (item.status ?? "planejado");
-                      const dot = STATUS_DOT[normalizedStatus] ?? "bg-gray-400";
-                      const statusLabel = STATUS_LABEL[normalizedStatus] ?? normalizedStatus;
-                      const typeColor = TYPE_COLOR[item.tipo] ?? "bg-gray-400";
-                      const typeLabel = TYPE_LABEL[item.tipo] ?? item.tipo;
+                      const statusCfg = STATUS_CONFIG[normalizeStatus(item.status)];
+                      const formatCfg = FORMAT_CONFIG[item.tipo as keyof typeof FORMAT_CONFIG] ?? FORMAT_CONFIG.post_unico;
                       const formattedDate = new Date(item.data + "T12:00:00").toLocaleDateString("pt-BR", {
                         day: "2-digit", month: "short", weekday: "short",
                       });
@@ -656,7 +619,7 @@ function ContentPlanner() {
                           onClick={() => setSelectedPost(item)}
                         >
                           {/* Status dot */}
-                          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dot}`} />
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: statusCfg.hex }} />
 
                           {/* Date */}
                           <span className="text-[11px] font-semibold text-gray-400 w-24 shrink-0 capitalize">
@@ -664,8 +627,8 @@ function ContentPlanner() {
                           </span>
 
                           {/* Format badge */}
-                          <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded text-white shrink-0 ${typeColor}`}>
-                            {typeLabel}
+                          <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded text-white shrink-0 ${formatCfg.color}`}>
+                            {formatCfg.label}
                           </span>
 
                           {/* Title */}
@@ -674,8 +637,8 @@ function ContentPlanner() {
                           </p>
 
                           {/* Status label */}
-                          <span className="text-[11px] font-semibold text-gray-400 shrink-0">
-                            {statusLabel}
+                          <span className="text-[11px] font-semibold shrink-0" style={{ color: statusCfg.hex }}>
+                            {statusCfg.label}
                           </span>
 
                           {/* Actions on hover */}
@@ -711,9 +674,7 @@ function ContentPlanner() {
                       .filter(item => {
                         const itemDate = new Date(item.data);
                         const inMonth = itemDate.getFullYear() === currentYear && itemDate.getMonth() === currentMonth;
-                        // Backward compat: treat 'criado' as 'pronto'
-                        const itemStatus = item.status === "criado" ? "pronto" : (item.status || "planejado");
-                        return inMonth && itemStatus === statusKey;
+                        return inMonth && normalizeStatus(item.status) === statusKey;
                       })
                       .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
 

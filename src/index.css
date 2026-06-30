@@ -15,7 +15,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 225 25% 12%;
 
-    --primary: 250 65% 58%;
+    --primary: 253 77% 58%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 225 15% 92%;
@@ -32,26 +32,26 @@
 
     --border: 225 15% 90%;
     --input: 225 15% 90%;
-    --ring: 250 65% 58%;
+    --ring: 253 77% 58%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 225 20% 98%;
     --sidebar-foreground: 225 15% 30%;
-    --sidebar-primary: 250 65% 58%;
+    --sidebar-primary: 253 77% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 250 40% 96%;
-    --sidebar-accent-foreground: 250 65% 40%;
+    --sidebar-accent-foreground: 253 77% 40%;
     --sidebar-border: 225 15% 92%;
-    --sidebar-ring: 250 65% 58%;
+    --sidebar-ring: 253 77% 58%;
 
     /* Custom glassmorphism tokens */
     --glass-bg: 0 0% 100% / 0.6;
     --glass-border: 0 0% 100% / 0.3;
     --glass-blur: 16px;
-    --neon-glow: 250 65% 58%;
+    --neon-glow: 253 77% 58%;
     --neon-accent: 180 55% 48%;
-    --gradient-mesh-1: 250 65% 58%;
+    --gradient-mesh-1: 253 77% 58%;
     --gradient-mesh-2: 180 55% 48%;
     --gradient-mesh-3: 320 60% 55%;
   }
@@ -66,7 +66,7 @@
     --popover: 225 20% 12%;
     --popover-foreground: 225 10% 92%;
 
-    --primary: 250 65% 62%;
+    --primary: 253 77% 62%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 225 20% 16%;
@@ -83,20 +83,20 @@
 
     --border: 225 20% 18%;
     --input: 225 20% 18%;
-    --ring: 250 65% 62%;
+    --ring: 253 77% 62%;
 
     --sidebar-background: 225 25% 10%;
     --sidebar-foreground: 225 10% 80%;
-    --sidebar-primary: 250 65% 62%;
+    --sidebar-primary: 253 77% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 250 30% 18%;
     --sidebar-accent-foreground: 250 50% 80%;
     --sidebar-border: 225 20% 16%;
-    --sidebar-ring: 250 65% 62%;
+    --sidebar-ring: 253 77% 62%;
 
     --glass-bg: 225 25% 12% / 0.5;
     --glass-border: 225 20% 20% / 0.4;
-    --neon-glow: 250 65% 62%;
+    --neon-glow: 253 77% 62%;
     --neon-accent: 180 55% 48%;
   }
 }

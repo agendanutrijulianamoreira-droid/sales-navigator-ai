@@ -2,25 +2,9 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { Badge } from "@/components/ui/badge";
 import { CalendarItem } from "@/hooks/useCalendarItems";
 import { cn } from "@/lib/utils";
-import { CalendarDays, Clock, FileText, Grid3X3, Play, BookOpen, Hand } from "lucide-react";
-
-const TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  carrossel:  { label: "Carrossel",        color: "text-violet-700",  bg: "bg-violet-100",  icon: Grid3X3 },
-  post_unico: { label: "Post Único",       color: "text-emerald-700", bg: "bg-emerald-100", icon: FileText },
-  reels:      { label: "Reels",            color: "text-pink-700",    bg: "bg-pink-100",    icon: Play },
-  stories:    { label: "Stories",          color: "text-amber-700",   bg: "bg-amber-100",   icon: BookOpen },
-  levantada:  { label: "Levantada de Mão", color: "text-red-700",     bg: "bg-red-100",     icon: Hand },
-};
-
-const STATUS_CONFIG: Record<string, { label: string; dot: string; badge: string }> = {
-  planejado:      { label: "Planejado",       dot: "bg-gray-400",    badge: "bg-gray-100 text-gray-600" },
-  rascunho:       { label: "Rascunho",        dot: "bg-amber-400",   badge: "bg-amber-100 text-amber-700" },
-  em_aprovacao:   { label: "Em aprovação",    dot: "bg-sky-400",     badge: "bg-sky-100 text-sky-700" },
-  aprovado:       { label: "Aprovado",        dot: "bg-green-500",   badge: "bg-green-100 text-green-700" },
-  pronto:         { label: "Pronto",          dot: "bg-blue-500",    badge: "bg-blue-100 text-blue-700" },
-  agendado:       { label: "Agendado",        dot: "bg-purple-500",  badge: "bg-purple-100 text-purple-700" },
-  publicado:      { label: "Publicado",       dot: "bg-emerald-500", badge: "bg-emerald-100 text-emerald-700" },
-};
+import { CalendarDays, Clock } from "lucide-react";
+import { getFormatConfig } from "@/lib/constants/postFormat";
+import { getStatusConfig } from "@/lib/constants/postStatus";
 
 interface PostPreviewPopoverProps {
   post: CalendarItem;
@@ -30,8 +14,8 @@ interface PostPreviewPopoverProps {
 }
 
 export function PostPreviewPopover({ post, thumbnail, children, side = "right" }: PostPreviewPopoverProps) {
-  const typeConfig = TYPE_CONFIG[post.tipo] ?? TYPE_CONFIG.post_unico;
-  const statusConfig = STATUS_CONFIG[(post.status ?? "planejado")] ?? STATUS_CONFIG.planejado;
+  const typeConfig = getFormatConfig(post.tipo);
+  const statusConfig = getStatusConfig(post.status);
   const TypeIcon = typeConfig.icon;
 
   const formattedDate = (() => {
@@ -60,7 +44,7 @@ export function PostPreviewPopover({ post, thumbnail, children, side = "right" }
             <img src={thumbnail} alt={post.titulo ?? ""} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
             <div className="absolute bottom-2 left-2 right-2 flex items-center gap-1.5">
-              <span className={cn("inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full", typeConfig.bg, typeConfig.color)}>
+              <span className={cn("inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full", typeConfig.bgLight, typeConfig.text)}>
                 <TypeIcon className="h-2.5 w-2.5" />
                 {typeConfig.label}
               </span>
@@ -71,7 +55,7 @@ export function PostPreviewPopover({ post, thumbnail, children, side = "right" }
             </div>
           </div>
         ) : (
-          <div className={cn("h-2 w-full", typeConfig.bg.replace("100", "400"))} />
+          <div className={cn("h-2 w-full", typeConfig.bgLight.replace("100", "400"))} />
         )}
 
         {/* Content */}
@@ -79,7 +63,7 @@ export function PostPreviewPopover({ post, thumbnail, children, side = "right" }
           {/* Badges (no thumbnail case) */}
           {!thumbnail && (
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className={cn("inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full", typeConfig.bg, typeConfig.color)}>
+              <span className={cn("inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full", typeConfig.bgLight, typeConfig.text)}>
                 <TypeIcon className="h-2.5 w-2.5" />
                 {typeConfig.label}
               </span>

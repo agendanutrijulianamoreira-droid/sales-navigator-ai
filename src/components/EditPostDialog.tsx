@@ -21,6 +21,8 @@ import { CalendarItem } from "@/hooks/useCalendarItems";
 import { useGenerations } from "@/hooks/useGenerations";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { FORMAT_CONFIG } from "@/lib/constants/postFormat";
+import { STATUS_CONFIG, STATUS_ORDER, normalizeStatus } from "@/lib/constants/postStatus";
 
 interface EditPostDialogProps {
   open: boolean;
@@ -30,13 +32,9 @@ interface EditPostDialogProps {
   post?: CalendarItem;
 }
 
-const CONTENT_TYPES = [
-  { value: "carrossel", label: "Carrossel" },
-  { value: "post_unico", label: "Post Único" },
-  { value: "reels", label: "Reels" },
-  { value: "stories", label: "Stories" },
-  { value: "levantada", label: "Levantada de Mão" },
-];
+const CONTENT_TYPES = Object.entries(FORMAT_CONFIG).map(([value, cfg]) => ({
+  value, label: cfg.label,
+}));
 
 export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post }: EditPostDialogProps) {
   // safety: we expect a post when the dialog is shown
@@ -60,7 +58,7 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
     titulo: post?.titulo || "",
     tipo: post?.tipo || "carrossel",
     notas: post?.notas || "",
-    status: post?.status || "planejado",
+    status: normalizeStatus(post?.status),
     date: post?.data || "",
   }), [post]);
 
@@ -273,11 +271,14 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="planejado">⚪ Planejado</SelectItem>
-                <SelectItem value="rascunho">🟡 Rascunho</SelectItem>
-                <SelectItem value="pronto">🔵 Pronto</SelectItem>
-                <SelectItem value="agendado">🟣 Agendado</SelectItem>
-                <SelectItem value="publicado">🟢 Publicado</SelectItem>
+                {STATUS_ORDER.map((key) => (
+                  <SelectItem key={key} value={key}>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_CONFIG[key].hex }} />
+                      {STATUS_CONFIG[key].label}
+                    </span>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
