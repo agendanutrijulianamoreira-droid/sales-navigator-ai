@@ -23,6 +23,7 @@ import {
 import { ContentCalendarPost, ContentCalendarPostDraft, Platform, PostFormat, PostStatus } from "@/types/contentCalendar";
 import { STATUS_ORDER, STATUS_CONFIG, SUGGESTED_TAGS } from "@/lib/constants/contentCalendarStatus";
 import { FORMAT_ORDER, FORMAT_CONFIG } from "@/lib/constants/contentCalendarFormat";
+import { InstagramPostPreview } from "./InstagramPostPreview";
 
 interface PostModalProps {
   open: boolean;
@@ -88,13 +89,14 @@ export function PostModal({ open, onOpenChange, defaultDate, post, onSave, onDel
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[560px] rounded-xl p-0 gap-0 overflow-hidden">
+        <DialogContent className="max-w-[860px] rounded-xl p-0 gap-0 overflow-hidden">
           <DialogHeader className="px-5 py-4 border-b border-[#E8E8EC]">
             <DialogTitle className="text-[16px] font-semibold text-[#1A1A2E]">
               {post ? "Editar post" : "Novo post"}
             </DialogTitle>
           </DialogHeader>
 
+          <div className="grid md:grid-cols-[1fr,280px]">
           <div className="px-5 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
             {/* Título */}
             <div className="space-y-1.5">
@@ -306,6 +308,12 @@ export function PostModal({ open, onOpenChange, defaultDate, post, onSave, onDel
                 className="rounded-lg border-[#E8E8EC] resize-none"
               />
             </div>
+          </div>
+
+          <div className="hidden md:flex flex-col items-center gap-2 px-4 py-5 border-l border-[#E8E8EC] bg-[#F8F8FA]">
+            <p className="text-[11px] font-semibold text-[#6B6B80] uppercase self-start">Preview</p>
+            <InstagramPostPreview draft={draft} />
+          </div>
           </div>
 
           <div className="flex items-center justify-between px-5 py-4 border-t border-[#E8E8EC]">

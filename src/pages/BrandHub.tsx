@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import {
     Loader2, Sparkles, Target, Crown, Sword, Lightbulb,
     ShieldAlert, BrainCircuit, Trophy, Palette, Package, Check,
-    Zap, Activity, LayoutGrid, Info
+    Zap, Activity, LayoutGrid, Info, ClipboardCheck, Swords
 } from "lucide-react";
 import { StrategyGenerator } from "@/components/strategy/StrategyGenerator";
 import { StrategyProfile } from "@/hooks/useStrategyAI";
@@ -20,6 +20,8 @@ import BrandKit from "@/components/BrandKit";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useProducts } from "@/hooks/useProducts";
 import { toast } from "sonner";
+import { ProfileDiagnosticTab } from "@/components/brand/ProfileDiagnosticTab";
+import { CompetitorAnalysisTab } from "@/components/brand/CompetitorAnalysisTab";
 
 export default function BrandHub() {
     const { profile, updateProfile } = useProfile();
@@ -178,6 +180,14 @@ export default function BrandHub() {
                         <TabsTrigger value="kit" className="gap-2 px-6">
                             <Palette className="h-4 w-4" />
                             Visual Kit
+                        </TabsTrigger>
+                        <TabsTrigger value="diagnostico" className="gap-2 px-6">
+                            <ClipboardCheck className="h-4 w-4" />
+                            Diagnóstico
+                        </TabsTrigger>
+                        <TabsTrigger value="concorrencia" className="gap-2 px-6">
+                            <Swords className="h-4 w-4" />
+                            Concorrência
                         </TabsTrigger>
                     </TabsList>
 
@@ -437,6 +447,14 @@ export default function BrandHub() {
 
                     <TabsContent value="kit" className="animate-in fade-in zoom-in-95 duration-500">
                         <BrandKit />
+                    </TabsContent>
+
+                    <TabsContent value="diagnostico" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <ProfileDiagnosticTab />
+                    </TabsContent>
+
+                    <TabsContent value="concorrencia" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <CompetitorAnalysisTab />
                     </TabsContent>
                 </Tabs>
 
