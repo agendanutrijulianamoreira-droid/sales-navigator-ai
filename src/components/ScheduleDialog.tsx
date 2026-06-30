@@ -16,6 +16,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, Loader2, Clock, Tag, FileText, CheckCircle2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FORMAT_CONFIG } from "@/lib/constants/postFormat";
+import { STATUS_CONFIG, STATUS_ORDER } from "@/lib/constants/postStatus";
 
 interface ScheduleDialogProps {
   open: boolean;
@@ -26,20 +28,13 @@ interface ScheduleDialogProps {
   defaultDate?: Date;
 }
 
-const CONTENT_TYPES = [
-  { value: "carrossel", label: "Carrossel", color: "bg-violet-500", emoji: "🖼️" },
-  { value: "post_unico", label: "Post Único", color: "bg-emerald-500", emoji: "📸" },
-  { value: "reels", label: "Reels", color: "bg-pink-500", emoji: "🎬" },
-  { value: "stories", label: "Stories", color: "bg-amber-500", emoji: "✨" },
-  { value: "levantada", label: "Levantada de Mão", color: "bg-red-500", emoji: "🙋" },
-];
+const CONTENT_TYPES = Object.entries(FORMAT_CONFIG).map(([value, cfg]) => ({
+  value, label: cfg.label, color: cfg.color, icon: cfg.icon,
+}));
 
-const STATUS_OPTIONS = [
-  { value: "planejado", label: "Planejado", dot: "bg-gray-400" },
-  { value: "rascunho", label: "Rascunho", dot: "bg-amber-400" },
-  { value: "pronto", label: "Pronto", dot: "bg-blue-500" },
-  { value: "agendado", label: "Agendado", dot: "bg-purple-500" },
-];
+const STATUS_OPTIONS = STATUS_ORDER.map((value) => ({
+  value, label: STATUS_CONFIG[value].label, dot: STATUS_CONFIG[value].dot,
+}));
 
 const SUGGESTED_TIMES = [
   { label: "8h30 (Stories manhã)", value: "08:30" },
@@ -144,7 +139,7 @@ export function ScheduleDialog({
                         : "border-gray-100 bg-white text-gray-500 hover:border-gray-200 hover:bg-gray-50"
                     )}
                   >
-                    <span className="text-base">{ct.emoji}</span>
+                    <ct.icon className="h-4 w-4" />
                     <span className="leading-tight text-center">{ct.label}</span>
                   </button>
                 ))}
@@ -226,7 +221,7 @@ export function ScheduleDialog({
               <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
                 <p className="text-[10px] font-semibold text-gray-400 uppercase mb-1.5">Preview do card</p>
                 <div className={cn("inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-white text-[10px] font-bold mb-1", selectedType?.color)}>
-                  {selectedType?.emoji} {selectedType?.label}
+                  {selectedType?.label}
                 </div>
                 <p className="text-sm font-semibold text-gray-800 leading-snug">{titulo}</p>
                 <div className="flex items-center gap-2 mt-1">

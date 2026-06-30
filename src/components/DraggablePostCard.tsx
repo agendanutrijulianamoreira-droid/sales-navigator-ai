@@ -1,27 +1,13 @@
 import { useDrag } from "react-dnd";
 import { Button } from "@/components/ui/button";
-import { Trash2, Pencil, Instagram } from "lucide-react";
+import { Trash2, Pencil, Instagram, Check } from "lucide-react";
 import { CalendarItem } from "@/hooks/useCalendarItems";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { PostPreviewPopover } from "./PostPreviewPopover";
-
-const TYPE_CONFIG = {
-  carrossel: { label: "Carrossel", color: "bg-violet-500", text: "text-violet-700", border: "border-l-violet-500" },
-  post_unico: { label: "Post Único", color: "bg-emerald-500", text: "text-emerald-700", border: "border-l-emerald-500" },
-  reels: { label: "Reels", color: "bg-pink-500", text: "text-pink-700", border: "border-l-pink-500" },
-  stories: { label: "Stories", color: "bg-amber-500", text: "text-amber-700", border: "border-l-amber-500" },
-  levantada: { label: "Levantada", color: "bg-red-500", text: "text-red-700", border: "border-l-red-500" },
-};
-
-const STATUS_CONFIG = {
-  planejado: { label: "Planejado", dot: "bg-gray-400" },
-  rascunho: { label: "Rascunho", dot: "bg-amber-400" },
-  pronto: { label: "Pronto", dot: "bg-blue-500" },
-  agendado: { label: "Agendado", dot: "bg-purple-500" },
-  publicado: { label: "Publicado", dot: "bg-emerald-500" },
-};
+import { getFormatConfig } from "@/lib/constants/postFormat";
+import { getStatusConfig, normalizeStatus } from "@/lib/constants/postStatus";
 
 interface DraggablePostCardProps {
   post: CalendarItem;
@@ -57,17 +43,19 @@ export function DraggablePostCard({ post, onEdit, onDuplicate, onDelete, variant
       });
   }, [post.generation_id]);
 
-  const typeConfig = TYPE_CONFIG[post.tipo as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.post_unico;
-  const statusConfig = STATUS_CONFIG[(post.status ?? "planejado") as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.planejado;
+  const formatConfig = getFormatConfig(post.tipo);
+  const statusConfig = getStatusConfig(post.status);
+  const isPublicado = normalizeStatus(post.status) === "publicado";
+  const FormatIcon = formatConfig.icon;
 
   if (variant === "week") {
     return (
       <PostPreviewPopover post={post} thumbnail={thumbnail} side="right">
         <div
           ref={drag}
+          style={{ borderLeftColor: statusConfig.hex }}
           className={cn(
-            "group rounded-lg border border-gray-100 bg-white shadow-sm overflow-hidden transition-all hover:shadow-md border-l-4 cursor-grab active:cursor-grabbing",
-            typeConfig.border,
+            "group rounded-lg border border-gray-100 bg-white shadow-sm overflow-hidden transition-all hover:shadow-md border-l-[3px] cursor-grab active:cursor-grabbing",
             isDragging && "opacity-30"
           )}
         >
@@ -79,17 +67,20 @@ export function DraggablePostCard({ post, onEdit, onDuplicate, onDelete, variant
             </div>
           </div>
         )}
-        <div className="p-2">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span className={cn("text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full text-white", typeConfig.color)}>
-              {typeConfig.label}
-            </span>
-            <span className="ml-auto flex items-center gap-1">
-              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", statusConfig.dot)} />
-              <span className="text-[9px] text-gray-400">{statusConfig.label}</span>
+        <div className="p-2" style={{ backgroundColor: `${statusConfig.hex}0d` }}>
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <FormatIcon className="h-3.5 w-3.5 text-gray-500 shrink-0" />
+            <span className="text-[11px] font-semibold text-gray-700">{formatConfig.label}</span>
+            <span className="ml-auto flex items-center justify-center shrink-0">
+              {isPublicado ? (
+                <Check className="h-3 w-3" style={{ color: statusConfig.hex }} />
+              ) : (
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusConfig.hex }} />
+              )}
             </span>
           </div>
-          <p className="text-xs font-semibold text-gray-800 line-clamp-2 leading-snug">
+          <p className="text-[11px] font-semibold mb-1" style={{ color: statusConfig.hex }}>{statusConfig.label}</p>
+          <p className="text-xs font-medium text-gray-800 line-clamp-2 leading-snug">
             {post.titulo || "Sem título"}
           </p>
           {post.notas && (
@@ -126,9 +117,9 @@ export function DraggablePostCard({ post, onEdit, onDuplicate, onDelete, variant
     <PostPreviewPopover post={post} thumbnail={thumbnail} side="top">
       <div
         ref={drag}
+        style={{ borderLeftColor: statusConfig.hex, backgroundColor: `${statusConfig.hex}0d` }}
         className={cn(
-          "group relative rounded border border-gray-100 bg-white overflow-hidden transition-all hover:shadow-sm border-l-[3px] cursor-grab active:cursor-grabbing",
-          typeConfig.border,
+          "group relative rounded border border-gray-100 overflow-hidden transition-all hover:shadow-sm border-l-[3px] cursor-grab active:cursor-grabbing",
           isDragging && "opacity-30"
         )}
       >
@@ -140,14 +131,16 @@ export function DraggablePostCard({ post, onEdit, onDuplicate, onDelete, variant
           </p>
         </div>
       ) : (
-        <div className="flex items-center gap-1.5 px-1.5 py-1">
-          <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", statusConfig.dot)} />
-          <p className="text-[10px] font-semibold leading-tight line-clamp-1 text-gray-800 flex-1">
+        <div className="flex items-center gap-1 px-1.5 py-1">
+          <FormatIcon className="h-3 w-3 text-gray-500 shrink-0" />
+          {isPublicado ? (
+            <Check className="h-2.5 w-2.5 shrink-0" style={{ color: statusConfig.hex }} />
+          ) : (
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: statusConfig.hex }} />
+          )}
+          <p className="text-[10px] font-medium leading-tight line-clamp-1 text-gray-800 flex-1">
             {post.titulo || "Sem título"}
           </p>
-          <span className={cn("text-[8px] font-bold uppercase shrink-0 opacity-60", typeConfig.text)}>
-            {typeConfig.label.slice(0, 3)}
-          </span>
         </div>
       )}
 

@@ -8,22 +8,10 @@ import {
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { FORMAT_CONFIG } from "@/lib/constants/postFormat";
+import { STATUS_CONFIG, STATUS_ORDER, normalizeStatus } from "@/lib/constants/postStatus";
 
-const TYPE_CONFIG = {
-  carrossel:  { label: "Carrossel",        color: "#7C3AED", bg: "bg-violet-500", light: "bg-violet-50", text: "text-violet-700" },
-  post_unico: { label: "Post Único",        color: "#059669", bg: "bg-emerald-500", light: "bg-emerald-50", text: "text-emerald-700" },
-  reels:      { label: "Reels",             color: "#EC4899", bg: "bg-pink-500",   light: "bg-pink-50",   text: "text-pink-700" },
-  stories:    { label: "Stories",           color: "#F59E0B", bg: "bg-amber-500",  light: "bg-amber-50",  text: "text-amber-700" },
-  levantada:  { label: "Levantada de Mão",  color: "#EF4444", bg: "bg-red-500",    light: "bg-red-50",    text: "text-red-700" },
-};
-
-const STATUS_CONFIG = {
-  planejado: { label: "Planejado", color: "#9CA3AF", bg: "bg-gray-400" },
-  rascunho:  { label: "Rascunho",  color: "#F59E0B", bg: "bg-amber-400" },
-  pronto:    { label: "Pronto",    color: "#3B82F6", bg: "bg-blue-500" },
-  agendado:  { label: "Agendado",  color: "#8B5CF6", bg: "bg-purple-500" },
-  publicado: { label: "Publicado", color: "#10B981", bg: "bg-emerald-500" },
-};
+const TYPE_CONFIG = FORMAT_CONFIG;
 
 const MONTHS = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
@@ -189,20 +177,20 @@ export function ReportsView({ items }: ReportsViewProps) {
     Object.entries(TYPE_CONFIG).map(([key, cfg]) => ({
       label: cfg.label,
       value: monthItems.filter(i => i.tipo === key).length,
-      color: cfg.color,
+      color: cfg.hex,
     })), [monthItems]);
 
   // --- Status distribution ---
   const statusData = useMemo(() =>
-    Object.entries(STATUS_CONFIG).map(([key, cfg]) => ({
-      label: cfg.label,
-      value: monthItems.filter(i => (i.status || "planejado") === key).length,
-      color: cfg.color,
+    STATUS_ORDER.map((key) => ({
+      label: STATUS_CONFIG[key].label,
+      value: monthItems.filter(i => normalizeStatus(i.status) === key).length,
+      color: STATUS_CONFIG[key].hex,
     })), [monthItems]);
 
-  const publishedCount = monthItems.filter(i => i.status === "publicado").length;
-  const readyCount = monthItems.filter(i => i.status === "pronto" || i.status === "agendado").length;
-  const pendingCount = monthItems.filter(i => !i.status || i.status === "planejado" || i.status === "rascunho").length;
+  const publishedCount = monthItems.filter(i => normalizeStatus(i.status) === "publicado").length;
+  const readyCount = monthItems.filter(i => ["aprovado", "agendado"].includes(normalizeStatus(i.status))).length;
+  const pendingCount = monthItems.filter(i => ["planejado", "rascunho"].includes(normalizeStatus(i.status))).length;
   const completionRate = monthItems.length > 0 ? Math.round((publishedCount / monthItems.length) * 100) : 0;
 
   // --- Best day analysis ---
@@ -233,7 +221,7 @@ export function ReportsView({ items }: ReportsViewProps) {
       item.data,
       TYPE_CONFIG[item.tipo as keyof typeof TYPE_CONFIG]?.label || item.tipo,
       item.titulo || "",
-      STATUS_CONFIG[(item.status || "planejado") as keyof typeof STATUS_CONFIG]?.label || "",
+      STATUS_CONFIG[normalizeStatus(item.status)].label,
       (item.notas || "").replace(/\n/g, " "),
     ]);
     const csv = [header, ...rows].map(r => r.map(c => `"${c}"`).join(",")).join("\n");
@@ -279,8 +267,8 @@ export function ReportsView({ items }: ReportsViewProps) {
       <div className="grid grid-cols-4 gap-3 mb-5">
         <StatCard icon={Layers} label="Total do Mês" value={monthItems.length} sub={`${allItems.length} total geral`} />
         <StatCard icon={CheckCircle2} label="Publicados" value={publishedCount} sub={`${completionRate}% do mês`} color="text-emerald-600" />
-        <StatCard icon={Clock} label="Em Preparação" value={readyCount} sub="Pronto ou Agendado" color="text-blue-600" />
-        <StatCard icon={AlertCircle} label="Pendentes" value={pendingCount} sub="Planejado ou Rascunho" color="text-amber-600" />
+        <StatCard icon={Clock} label="Em Preparação" value={readyCount} sub="Pronto ou Programado" color="text-blue-600" />
+        <StatCard icon={AlertCircle} label="Pendentes" value={pendingCount} sub="Ideia ou Em Produção" color="text-amber-600" />
       </div>
 
       {/* Main Grid */}
@@ -362,13 +350,13 @@ export function ReportsView({ items }: ReportsViewProps) {
               .sort((a, b) => a.data.localeCompare(b.data))
               .map(item => {
                 const tc = TYPE_CONFIG[item.tipo as keyof typeof TYPE_CONFIG];
-                const sc = STATUS_CONFIG[(item.status || "planejado") as keyof typeof STATUS_CONFIG];
+                const sc = STATUS_CONFIG[normalizeStatus(item.status)];
                 return (
                   <div key={item.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50/50 transition-colors">
                     <span className="text-xs font-semibold text-gray-400 w-10 shrink-0">
                       {new Date(item.data + "T12:00:00").getDate()}/{month + 1}
                     </span>
-                    <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded text-white shrink-0", tc?.bg || "bg-gray-400")}>
+                    <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded text-white shrink-0", tc?.color || "bg-gray-400")}>
                       {tc?.label || item.tipo}
                     </span>
                     <span className="text-sm text-gray-800 flex-1 truncate">
@@ -378,8 +366,8 @@ export function ReportsView({ items }: ReportsViewProps) {
                       <span className="text-[10px] text-gray-400 truncate max-w-[160px] hidden md:block">{item.notas}</span>
                     )}
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <span className={cn("w-2 h-2 rounded-full", sc?.bg || "bg-gray-300")} />
-                      <span className="text-[10px] text-gray-500">{sc?.label}</span>
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: sc.hex }} />
+                      <span className="text-[10px] text-gray-500">{sc.label}</span>
                     </div>
                   </div>
                 );
