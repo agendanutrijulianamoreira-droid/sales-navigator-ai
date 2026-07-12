@@ -1,0 +1,9 @@
+# NutriSales OS
+
+> Sistema de gestão e marketing para nutricionistas: conteúdo, funil de vendas, finanças e agenda do consultório em um só lugar.
+
+NutriSales OS é uma plataforma SaaS que ajuda nutricionistas a gerenciar o marketing do consultório — geração de conteúdo com IA, planejamento editorial, funis, precificação e acompanhamento financeiro.
+
+## Pages
+- [Início](/): visão geral da plataforma e acesso ao painel
+- [Entrar](/auth): login e cadastro de nutricionistas

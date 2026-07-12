@@ -107,6 +107,7 @@ export default function Dashboard() {
           <div>
             <p className="text-primary-foreground/60 text-sm font-medium tracking-wide uppercase mb-1">Painel Principal</p>
             <h1 className="text-3xl md:text-4xl font-bold text-primary-foreground tracking-tight">
+              <span className="sr-only">Painel de Controle NutriSales OS — </span>
               {greeting()}, {profile?.nome?.split(" ")[0] || "Nutri"}!
             </h1>
             <p className="text-primary-foreground/70 text-base mt-1 max-w-lg">

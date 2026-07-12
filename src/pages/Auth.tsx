@@ -133,7 +133,7 @@ export default function Auth() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
             <Sparkles className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">NutriSales OS</h1>
+          <h1 className="text-3xl font-bold tracking-tight">NutriSales OS — Sistema de Marketing para Nutricionistas</h1>
           <p className="text-muted-foreground mt-2">Sua firma digital de vendas</p>
         </div>
 
