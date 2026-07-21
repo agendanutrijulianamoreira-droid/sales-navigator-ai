@@ -38,6 +38,7 @@ const ChallengeCreator = lazy(() => import("./pages/ChallengeCreator"));
 const Billing = lazy(() => import("./pages/Billing"));
 const BillingSuccess = lazy(() => import("./pages/BillingSuccess"));
 const AdminSales = lazy(() => import("./pages/AdminSales"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,15 @@ const App = () => (
           <AuthProvider>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route
+                path="/.lovable/oauth/consent"
+                element={
+                  <Suspense fallback={<PageLoader />}>
+                    <OAuthConsent />
+                  </Suspense>
+                }
+              />
+
 
               {/* Billing routes - require auth+onboarding but NOT subscription */}
               <Route

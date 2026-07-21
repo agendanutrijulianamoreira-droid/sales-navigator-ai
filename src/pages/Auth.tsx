@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,9 +17,15 @@ const nameSchema = z.string().min(2, "Nome deve ter no mínimo 2 caracteres");
 
 export default function Auth() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, loading, signIn, signUp } = useAuth();
   const { toast } = useToast();
-  
+
+  // Validate ?next= as a same-origin relative path so it can safely be used to
+  // return the user to an OAuth consent URL after sign-in / sign-up.
+  const rawNext = searchParams.get("next");
+  const nextPath = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -29,9 +36,14 @@ export default function Auth() {
 
   useEffect(() => {
     if (user && !loading) {
-      navigate("/", { replace: true });
+      if (nextPath) {
+        window.location.replace(nextPath);
+      } else {
+        navigate("/", { replace: true });
+      }
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, nextPath]);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
