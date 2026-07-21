@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "sdk_version": "0.24.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://niumihdrjnfyymncpxqf.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "nutrisales-os-mcp",
+      "version": "0.1.0",
+      "title": "NutriSales OS"
+    },
+    "tools": [
+      {
+        "name": "get_profile",
+        "title": "Get profile & brand",
+        "description": "Return the signed-in nutritionist's profile: niche, persona, tone of voice, brand colors and fonts.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_products",
+        "title": "List products",
+        "description": "List the signed-in user's products / offers (name, price, client type, product type, active flag).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "only_active": {
+              "type": "boolean",
+              "description": "If true, return only products marked as active."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_content",
+        "title": "List generated content",
+        "description": "List the user's AI-generated content pieces (posts, carousels, strategies) from the library. Filter by type or favorites.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "tipo": {
+              "type": "string",
+              "description": "Optional content type filter, e.g. 'post', 'carousel', 'strategy'."
+            },
+            "only_favorites": {
+              "type": "boolean",
+              "description": "Return only favorited items."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Max results (default 20)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_calendar",
+        "title": "List calendar items",
+        "description": "List scheduled content in the user's content planner within an optional date range (ISO YYYY-MM-DD).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "from": {
+              "type": "string",
+              "description": "Start date (YYYY-MM-DD), inclusive."
+            },
+            "to": {
+              "type": "string",
+              "description": "End date (YYYY-MM-DD), inclusive."
+            },
+            "status": {
+              "type": "string",
+              "description": "Optional status filter (e.g. 'draft', 'scheduled')."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
