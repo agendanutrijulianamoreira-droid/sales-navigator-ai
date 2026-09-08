@@ -458,6 +458,7 @@ export type Database = {
           foto_url: string | null
           id: string
           inimigo_comum: string | null
+          intensidade_tom: string
           mecanismo_unico: string | null
           nicho: string | null
           nome: string
@@ -468,7 +469,10 @@ export type Database = {
           persona_ideal: string | null
           problema_90_dias: string | null
           promessa_principal: string | null
+          registro_profissional: string | null
           sub_nicho: string | null
+          termos_proibidos: string | null
+          titulo_profissional: string | null
           tom_voz: string | null
           updated_at: string
           user_id: string
@@ -492,6 +496,7 @@ export type Database = {
           foto_url?: string | null
           id?: string
           inimigo_comum?: string | null
+          intensidade_tom?: string
           mecanismo_unico?: string | null
           nicho?: string | null
           nome: string
@@ -502,7 +507,10 @@ export type Database = {
           persona_ideal?: string | null
           problema_90_dias?: string | null
           promessa_principal?: string | null
+          registro_profissional?: string | null
           sub_nicho?: string | null
+          termos_proibidos?: string | null
+          titulo_profissional?: string | null
           tom_voz?: string | null
           updated_at?: string
           user_id: string
@@ -526,6 +534,7 @@ export type Database = {
           foto_url?: string | null
           id?: string
           inimigo_comum?: string | null
+          intensidade_tom?: string
           mecanismo_unico?: string | null
           nicho?: string | null
           nome?: string
@@ -536,7 +545,10 @@ export type Database = {
           persona_ideal?: string | null
           problema_90_dias?: string | null
           promessa_principal?: string | null
+          registro_profissional?: string | null
           sub_nicho?: string | null
+          termos_proibidos?: string | null
+          titulo_profissional?: string | null
           tom_voz?: string | null
           updated_at?: string
           user_id?: string
