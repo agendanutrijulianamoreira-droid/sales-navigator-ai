@@ -29,7 +29,7 @@ serve(async (req) => {
 
   try {
     const {
-      topic, tone, format, mode, currentText, strategyContext,
+      topic, tone, format, mode, currentText, userCopy, strategyContext,
       postType, contentPillar, funnelStage, ctaStyle, narrativeElement,
       contentFormat, customInstructions, profile, products, sourceContext
     } = await req.json()
@@ -43,6 +43,73 @@ serve(async (req) => {
     const brandColors = profile?.primary_color ? `Cores: ${profile.primary_color}, ${profile.secondary_color}` : '';
     const brandFonts = profile?.font_heading ? `Fontes: ${profile.font_heading}, ${profile.font_body}` : '';
     const productsList = products?.length ? products.map((p: any) => `- ${p.nome}: ${p.descricao || ''} (R$${p.preco || ''})`).join('\n') : 'Não definidos';
+
+    // ── IDENTIDADE PROFISSIONAL (título + registro) ──
+    // Evita que "Dra." ou o CRN se percam: em vez de misturar no campo "nome" livre,
+    // a assinatura é montada aqui e passada como instrução fixa, não como sugestão.
+    const titulo = String(profile?.titulo_profissional || '').trim();
+    const registro = String(profile?.registro_profissional || '').trim();
+    const nomeExibicao = String(profile?.nome || '').trim();
+    const assinaturaCompleta = [titulo, nomeExibicao].filter(Boolean).join(' ') + (registro ? ` — ${registro}` : '');
+    const identityInstruction = nomeExibicao
+      ? `- Assinatura oficial (use EXATAMENTE assim sempre que o formato pedir crédito, rodapé ou fechamento com nome): "${assinaturaCompleta}"`
+      : '';
+
+    // ── INTENSIDADE DE TOM (evita sensacionalismo por padrão) ──
+    const intensidade = (profile?.intensidade_tom || 'equilibrado') as 'clinico' | 'equilibrado' | 'agressivo';
+    const INTENSITY_RULES: Record<string, string> = {
+      clinico: `
+═══ REGRAS DE COPY (TOM CLÍNICO E RESPONSÁVEL) ═══
+1. GANCHO em 3 segundos, mas SEM exagero, alarme ou promessa irreal — use curiosidade genuína, dado concreto ou pergunta honesta.
+2. Uma ideia por slide. Frases curtas e claras.
+3. Linguagem sensorial e concreta, mas SEMPRE tecnicamente correta — nunca invente mecanismo fisiológico não estabelecido.
+4. PROIBIDO: promessas de resultado garantido, comparações de "antes x depois" irreais, urgência artificial, termos como "descoberta chocante", "segredo que ninguém conta", "cura", "milagre".
+5. Evite terrorismo nutricional: não trate nenhum alimento como veneno nem prometa emagrecimento sem esforço.
+6. Storytelling em 1ª pessoa é bem-vindo, mas ancorado em casos plausíveis, não em drama forçado.
+7. CTA convidativo e de baixo atrito, nunca com pressão ou escassez fabricada.
+8. Headline máx 12 palavras, subtexto máx 25. Emojis opcionais, funcionais.
+9. Layouts: "capa" (slide 1), "topicos" (2-8), "cta" (9-10).
+10. Legenda com HOOK honesto + corpo educativo + CTA respeitoso + hashtags.`,
+      equilibrado: `
+═══ REGRAS DE COPY (TOM EQUILIBRADO — PADRÃO) ═══
+1. GANCHO em 3 segundos no slide 1 — use curiosidade, contraste ou um dado específico. Evite alarme ou exagero.
+2. EFEITO ZEIGARNIK com moderação: cada slide entrega valor real e pode indicar "no próximo slide" sem criar suspense artificial ou manipulador.
+3. UMA ideia por slide. Carga cognitiva baixa = retenção alta.
+4. Frases curtas (máx 12 palavras). Quebra de linha com ritmo.
+5. Linguagem sensorial e concreta, sempre factualmente correta.
+6. Storytelling em 1ª pessoa quando fizer sentido, sem dramatização forçada.
+7. Contraste entre hábito comum x abordagem recomendada — sem comparação humilhante.
+8. Destaque no máximo 1-2 palavras-chave em **negrito** por slide, sem apelar para medo.
+9. Headline máx 12 palavras, subtexto máx 25. Máx 1-2 emojis funcionais por slide.
+10. Layouts: "capa" (slide 1), "topicos" (2-8), "cta" (9-10).
+11. Legenda COMPLEMENTA (não repete). Use AIDA condensado + 5-10 hashtags.
+12. CTA único, claro, com benefício real e baixo atrito.
+13. PROIBIDO: "descoberta chocante", "segredo", promessa de cura/milagre, urgência fabricada, comparação de corpo humilhante.
+14. cta_stories: 3-5 Stories que complementam o post, sem clickbait.`,
+      agressivo: `
+═══ REGRAS DE COPY (NEUROMARKETING + NEUROVENDAS — ALTO IMPACTO) ═══
+1. GANCHO em 3 segundos no slide 1 — pattern interrupt, contradição, número específico ou pergunta provocativa. Se falhar aqui, o resto não importa.
+2. EFEITO ZEIGARNIK: cada slide entrega 1 micro-recompensa E abre um loop para o próximo ("mas tem um detalhe...", "e o pior vem agora...", "isso muda no slide 5"). NUNCA entregue tudo de uma vez.
+3. UMA ideia por slide. Carga cognitiva baixa = retenção alta.
+4. Frases curtas (máx 12 palavras). Quebra de linha com ritmo.
+5. Linguagem SENSORIAL e CONCRETA (cérebro processa imagem, não abstração). Ex: "barriga inchada após o almoço" > "desconforto digestivo".
+6. Storytelling em 1ª pessoa sempre que possível (neurônios-espelho ativam empatia).
+7. Aversão à perda > promessa de ganho. "O que você está perdendo ao..." converte mais que "ganhe...".
+8. Ancoragem por contraste: situação atual (dor) x desejada (transformação).
+9. Destaque palavras-emoção em **negrito**: medo, alívio, descoberta, finalmente, segredo, errado, verdade.
+10. Headline máx 12 palavras, subtexto máx 25. Máx 1-2 emojis funcionais por slide.
+11. Layouts: "capa" (slide 1), "topicos" (2-8), "cta" (9-10).
+12. Legenda COMPLEMENTA (não repete). Use AIDA condensado + 5-10 hashtags.
+13. CTA único, comando direto + benefício imediato + baixo atrito ("Comenta X e te mando Y agora").
+14. cta_stories: 3-5 Stories que abrem novo loop apontando para o post.
+15. LIMITE ÉTICO INEGOCIÁVEL mesmo neste modo: nunca prometer cura, resultado garantido ou usar termos de terrorismo nutricional.`,
+    };
+    const intensityBlock = INTENSITY_RULES[intensidade] || INTENSITY_RULES.equilibrado;
+
+    const proibidosList = String(profile?.termos_proibidos || '').trim();
+    const proibidosInstruction = proibidosList
+      ? `\n═══ TERMOS E TÉCNICAS PROIBIDOS (regra dura, nunca use) ═══\n${proibidosList}\n`
+      : '';
     const sourceTitle = String(sourceContext?.title || '').slice(0, 500);
     const sourceSummary = String(sourceContext?.summary || '').slice(0, 3500);
     const sourceName = String(sourceContext?.source || '').slice(0, 240);
@@ -114,6 +181,101 @@ REGRAS:
       });
     }
 
+    // ── MODO "USAR MINHA COPY" ──
+    // A profissional já escreveu o texto (legenda, roteiro, ideia). A IA NÃO reescreve
+    // nem substitui o conteúdo — só organiza o texto exatamente como foi escrito em slides,
+    // aplicando o layout do formato pedido. Isso resolve a reclamação de que a IA "sempre
+    // gera por conta própria" mesmo quando a profissional já tem a copy pronta.
+    if (mode === 'use_my_copy') {
+      const rawCopy = String(userCopy || currentText || '').trim();
+      if (!rawCopy) throw new Error('Cole o texto da sua copy para usar este modo.');
+
+      const formatoAlvo = contentFormat === 'single_post'
+        ? '1 único slide (layout "capa") + legenda'
+        : contentFormat === 'stories'
+          ? '5 a 7 stories (layout "capa" no 1º, "cta" no último, "topicos" nos demais)'
+          : contentFormat === 'reels_script'
+            ? '4 a 6 seções de roteiro (layout "capa" na 1ª, "cta" na última)'
+            : '5 a 10 slides de carrossel (layout "capa" no 1º, "cta" no(s) último(s), "topicos" nos demais)';
+
+      const useCopyPrompt = `
+Você é um DIAGRAMADOR de conteúdo, não um copywriter. A profissional abaixo JÁ ESCREVEU o texto dela. Sua ÚNICA tarefa é organizar esse texto em slides de ${formatoAlvo}, SEM reescrever, parafrasear, resumir, exagerar ou adicionar qualquer afirmação, dado ou promessa que não esteja no texto original.
+
+═══ TEXTO ORIGINAL DA PROFISSIONAL (fonte única, não altere o conteúdo) ═══
+"""
+${rawCopy}
+"""
+
+${topic ? `TEMA/TÍTULO INTERNO DE REFERÊNCIA: ${topic}` : ''}
+${identityInstruction}
+${customInstructions ? `INSTRUÇÕES DE FORMATAÇÃO EXTRAS (só sobre organização, não sobre conteúdo): ${customInstructions}` : ''}
+
+REGRAS INEGOCIÁVEIS:
+1. Preserve as palavras da profissional o máximo possível. Você pode quebrar frases entre slides e cortar conectivos ("e", "então") na transição, mas NÃO pode reformular ideias, trocar sinônimos por efeito de "impacto" ou adicionar gatilhos de neuromarketing que não estavam lá.
+2. NÃO invente headline/gancho genérico se o texto não trouxer um — nesse caso, use a primeira frase forte do próprio texto como headline do slide 1.
+3. Se o texto já tiver uma chamada para ação, use-a como está no slide/seção final. Só complete com uma assinatura (ver acima) se fizer sentido e não houver uma já no texto.
+4. Divida em blocos de tamanho equilibrado por slide — não amontoe tudo em um slide e deixe outro vazio.
+5. "legenda" = o texto original completo (ou a versão mais próxima possível dele), preservado. Não reescreva o texto para a legenda; apenas garanta que esteja completo e com quebras de parágrafo legíveis.
+6. Se o texto não trouxer hashtags, sugira de 5 a 8 relevantes ao tema no final da legenda — essa é a única parte em que você pode adicionar conteúdo novo.
+7. cta_stories: sugira brevemente como amplificar esse mesmo conteúdo nos Stories, sem inventar fatos novos sobre a paciente/método.
+
+═══ RESPOSTA — APENAS JSON VÁLIDO (sem markdown) ═══
+{
+  "titulo": "Título interno curto para referência",
+  "slides": [
+    { "numero": 1, "tipo": "informacao", "layout": "capa", "headline": "Trecho do texto original", "subtexto": "Trecho do texto original", "destaque": "" }
+  ],
+  "legenda": "Texto original completo, com hashtags sugeridas ao final",
+  "cta_stories": "Sugestão de amplificação nos Stories"
+}`;
+
+      const isLovableKeyCopy = !!Deno.env.get('LOVABLE_API_KEY');
+      const apiUrlCopy = isLovableKeyCopy
+        ? 'https://ai.gateway.lovable.dev/v1/chat/completions'
+        : 'https://api.openai.com/v1/chat/completions';
+      const modelCopy = isLovableKeyCopy ? 'google/gemini-2.0-flash-exp' : 'gpt-4o-mini';
+
+      const responseCopy = await fetch(apiUrlCopy, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: modelCopy,
+          messages: [
+            { role: 'system', content: 'Você é um diagramador de conteúdo fiel ao texto original. NUNCA reescreve o conteúdo do usuário. SEMPRE responde em JSON válido, sem markdown.' },
+            { role: 'user', content: useCopyPrompt }
+          ],
+          temperature: 0.2,
+        }),
+      });
+
+      const rawTextCopy = await responseCopy.text();
+      if (!responseCopy.ok) throw new Error(`API error ${responseCopy.status}: ${rawTextCopy.substring(0, 200)}`);
+      const dataCopy = JSON.parse(rawTextCopy);
+      const contentCopy = dataCopy.choices[0].message.content.trim();
+      const jsonMatchCopy = contentCopy.match(/\{[\s\S]*\}/);
+      if (!jsonMatchCopy) throw new Error('Resposta da IA não contém JSON válido');
+      const parsedCopy = JSON.parse(jsonMatchCopy[0]);
+
+      if (!parsedCopy.titulo || !parsedCopy.slides || !Array.isArray(parsedCopy.slides) || parsedCopy.slides.length < 1) {
+        throw new Error('Resposta da IA incompleta ou malformada');
+      }
+
+      parsedCopy.slides = parsedCopy.slides.map((slide: any, i: number) => ({
+        ...slide,
+        numero: i + 1,
+        layout: slide.layout || (i === 0 ? 'capa' : i >= parsedCopy.slides.length - 2 ? 'cta' : 'topicos'),
+        headline: slide.headline || '',
+        subtexto: slide.subtexto || '',
+      }));
+
+      return new Response(JSON.stringify(parsedCopy), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // ── CONFIGURAÇÃO DE FUNIL ──
     const FUNNEL_CONFIG: Record<string, { objetivo: string; cta: string; mecanismo: string }> = {
       ALCANCE: {
@@ -153,8 +315,8 @@ REGRAS:
         Use ANTAGONISMO (a crença limitante é o inimigo) e ANALOGIA.`,
 
       LISTA_AUTORIDADE: `LISTA DE AUTORIDADE: Entregue valor denso em formato de lista numerada.
-        Estrutura: Promessa no título (ex: "5 sinais de que seu intestino precisa de atenção") → Itens com mini-explicação → Conexão com seu método → CTA.
-        Use EXAGERO INTENCIONAL nos títulos e EUFEMISMO na solução.`,
+        Estrutura: Título específico e verdadeiro (ex: "5 sinais de que seu intestino precisa de atenção") → Itens com mini-explicação → Conexão com seu método → CTA.
+        Use um título forte mas factualmente sustentável — nunca exagero ou eufemismo sobre a solução.`,
 
       COMPARATIVO_ELITE: `COMPARATIVO DE ELITE: Compare dois caminhos — o comum vs. o ideal.
         Estrutura: "A maioria faz X" vs "Quem tem resultado faz Y" → Detalhe as diferenças → Mostre as consequências de cada caminho → Posicione seu método como o caminho Y.
@@ -223,8 +385,10 @@ Sua missão: criar um carrossel de Instagram de ALTO IMPACTO sobre: "${topic}"
 ${productsList}
 ${brandColors ? `- ${brandColors}` : ''}
 ${brandFonts ? `- ${brandFonts}` : ''}
+${identityInstruction}
 ${customInstructions ? `- Instruções extras: ${customInstructions}` : ''}
 ${sourceGrounding}
+${proibidosInstruction}
 
 ═══ ESTRATÉGIA DO FUNIL ═══
 Estágio: ${funnelStage || 'EVENTOS_DOR'}
@@ -336,9 +500,12 @@ REGRAS PARA ROTEIRO:
 ═══ MÉTODO ISCAA — ESTRUTURA OBRIGATÓRIA DOS SLIDES ═══
 
 ** I — INFORMAÇÃO (Slides 1-2) — HOOK + CONTEXTO **
-   - Slide 1 (CAPA): Headline IMPOSSÍVEL de ignorar. Máximo 8-12 palavras.
-     Toque na DOR mais profunda ou faça uma PROMESSA ousada.
-     Técnicas: pergunta provocativa, afirmação contraintuitiva, dado chocante.
+   - Slide 1 (CAPA): Headline forte e que prende atenção. Máximo 8-12 palavras.
+     ${intensidade === 'clinico'
+        ? 'Desperte curiosidade genuína com um dado real, uma pergunta honesta ou uma contradição factual — sem exagero nem alarme.'
+        : intensidade === 'agressivo'
+          ? 'Toque na DOR mais profunda ou faça uma PROMESSA ousada. Técnicas: pergunta provocativa, afirmação contraintuitiva, dado chocante.'
+          : 'Toque em uma dor real ou curiosidade genuína, com uma pergunta provocativa ou afirmação contraintuitiva — sem alarme nem exagero.'}
    - Slide 2: Aprofunde o gancho. Explique "por que isso importa AGORA".
 
 ** S — SOLUÇÃO (Slides 3-5) — VALOR + MÉTODO **
@@ -355,23 +522,9 @@ REGRAS PARA ROTEIRO:
 
 ** A — AÇÃO (Slides 9-10) — CTA + FECHAMENTO **
    - CTA claro, direto e ÚNICO.
-   - Crie URGÊNCIA sem ser apelativo.
-
-═══ REGRAS DE COPY (NEUROMARKETING + NEUROVENDAS) ═══
-1. GANCHO em 3 segundos no slide 1 — pattern interrupt, contradição, número específico ou pergunta provocativa. Se falhar aqui, o resto não importa.
-2. EFEITO ZEIGARNIK: cada slide entrega 1 micro-recompensa E abre um loop para o próximo ("mas tem um detalhe...", "e o pior vem agora...", "isso muda no slide 5"). NUNCA entregue tudo de uma vez.
-3. UMA ideia por slide. Carga cognitiva baixa = retenção alta.
-4. Frases curtas (máx 12 palavras). Quebra de linha com ritmo.
-5. Linguagem SENSORIAL e CONCRETA (cérebro processa imagem, não abstração). Ex: "barriga inchada após o almoço" > "desconforto digestivo".
-6. Storytelling em 1ª pessoa sempre que possível (neurônios-espelho ativam empatia).
-7. Aversão à perda > promessa de ganho. "O que você está perdendo ao..." converte mais que "ganhe...".
-8. Ancoragem por contraste: situação atual (dor) x desejada (transformação).
-9. Destaque palavras-emoção em **negrito**: medo, alívio, descoberta, finalmente, segredo, errado, verdade.
-10. Headline máx 12 palavras, subtexto máx 25. Máx 1-2 emojis funcionais por slide.
-11. Layouts: "capa" (slide 1), "topicos" (2-8), "cta" (9-10).
-12. Legenda COMPLEMENTA (não repete). Use AIDA condensado + 5-10 hashtags.
-13. CTA único, comando direto + benefício imediato + baixo atrito ("Comenta X e te mando Y agora").
-14. cta_stories: 3-5 Stories que abrem novo loop apontando para o post.
+   - ${intensidade === 'clinico' ? 'Convide para a ação com clareza, sem criar urgência artificial.' : 'Crie senso de momento certo para agir, sem ser apelativo.'}
+${intensityBlock}
+${proibidosInstruction}
 
 ═══ RESPOSTA — APENAS JSON VÁLIDO (sem markdown) ═══
 {

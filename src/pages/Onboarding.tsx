@@ -30,6 +30,8 @@ export default function Onboarding() {
   // Form state
   const [formData, setFormData] = useState({
     nome: profile?.nome || "",
+    titulo_profissional: profile?.titulo_profissional || "",
+    registro_profissional: profile?.registro_profissional || "",
     experiencias_marcantes: profile?.experiencias_marcantes || "",
     nicho: profile?.nicho || "",
     sub_nicho: profile?.sub_nicho || "",
@@ -43,6 +45,8 @@ export default function Onboarding() {
     promessa_principal: profile?.promessa_principal || "",
     tom_voz: profile?.tom_voz || "empático",
     arquetipo: profile?.arquetipo || "",
+    intensidade_tom: profile?.intensidade_tom || "equilibrado",
+    termos_proibidos: profile?.termos_proibidos || "",
   });
 
   const updateField = (field: string, value: string) => {
@@ -111,9 +115,30 @@ export default function Onboarding() {
           <CardContent className="space-y-4">
             {step === 1 && (
               <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Título profissional</Label>
+                    <Select value={formData.titulo_profissional || "nenhum"} onValueChange={(v) => updateField("titulo_profissional", v === "nenhum" ? "" : v)}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="nenhum">Sem título</SelectItem>
+                        <SelectItem value="Dra.">Dra.</SelectItem>
+                        <SelectItem value="Dr.">Dr.</SelectItem>
+                        <SelectItem value="Nutricionista">Nutricionista</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Registro (CRN)</Label>
+                    <Input value={formData.registro_profissional} onChange={(e) => updateField("registro_profissional", e.target.value)} placeholder="Ex: CRN-9 12345" />
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label>Seu nome</Label>
                   <Input value={formData.nome} onChange={(e) => updateField("nome", e.target.value)} placeholder="Como você quer ser chamada?" />
+                  <p className="text-xs text-muted-foreground">
+                    Assinatura que a IA vai usar: <strong>{[formData.titulo_profissional, formData.nome || "Seu Nome"].filter(Boolean).join(" ")}{formData.registro_profissional ? ` — ${formData.registro_profissional}` : ""}</strong>
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label>Experiências marcantes</Label>
@@ -202,6 +227,29 @@ export default function Onboarding() {
                 <div className="space-y-2">
                   <Label>Quem é o "inimigo comum" do seu público?</Label>
                   <Input value={formData.inimigo_comum} onChange={(e) => updateField("inimigo_comum", e.target.value)} placeholder="Ex: Dietas restritivas, industria de ultra-processados" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Intensidade da linguagem da IA</Label>
+                  <Select value={formData.intensidade_tom} onValueChange={(v) => updateField("intensidade_tom", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="clinico">Clínico — responsável, sem exagero nem alarme</SelectItem>
+                      <SelectItem value="equilibrado">Equilibrado — envolvente, sem sensacionalismo (recomendado)</SelectItem>
+                      <SelectItem value="agressivo">Alto impacto — neuromarketing pesado (venda de infoproduto)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Controla o quanto a IA usa gatilhos de urgência/medo. "Equilibrado" evita termos como "descoberta chocante" ou promessas de cura em qualquer opção.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Termos ou técnicas que a IA nunca deve usar (opcional)</Label>
+                  <Textarea
+                    value={formData.termos_proibidos}
+                    onChange={(e) => updateField("termos_proibidos", e.target.value)}
+                    placeholder="Ex: detox, milagre, cura, prometer emagrecimento sem esforço, comparar corpos"
+                    rows={2}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Arquétipo da marca (opcional)</Label>

@@ -20,8 +20,30 @@ const POST_TYPES = {
   ALCANCE: "Alcance - Conteúdo viral que atrai novos seguidores",
 };
 
-// Estrutura do carrossel com princípios de neuromarketing
-const CAROUSEL_STRUCTURE = `
+// Estrutura do carrossel — princípios ajustados pela intensidade de tom da profissional
+function buildCarouselStructure(intensidade: 'clinico' | 'equilibrado' | 'agressivo'): string {
+  if (intensidade === 'clinico') {
+    return `
+ESTRUTURA (5-7 slides):
+1. CAPA (Gancho 3s): curiosidade genuína, dado real ou pergunta honesta. Sem alarme, sem exagero.
+2-4. CONTEÚDO: cada slide entrega valor real. Pode indicar "no próximo slide" sem criar suspense manipulador.
+5-6. PROVA + CONTEXTO: caso real (sem prometer resultado garantido), dado, explicação do mecanismo.
+7. CTA CLARO: convite direto, sem pressão nem escassez fabricada.
+
+PRINCÍPIOS OBRIGATÓRIOS:
+- GANCHO em 3 segundos, honesto e específico
+- 1 ideia por slide (carga cognitiva baixa)
+- Frases curtas (máx 12 palavras)
+- Linguagem sensorial e concreta, sempre tecnicamente correta
+- Storytelling em 1ª pessoa quando fizer sentido, sem dramatização
+- PROIBIDO: promessa de cura/resultado garantido, urgência artificial, terrorismo nutricional, termos como "segredo" ou "descoberta chocante"
+- Emojis funcionais (0-2 por slide), nunca decorativos
+- Tom: profissional acolhedora, autoridade com responsabilidade
+- Máx 40-50 palavras por slide
+`;
+  }
+  if (intensidade === 'agressivo') {
+    return `
 ESTRUTURA NEURO-OTIMIZADA (5-7 slides):
 1. CAPA (Gancho 3s): Pattern interrupt + curiosidade. Use uma das técnicas:
    - Contradição ("Pare de beber água em jejum se...")
@@ -47,16 +69,49 @@ PRINCÍPIOS OBRIGATÓRIOS (neuromarketing/neurovendas):
 - Cada slide DEVE dar vontade de arrastar para o próximo
 - Tom: amiga especialista — autoridade sem distância
 - Máx 40-50 palavras por slide
+- LIMITE ÉTICO INEGOCIÁVEL mesmo neste modo: nunca prometer cura, resultado garantido ou usar terrorismo nutricional
 `;
+  }
+  return `
+ESTRUTURA (5-7 slides):
+1. CAPA (Gancho 3s): curiosidade ou contraste real. Uma das técnicas:
+   - Contraste ("A maioria erra nisso, mas não precisa ser assim")
+   - Número específico ("3 erros comuns na rotina alimentar")
+   - Pergunta provocativa, sem alarme ("Por que a dieta trava na 3ª semana?")
+2-4. CONTEÚDO: cada slide entrega valor real e pode indicar "no próximo slide" sem manipulação.
+5-6. PROVA + AUTORIDADE: caso real, número, transformação — sem prometer resultado garantido.
+7. CTA: comando direto + benefício real + baixo atrito.
+
+PRINCÍPIOS OBRIGATÓRIOS:
+- GANCHO em 3 segundos, com curiosidade genuína (não alarme)
+- 1 ideia por slide (carga cognitiva baixa)
+- Frases curtas (máx 12 palavras). Quebre linha gerando ritmo.
+- Linguagem sensorial concreta, sempre factualmente correta
+- Storytelling em 1ª pessoa quando fizer sentido
+- Contraste entre hábito comum x abordagem recomendada — sem humilhar
+- Destaque no máximo 1-2 palavras-chave em **negrito**, sem apelar para medo
+- Emojis funcionais (1-2 por slide), nunca decorativos
+- PROIBIDO: promessa de cura/resultado garantido, urgência fabricada, terrorismo nutricional
+- Tom: amiga especialista — autoridade sem distância
+- Máx 40-50 palavras por slide
+`;
+}
 
 function buildSystemPrompt(profile: any, products: any[]): string {
-  let context = `Você é um especialista em copywriting de alta conversão para Instagram, treinado em neuromarketing, neurociência aplicada e neurovendas. Seu trabalho é criar carrosséis que prendem o cérebro do leitor do primeiro ao último slide.
+  const intensidade = (profile?.intensidade_tom || 'equilibrado') as 'clinico' | 'equilibrado' | 'agressivo';
+  let context = `Você é um especialista em copywriting para Instagram na área de nutrição e saúde. Seu trabalho é criar carrosséis que prendem a atenção do leitor do primeiro ao último slide, de forma ${intensidade === 'clinico' ? 'clínica e responsável' : intensidade === 'agressivo' ? 'de alto impacto (neuromarketing)' : 'equilibrada'}.
 
-${CAROUSEL_STRUCTURE}
+${buildCarouselStructure(intensidade)}
 
 CONTEXTO DA PROFISSIONAL:`;
-  
-  if (profile?.nome) context += `\n- Nome: ${profile.nome}`;
+
+  const titulo = String(profile?.titulo_profissional || '').trim();
+  const registro = String(profile?.registro_profissional || '').trim();
+  if (profile?.nome) {
+    const assinatura = [titulo, profile.nome].filter(Boolean).join(' ') + (registro ? ` — ${registro}` : '');
+    context += `\n- Nome: ${profile.nome}`;
+    context += `\n- Assinatura oficial (use exatamente assim em créditos/fechamentos): "${assinatura}"`;
+  }
   if (profile?.nicho) context += `\n- Nicho: ${profile.nicho}`;
   if (profile?.sub_nicho) context += `\n- Sub-nicho: ${profile.sub_nicho}`;
   if (profile?.persona_ideal) context += `\n- Público-alvo: ${profile.persona_ideal}`;
@@ -68,14 +123,15 @@ CONTEXTO DA PROFISSIONAL:`;
   if (profile?.promessa_principal) context += `\n- Promessa: ${profile.promessa_principal}`;
   if (profile?.tom_voz) context += `\n- Tom de voz: ${profile.tom_voz}`;
   if (profile?.inimigo_comum) context += `\n- Inimigo comum: ${profile.inimigo_comum}`;
-  
+  if (profile?.termos_proibidos) context += `\n\nTERMOS E TÉCNICAS PROIBIDOS (regra dura, nunca use): ${profile.termos_proibidos}`;
+
   if (products && products.length > 0) {
     context += `\n\nPRODUTOS/SERVIÇOS:`;
     products.forEach((p, i) => {
       context += `\n${i + 1}. ${p.nome} - R$ ${p.ticket}`;
     });
   }
-  
+
   return context;
 }
 

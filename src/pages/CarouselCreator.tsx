@@ -30,7 +30,7 @@ import { useCalendarItems } from "@/hooks/useCalendarItems";
 import { ScheduleDialog } from "@/components/ScheduleDialog";
 import { ColorPicker } from "@/components/ColorPicker";
 import { PhotoSelectionDialog } from "@/components/PhotoSelectionDialog";
-import { downloadCarouselAsZip } from "@/lib/downloadZip";
+import { downloadCapturedSlidesAsZip } from "@/lib/downloadZip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,7 +50,7 @@ import { CarouselSlideEditor } from "@/components/carousel/CarouselSlideEditor";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { SlideToolbar } from "@/components/carousel/SlideToolbar";
-import { exportSlideAsImage } from "@/utils/exportCarousel";
+import { exportSlideAsImage, captureSlideAsDataUrl } from "@/utils/exportCarousel";
 import { useAuth } from "@/hooks/useAuth";
 import { useCarouselPersistence } from "@/hooks/useCarouselPersistence";
 import { useBrand } from "@/contexts/BrandContext";
@@ -107,6 +107,8 @@ export default function CarouselCreator() {
   const [ctaStyle, setCtaStyle] = useState<CtaStyle>("auto");
   const [narrativeElement, setNarrativeElement] = useState<NarrativeElement>("auto");
   const [customInstructions, setCustomInstructions] = useState("");
+  const [useMyCopy, setUseMyCopy] = useState(false);
+  const [userCopy, setUserCopy] = useState("");
   const [editingSlide, setEditingSlide] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
@@ -209,7 +211,11 @@ export default function CarouselCreator() {
       toast({ variant: "destructive", title: "Digite um tema" });
       return;
     }
-    await generateCarousel(topic, postType, contentPillar, customInstructions, undefined, funnelStage, ctaStyle, narrativeElement, contentFormat, sourceContext || undefined);
+    if (useMyCopy && !userCopy.trim()) {
+      toast({ variant: "destructive", title: "Cole sua copy no campo abaixo" });
+      return;
+    }
+    await generateCarousel(topic, postType, contentPillar, customInstructions, undefined, funnelStage, ctaStyle, narrativeElement, contentFormat, sourceContext || undefined, useMyCopy ? userCopy : undefined);
   };
 
   const handleNewContent = () => {
@@ -315,17 +321,22 @@ export default function CarouselCreator() {
   };
 
   const handleDownloadZip = async () => {
-    if (!carousel) return;
-
-    const hasImages = carousel.slides.some(s => s.imageUrl);
-    if (!hasImages) {
-      toast({ variant: "destructive", title: "Gere os designs primeiro" });
-      return;
-    }
+    if (!carousel || carousel.slides.length === 0 || currentContentFormat === 'reels_script') return;
 
     setIsDownloading(true);
+    const originalIndex = currentSlideIndex;
     try {
-      await downloadCarouselAsZip(carousel.slides, carousel.titulo);
+      // Captura cada slide exatamente como está na tela — com fundo de cor da marca,
+      // foto da biblioteca ou design gerado por IA, tanto faz. Isso permite baixar o
+      // carrossel completo sem depender de nenhuma geração de imagem por IA.
+      const waitForPaint = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const images: string[] = [];
+      for (let i = 0; i < carousel.slides.length; i++) {
+        setCurrentSlideIndex(i);
+        await waitForPaint();
+        images.push(await captureSlideAsDataUrl('active-slide-container'));
+      }
+      await downloadCapturedSlidesAsZip(images, carousel.titulo);
       toast({ title: "Download iniciado!" });
     } catch (error) {
       toast({
@@ -334,6 +345,7 @@ export default function CarouselCreator() {
         description: error instanceof Error ? error.message : "Tente novamente"
       });
     } finally {
+      setCurrentSlideIndex(originalIndex);
       setIsDownloading(false);
     }
   };
@@ -376,18 +388,20 @@ export default function CarouselCreator() {
                   <RefreshCw className="h-4 w-4 mr-2" /> Novo
                 </Button>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDownloadZip}
-                disabled={isDownloading || !carousel.slides.some(s => s.imageUrl)}
-              >
-                {isDownloading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <><Download className="h-4 w-4 mr-2" /> ZIP</>
-                )}
-              </Button>
+              {currentContentFormat !== 'reels_script' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadZip}
+                  disabled={isDownloading}
+                >
+                  {isDownloading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <><Download className="h-4 w-4 mr-2" /> ZIP</>
+                  )}
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={() => setShowScheduleDialog(true)}>
                 <CalendarPlus className="h-4 w-4 mr-2" /> Agendar
               </Button>
@@ -586,6 +600,38 @@ export default function CarouselCreator() {
                     <Lightbulb className="w-3 h-3" /> Quanto mais específico, melhor o resultado
                   </span>
                   <span className="text-xs text-muted-foreground">{topic.length} caracteres</span>
+                </div>
+
+                <div className="pt-2 border-t">
+                  <button
+                    type="button"
+                    onClick={() => setUseMyCopy(!useMyCopy)}
+                    className={cn(
+                      "flex items-center gap-2 text-sm font-medium transition-colors",
+                      useMyCopy ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <span className={cn(
+                      "flex h-4 w-4 items-center justify-center rounded border-2 transition-colors",
+                      useMyCopy ? "bg-primary border-primary" : "border-muted-foreground/40"
+                    )}>
+                      {useMyCopy && <Check className="h-3 w-3 text-primary-foreground" />}
+                    </span>
+                    Já escrevi minha copy — só quero organizar em slides
+                  </button>
+                  {useMyCopy && (
+                    <div className="mt-3 space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <Textarea
+                        value={userCopy}
+                        onChange={(e) => setUserCopy(e.target.value)}
+                        placeholder="Cole aqui o texto que você já escreveu. A IA vai apenas dividir em slides e sugerir hashtags — sem reescrever o que você já falou."
+                        className="min-h-[140px] text-sm resize-none"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        A IA não reescreve seu texto neste modo — só organiza no formato escolhido acima.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

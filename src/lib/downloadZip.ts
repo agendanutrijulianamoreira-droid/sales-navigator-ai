@@ -1,36 +1,21 @@
 import JSZip from "jszip";
 
-export async function downloadCarouselAsZip(
-  slides: { headline: string; imageUrl?: string }[],
-  title: string
-): Promise<void> {
+async function buildAndDownloadZip(images: string[], title: string): Promise<void> {
   const zip = new JSZip();
   const folder = zip.folder("carousel");
-  
+
   if (!folder) {
     throw new Error("Failed to create zip folder");
   }
 
-  // Filter slides with images
-  const slidesWithImages = slides.filter(slide => slide.imageUrl);
-  
-  if (slidesWithImages.length === 0) {
-    throw new Error("Nenhum slide tem design gerado");
-  }
-
-  // Download and add each image to the zip
-  for (let i = 0; i < slidesWithImages.length; i++) {
-    const slide = slidesWithImages[i];
-    if (!slide.imageUrl) continue;
-
+  for (let i = 0; i < images.length; i++) {
+    const imageUrl = images[i];
     try {
-      // Handle base64 data URLs
-      if (slide.imageUrl.startsWith("data:")) {
-        const base64Data = slide.imageUrl.split(",")[1];
+      if (imageUrl.startsWith("data:")) {
+        const base64Data = imageUrl.split(",")[1];
         folder.file(`slide-${i + 1}.png`, base64Data, { base64: true });
       } else {
-        // Handle external URLs
-        const response = await fetch(slide.imageUrl);
+        const response = await fetch(imageUrl);
         const blob = await response.blob();
         folder.file(`slide-${i + 1}.png`, blob);
       }
@@ -39,7 +24,6 @@ export async function downloadCarouselAsZip(
     }
   }
 
-  // Generate and download the zip
   const content = await zip.generateAsync({ type: "blob" });
   const url = URL.createObjectURL(content);
   const link = document.createElement("a");
@@ -49,4 +33,28 @@ export async function downloadCarouselAsZip(
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Downloads pre-captured slide images (data URLs from the on-screen design, AI-generated
+ * or not) as a ZIP. This is the "free" export path: it works regardless of whether any
+ * slide used AI, since the images come from what's already rendered on screen.
+ */
+export async function downloadCapturedSlidesAsZip(images: string[], title: string): Promise<void> {
+  if (images.length === 0) {
+    throw new Error("Nenhum slide para exportar");
+  }
+  await buildAndDownloadZip(images, title);
+}
+
+/** @deprecated Prefer downloadCapturedSlidesAsZip, which doesn't require AI-generated images. */
+export async function downloadCarouselAsZip(
+  slides: { headline: string; imageUrl?: string }[],
+  title: string
+): Promise<void> {
+  const slidesWithImages = slides.filter(slide => slide.imageUrl);
+  if (slidesWithImages.length === 0) {
+    throw new Error("Nenhum slide tem design gerado");
+  }
+  await buildAndDownloadZip(slidesWithImages.map(s => s.imageUrl as string), title);
 }
