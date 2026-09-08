@@ -1,16 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useAssets } from "@/hooks/useAssets";
+import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Camera, Upload, Sparkles, Image as ImageIcon,
   CheckCircle2, AlertCircle, Loader2, Trash2, Download,
-  User, Briefcase, GraduationCap
+  User, Briefcase, GraduationCap, Building2, Shirt, Save
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -56,12 +59,34 @@ const SUCCESS_TIPS = [
 ];
 
 export default function PhotoStudio() {
+  const { user } = useAuth();
+  const { profile, updateProfile } = useProfile();
   const { assets, loading: assetsLoading, addAsset, deleteAsset } = useAssets();
   const [isUploading, setIsUploading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedPack, setSelectedPack] = useState("headshot");
+  const [scenarioFile, setScenarioFile] = useState<File | null>(null);
+  const [scenarioPreviewUrl, setScenarioPreviewUrl] = useState<string | null>(null);
+  const [clothingStyle, setClothingStyle] = useState("");
+  const [isSavingPreferences, setIsSavingPreferences] = useState(false);
+
+  useEffect(() => {
+    setClothingStyle(profile?.clothing_style_description || "");
+  }, [profile?.clothing_style_description]);
+
+  useEffect(() => {
+    if (scenarioFile || !profile?.photo_scenario_reference) return;
+    let active = true;
+    supabase.storage
+      .from("assets")
+      .createSignedUrl(profile.photo_scenario_reference, 3600)
+      .then(({ data }) => {
+        if (active && data?.signedUrl) setScenarioPreviewUrl(data.signedUrl);
+      });
+    return () => { active = false; };
+  }, [profile?.photo_scenario_reference, scenarioFile]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -73,13 +98,13 @@ export default function PhotoStudio() {
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || !user) return;
     setIsUploading(true);
 
     try {
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `base-photos/${fileName}`;
+      const filePath = `${user.id}/base-photos/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('assets')
@@ -95,7 +120,7 @@ export default function PhotoStudio() {
         tipo: 'foto_base',
         subtipo: null,
         url: publicUrl,
-        metadata: { originalName: selectedFile.name }
+        metadata: { originalName: selectedFile.name, storagePath: filePath }
       });
 
       toast.success("Foto base carregada com sucesso!");
@@ -104,6 +129,50 @@ export default function PhotoStudio() {
       toast.error("Erro ao carregar foto");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleScenarioFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Escolha uma imagem para o cenário");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem do cenário deve ter até 5 MB");
+      return;
+    }
+    setScenarioFile(file);
+    setScenarioPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleSavePhotoPreferences = async () => {
+    if (!user) return;
+    setIsSavingPreferences(true);
+    try {
+      let scenarioPath = profile?.photo_scenario_reference || null;
+      if (scenarioFile) {
+        const fileExt = scenarioFile.name.split(".").pop() || "jpg";
+        scenarioPath = `${user.id}/photo-scenarios/${crypto.randomUUID()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("assets")
+          .upload(scenarioPath, scenarioFile, { contentType: scenarioFile.type, upsert: false });
+        if (uploadError) throw uploadError;
+      }
+
+      const { error } = await updateProfile({
+        photo_scenario_reference: scenarioPath,
+        clothing_style_description: clothingStyle.trim() || null,
+      });
+      if (error) throw error;
+      setScenarioFile(null);
+      toast.success("Direção visual salva para os próximos ensaios");
+    } catch (error) {
+      console.error("Photo preferences error:", error);
+      toast.error("Não foi possível salvar cenário e roupa");
+    } finally {
+      setIsSavingPreferences(false);
     }
   };
 
@@ -121,11 +190,31 @@ export default function PhotoStudio() {
         return;
       }
 
-      console.log("[PhotoStudio] Invoking generate-photo on URL:", import.meta.env.VITE_SUPABASE_URL);
+      const storagePath = typeof basePhoto.metadata?.storagePath === "string" ? basePhoto.metadata.storagePath : null;
+      let basePhotoUrl = basePhoto.url;
+      if (storagePath) {
+        const { data: signedBase, error: signedBaseError } = await supabase.storage
+          .from("assets")
+          .createSignedUrl(storagePath, 900);
+        if (signedBaseError) throw signedBaseError;
+        basePhotoUrl = signedBase.signedUrl;
+      }
+
+      let scenarioReferenceUrl: string | undefined;
+      if (profile?.photo_scenario_reference) {
+        const { data: signedScenario, error: signedScenarioError } = await supabase.storage
+          .from("assets")
+          .createSignedUrl(profile.photo_scenario_reference, 900);
+        if (signedScenarioError) throw signedScenarioError;
+        scenarioReferenceUrl = signedScenario.signedUrl;
+      }
+
       const { data, error: functionError } = await supabase.functions.invoke('generate-photo', {
         body: {
-          basePhotoUrl: basePhoto.url,
+          basePhotoUrl,
           pack: selectedPack,
+          scenarioReferenceUrl,
+          clothingStyleDescription: profile?.clothing_style_description || undefined,
         },
       });
 
@@ -151,10 +240,11 @@ export default function PhotoStudio() {
       });
 
       toast.success("Foto profissional gerada com sucesso!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Generation error:", error);
       // supabase-js returns a generic message when network fails
-      if (error?.message?.includes("Failed to send a request")) {
+      const errorMessage = error instanceof Error ? error.message : "";
+      if (errorMessage.includes("Failed to send a request")) {
         toast.error(
           "Não foi possível alcançar a função. Verifique se ela está implantada e se o SUPABASE_URL está correto."
         );
@@ -254,6 +344,72 @@ export default function PhotoStudio() {
             </CardContent>
           </Card>
 
+          <Card className="border-primary/15">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Building2 className="h-5 w-5 text-primary" />
+                Direção visual persistente
+              </CardTitle>
+              <CardDescription>
+                Configure uma vez. A IA reaproveita o ambiente e o estilo de roupa em todos os ensaios.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="scenario-upload" className="text-sm font-medium">
+                  Cenário de referência
+                </Label>
+                <label
+                  htmlFor="scenario-upload"
+                  className="relative flex min-h-36 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-primary/25 bg-primary/[0.03] focus-within:ring-2 focus-within:ring-ring"
+                >
+                  {scenarioPreviewUrl ? (
+                    <img src={scenarioPreviewUrl} alt="Cenário de referência" className="h-40 w-full object-cover" />
+                  ) : (
+                    <div className="px-4 py-8 text-center">
+                      <Building2 className="mx-auto h-7 w-7 text-primary/60" />
+                      <p className="mt-2 text-sm font-medium">Enviar foto do consultório ou ambiente</p>
+                      <p className="mt-1 text-xs text-muted-foreground">JPG ou PNG até 5 MB</p>
+                    </div>
+                  )}
+                  <Input
+                    id="scenario-upload"
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={handleScenarioFileChange}
+                  />
+                </label>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="clothing-style" className="flex items-center gap-2 text-sm font-medium">
+                  <Shirt className="h-4 w-4 text-primary" />
+                  Estilo de roupa
+                </Label>
+                <Textarea
+                  id="clothing-style"
+                  value={clothingStyle}
+                  onChange={(event) => setClothingStyle(event.target.value)}
+                  maxLength={600}
+                  rows={4}
+                  placeholder="Ex.: alfaiataria vinho e bege, tecidos sem estampas, joias douradas discretas, sem jaleco."
+                />
+                <p className="text-right text-[10px] text-muted-foreground">{clothingStyle.length}/600</p>
+              </div>
+
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={handleSavePhotoPreferences}
+                disabled={isSavingPreferences}
+              >
+                {isSavingPreferences ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Salvar direção visual
+              </Button>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -288,7 +444,7 @@ export default function PhotoStudio() {
               <Button
                 className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 py-6"
                 size="lg"
-                disabled={!selectedFile || isGenerating}
+                disabled={(!selectedFile && !assets.some((asset) => asset.tipo === "foto_base")) || isGenerating}
                 onClick={handleGenerate}
               >
                 {isGenerating ? (

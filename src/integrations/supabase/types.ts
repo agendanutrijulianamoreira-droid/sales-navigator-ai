@@ -450,6 +450,7 @@ export type Database = {
           brand_secondary_color: string | null
           brand_style: string | null
           brand_watermark_url: string | null
+          clothing_style_description: string | null
           created_at: string
           desejo_principal: string | null
           dor_principal: string | null
@@ -465,6 +466,7 @@ export type Database = {
           objecoes: string | null
           onboarding_completed: boolean | null
           onboarding_step: number | null
+          photo_scenario_reference: string | null
           persona_ideal: string | null
           problema_90_dias: string | null
           promessa_principal: string | null
@@ -484,6 +486,7 @@ export type Database = {
           brand_secondary_color?: string | null
           brand_style?: string | null
           brand_watermark_url?: string | null
+          clothing_style_description?: string | null
           created_at?: string
           desejo_principal?: string | null
           dor_principal?: string | null
@@ -499,6 +502,7 @@ export type Database = {
           objecoes?: string | null
           onboarding_completed?: boolean | null
           onboarding_step?: number | null
+          photo_scenario_reference?: string | null
           persona_ideal?: string | null
           problema_90_dias?: string | null
           promessa_principal?: string | null
@@ -518,6 +522,7 @@ export type Database = {
           brand_secondary_color?: string | null
           brand_style?: string | null
           brand_watermark_url?: string | null
+          clothing_style_description?: string | null
           created_at?: string
           desejo_principal?: string | null
           dor_principal?: string | null
@@ -533,6 +538,7 @@ export type Database = {
           objecoes?: string | null
           onboarding_completed?: boolean | null
           onboarding_step?: number | null
+          photo_scenario_reference?: string | null
           persona_ideal?: string | null
           problema_90_dias?: string | null
           promessa_principal?: string | null
@@ -540,6 +546,51 @@ export type Database = {
           tom_voz?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      research_items: {
+        Row: {
+          external_id: string
+          fetched_at: string
+          id: string
+          keywords: string[]
+          published_at: string | null
+          query_key: string
+          source: string
+          source_metadata: Json
+          summary: string
+          title: string
+          type: string
+          url: string
+        }
+        Insert: {
+          external_id: string
+          fetched_at?: string
+          id?: string
+          keywords?: string[]
+          published_at?: string | null
+          query_key: string
+          source: string
+          source_metadata?: Json
+          summary?: string
+          title: string
+          type: string
+          url: string
+        }
+        Update: {
+          external_id?: string
+          fetched_at?: string
+          id?: string
+          keywords?: string[]
+          published_at?: string | null
+          query_key?: string
+          source?: string
+          source_metadata?: Json
+          summary?: string
+          title?: string
+          type?: string
+          url?: string
         }
         Relationships: []
       }
