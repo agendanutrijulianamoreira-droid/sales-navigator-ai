@@ -238,7 +238,8 @@ export function useCarouselGenerator() {
     ctaStyle?: CtaStyle,
     narrativeElement?: NarrativeElement,
     contentFormat?: ContentFormat,
-    sourceContext?: ResearchSourceContext
+    sourceContext?: ResearchSourceContext,
+    userCopy?: string
   ) => {
     // 1. Verificar Créditos
     const hasCredit = await consumeCredit(1);
@@ -250,6 +251,8 @@ export function useCarouselGenerator() {
     try {
       const { data, error } = await supabase.functions.invoke('generate-carousel-text', {
         body: {
+          mode: userCopy?.trim() ? 'use_my_copy' : undefined,
+          userCopy: userCopy?.trim() || undefined,
           topic,
           postType,
           contentPillar,

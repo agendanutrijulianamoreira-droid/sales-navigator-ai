@@ -15,21 +15,52 @@ serve(async (req) => {
   if (!authHeader?.startsWith("Bearer ")) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
+  let authenticatedUserId: string | null = null;
   try {
     const { createClient: _createAuthClient } = await import("https://esm.sh/@supabase/supabase-js@2.45.0");
     const _authClient = _createAuthClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
     );
     const token = authHeader.replace("Bearer ", "");
     const { data: _claims, error: _authErr } = await _authClient.auth.getClaims(token);
     if (_authErr || !_claims?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+    const { data: { user } } = await _authClient.auth.getUser();
+    authenticatedUserId = user?.id ?? null;
   } catch (_e) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
+  // Consumir crédito de IA — geração de imagem é a operação mais cara do sistema
+  // e antes não tinha nenhum controle de custo (diferente de generate-carousel-text).
+  if (authenticatedUserId) {
+    const { createClient: _createAdminClient } = await import("https://esm.sh/@supabase/supabase-js@2.45.0");
+    const adminClient = _createAdminClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+    const { data: result } = await adminClient.rpc("consume_ai_credit", {
+      _user_id: authenticatedUserId,
+      _feature: "generate_design",
+      _credits: 1,
+    });
+    if (!(result as any)?.ok) {
+      return new Response(JSON.stringify({
+        error: (result as any)?.reason === "insufficient_credits"
+          ? "Créditos de IA esgotados. Use um fundo já salvo na sua biblioteca (sem custo) ou faça upgrade do plano."
+          : (result as any)?.reason === "no_subscription" || (result as any)?.reason === "inactive"
+            ? "Assinatura inativa. Renove para continuar gerando designs com IA."
+            : "Sem permissão para gerar design com IA.",
+        reason: (result as any)?.reason,
+      }), {
+        status: 402,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
 
   try {
     const { slide, style, profileName, brandColors, fontFamily, contentFormat } = await req.json();
