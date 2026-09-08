@@ -16,11 +16,13 @@ const TYPE_CONFIG = {
 };
 
 const STATUS_CONFIG = {
-  planejado: { label: "Planejado", dot: "bg-gray-400" },
-  rascunho: { label: "Rascunho", dot: "bg-amber-400" },
-  pronto: { label: "Pronto", dot: "bg-blue-500" },
-  agendado: { label: "Agendado", dot: "bg-purple-500" },
-  publicado: { label: "Publicado", dot: "bg-emerald-500" },
+  planejado:    { label: "Planejado",      dot: "bg-gray-400",   bar: "bg-gray-300" },
+  rascunho:     { label: "Rascunho",       dot: "bg-amber-400",  bar: "bg-amber-300" },
+  em_aprovacao: { label: "Em aprovação",   dot: "bg-sky-400",    bar: "bg-sky-300" },
+  aprovado:     { label: "Aprovado",       dot: "bg-green-500",  bar: "bg-green-400" },
+  pronto:       { label: "Pronto",         dot: "bg-blue-500",   bar: "bg-blue-400" },
+  agendado:     { label: "Agendado",       dot: "bg-purple-500", bar: "bg-purple-400" },
+  publicado:    { label: "Publicado",      dot: "bg-emerald-500",bar: "bg-emerald-400" },
 };
 
 interface DraggablePostCardProps {
@@ -58,7 +60,8 @@ export function DraggablePostCard({ post, onEdit, onDuplicate, onDelete, variant
   }, [post.generation_id]);
 
   const typeConfig = TYPE_CONFIG[post.tipo as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.post_unico;
-  const statusConfig = STATUS_CONFIG[(post.status ?? "planejado") as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.planejado;
+  const normalizedStatus = post.status === "criado" ? "pronto" : (post.status ?? "planejado");
+  const statusConfig = STATUS_CONFIG[normalizedStatus as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.planejado;
 
   if (variant === "week") {
     return (
@@ -132,6 +135,8 @@ export function DraggablePostCard({ post, onEdit, onDuplicate, onDelete, variant
           isDragging && "opacity-30"
         )}
       >
+      {/* Status bar — thin top stripe for quick visual scanning */}
+      <div className={cn("h-0.5 w-full", statusConfig.bar)} />
       {thumbnail ? (
         <div className="flex items-center gap-1.5 p-1">
           <img src={thumbnail} alt="" className="w-6 h-6 rounded object-cover shrink-0" />

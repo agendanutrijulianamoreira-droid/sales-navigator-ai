@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Link } from "react-router-dom";
-import { 
+import {
   Calendar, Grid3X3, Plus, ChevronLeft, ChevronRight, Pencil, Trash2,
   FileText, ArrowLeft, Loader2, Sparkles,
   Copy, Download, Search, MoreHorizontal, Zap,
@@ -39,12 +39,14 @@ import {
   StickyNote,
   BarChart2,
   List,
-  LayoutGrid
+  LayoutGrid,
+  Instagram
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { CalendarDayCell } from "@/components/CalendarDayCell";
 import { ReportsView } from "@/components/ReportsView";
+import { FeedView } from "@/components/FeedView";
 import { getHolidayForDate, COMMEMORATIVE_DATES } from "@/lib/constants/holidays";
 import {
   DropdownMenu,
@@ -82,7 +84,7 @@ function ContentPlanner() {
   const { profile } = useProfile();
   const { items, isLoading, addItem, deleteItem, updateItem, getItemsForDate } = useCalendarItems();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<"month" | "week" | "pipeline" | "reports">("month");
+  const [view, setView] = useState<"month" | "week" | "pipeline" | "feed" | "reports">("month");
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedPost, setSelectedPost] = useState<CalendarItem | undefined>();
@@ -476,6 +478,14 @@ function ContentPlanner() {
                 <Columns3 className="h-3.5 w-3.5" /> Pipeline
               </Button>
               <Button
+                variant={view === "feed" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-8 text-xs font-semibold px-3 gap-1"
+                onClick={() => setView("feed")}
+              >
+                <Instagram className="h-3.5 w-3.5" /> Feed
+              </Button>
+              <Button
                 variant={view === "reports" ? "secondary" : "ghost"}
                 size="sm"
                 className="h-8 text-xs font-semibold px-3 gap-1"
@@ -485,7 +495,7 @@ function ContentPlanner() {
               </Button>
             </div>
 
-            {view !== "reports" && (
+            {view !== "reports" && view !== "feed" && (
             <Select value={filterType || "todos"} onValueChange={(v) => setFilterType(v === "todos" ? null : v)}>
               <SelectTrigger className="w-[180px] h-9 bg-gray-50 border-none text-sm font-medium">
                 <SelectValue placeholder="Todos os eventos" />
@@ -499,7 +509,7 @@ function ContentPlanner() {
             </Select>
             )}
 
-            {view !== "reports" && (
+            {view !== "reports" && view !== "feed" && (
             <Button
               className="bg-primary hover:bg-primary/90 text-white font-bold h-9"
               onClick={() => { setSelectedDate(new Date()); setShowScheduleDialog(true); }}
@@ -530,7 +540,7 @@ function ContentPlanner() {
 
 
         {/* ─── Status filter chips ─── */}
-        {view !== "reports" && (
+        {view !== "reports" && view !== "feed" && (
           <div className="flex items-center gap-1.5 px-4 py-2 bg-white border-b border-gray-100 overflow-x-auto">
             {[
               { key: null,            label: "Todos",          dot: "bg-gray-300" },
@@ -578,6 +588,15 @@ function ContentPlanner() {
             {view === "reports" ? (
               /* ═══ REPORTS VIEW ═══ */
               <ReportsView items={items} />
+            ) : view === "feed" ? (
+              /* ═══ FEED VIEW ═══ */
+              <FeedView
+                items={filteredItems}
+                currentMonth={currentMonth}
+                currentYear={currentYear}
+                onEditPost={handleEditPost}
+                onDeletePost={deleteItem}
+              />
             ) : view === "pipeline" ? (
               /* ═══ PIPELINE / KANBAN VIEW ═══ */
               <>
@@ -915,7 +934,7 @@ function ContentPlanner() {
             )}
 
             {/* Floating generation buttons (visible on month/week views) */}
-            {view !== "pipeline" && view !== "reports" && (
+            {view !== "pipeline" && view !== "reports" && view !== "feed" && (
               <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-[60]">
                 <Button
                   variant="outline"
