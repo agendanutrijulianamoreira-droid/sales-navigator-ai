@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
     Sparkles, Target, Calendar, ShoppingBag, MessageSquare,
-    BarChart3, BookOpen, User, Zap, Home, Camera, Settings, LogOut, Plus, Coins, Crown, Trophy, TrendingUp
+    BarChart3, BookOpenCheck, Zap, Home, Camera, Settings, LogOut, Plus, Coins, Crown, Trophy, TrendingUp
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useCredits } from "@/hooks/useCredits";
@@ -29,6 +29,7 @@ const NAV_GROUPS = [
         label: "Conteúdo",
         items: [
             { title: "Calendário", icon: Calendar, href: "/planner" },
+            { title: "Fontes & Pesquisa", icon: BookOpenCheck, href: "/research" },
             { title: "Criar Conteúdo", icon: Sparkles, href: "/carousel-creator" },
             { title: "Estúdio de Fotos", icon: Camera, href: "/photo-studio" },
         ],

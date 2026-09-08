@@ -81,6 +81,10 @@ verify_jwt = true
 enabled = true
 verify_jwt = true
 
+[functions.fetch-research-items]
+enabled = true
+verify_jwt = true
+
 [functions.generate-challenge]
 enabled = true
 verify_jwt = true

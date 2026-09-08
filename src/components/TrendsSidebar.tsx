@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useProfile } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -35,12 +35,22 @@ export function TrendsSidebar({ onApplyIdea }: TrendsSidebarProps) {
     const [ideas, setIdeas] = useState<ViralIdea[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    const fetchIdeas = async () => {
+    const fetchIdeas = useCallback(async () => {
         if (!profile) return;
         setIsLoading(true);
         try {
+            const { data: researchData } = await supabase.functions.invoke("fetch-research-items", {
+                body: {
+                    niche: profile.nicho,
+                    subNiche: profile.sub_nicho,
+                },
+            });
+            const recentSources = Array.isArray(researchData?.items)
+                ? researchData.items.slice(0, 12)
+                : [];
+
             const { data, error } = await supabase.functions.invoke("get-viral-ideas", {
-                body: { profile },
+                body: { profile, recentSources: recentSources || [] },
             });
 
             if (error) throw error;
@@ -51,11 +61,11 @@ export function TrendsSidebar({ onApplyIdea }: TrendsSidebarProps) {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [profile]);
 
     useEffect(() => {
         fetchIdeas();
-    }, [profile]);
+    }, [fetchIdeas]);
 
     return (
         <div className="flex flex-col h-full bg-white border-l border-gray-100 w-80 shadow-[-4px_0_15px_rgba(0,0,0,0.02)]">
@@ -78,7 +88,7 @@ export function TrendsSidebar({ onApplyIdea }: TrendsSidebarProps) {
                     </Button>
                 </div>
                 <p className="text-xs text-gray-500 leading-relaxed font-medium">
-                    Sugestões estratégicas baseadas no seu nicho para aumentar seu alcance.
+                    Ideias ancoradas nas fontes recentes do seu nicho sempre que disponíveis.
                 </p>
             </div>
 
@@ -89,7 +99,7 @@ export function TrendsSidebar({ onApplyIdea }: TrendsSidebarProps) {
                             <Loader2 className="h-8 w-8 text-primary animate-spin" />
                             <p className="text-sm text-gray-500 font-medium">Analisando o mercado...</p>
                         </div>
-                    ) : (
+                    ) : ideas.length > 0 ? (
                         ideas.map((idea, index) => (
                             <Card
                                 key={index}
@@ -138,6 +148,11 @@ export function TrendsSidebar({ onApplyIdea }: TrendsSidebarProps) {
                                 </CardContent>
                             </Card>
                         ))
+                    ) : (
+                        <div className="py-16 text-center">
+                            <p className="text-sm font-medium text-gray-700">Nenhuma ideia disponível</p>
+                            <p className="mt-1 text-xs text-gray-500">Atualize as fontes no Research Hub e tente novamente.</p>
+                        </div>
                     )}
                 </div>
             </ScrollArea>

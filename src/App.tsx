@@ -31,6 +31,7 @@ const Results = lazy(() => import("./pages/Results"));
 const Mentor = lazy(() => import("./pages/Mentor"));
 const Settings = lazy(() => import("./pages/Settings"));
 const PhotoStudio = lazy(() => import("./pages/PhotoStudio"));
+const ResearchHub = lazy(() => import("./pages/ResearchHub"));
 const Funnels = lazy(() => import("./pages/Funnels"));
 const VipListManager = lazy(() => import("./pages/VipListManager"));
 const ChallengeCreator = lazy(() => import("./pages/ChallengeCreator"));
@@ -106,6 +107,7 @@ const App = () => (
                 <Route path="/mentor" element={<Mentor />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/photo-studio" element={<PhotoStudio />} />
+                <Route path="/research" element={<ResearchHub />} />
                 <Route path="/funnels" element={<Funnels />} />
                 <Route path="/vip-list" element={<VipListManager />} />
                 <Route path="/challenge-creator" element={<ChallengeCreator />} />

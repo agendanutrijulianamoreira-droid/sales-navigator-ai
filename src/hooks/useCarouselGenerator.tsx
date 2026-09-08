@@ -5,6 +5,7 @@ import { useToast } from "./use-toast";
 import { useBrand } from "@/contexts/BrandContext";
 import { useCredits } from "./useCredits";
 import { supabase } from "@/integrations/supabase/client";
+import type { ResearchSourceContext } from "@/types/research";
 
 export interface CarouselSlide {
   numero: number;
@@ -23,6 +24,7 @@ export interface CarouselData {
   slides: CarouselSlide[];
   legenda: string;
   cta_stories?: string;
+  source?: ResearchSourceContext;
 }
 
 export interface WeekContent {
@@ -235,7 +237,8 @@ export function useCarouselGenerator() {
     funnelStage?: FunnelStage,
     ctaStyle?: CtaStyle,
     narrativeElement?: NarrativeElement,
-    contentFormat?: ContentFormat
+    contentFormat?: ContentFormat,
+    sourceContext?: ResearchSourceContext
   ) => {
     // 1. Verificar Créditos
     const hasCredit = await consumeCredit(1);
@@ -258,6 +261,7 @@ export function useCarouselGenerator() {
           profile,
           products,
           strategyContext,
+          sourceContext,
           brandColors: brand.primary ? `Primary: ${brand.primary}, Secondary: ${brand.secondary}` : undefined,
           brandFonts: brand.fontHeading ? `Heading: ${brand.fontHeading}, Body: ${brand.fontBody}` : undefined,
         }
