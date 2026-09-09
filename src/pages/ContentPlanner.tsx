@@ -29,7 +29,7 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   Calendar, Grid3X3, Plus, ChevronLeft, ChevronRight, Pencil, Trash2,
   FileText, ArrowLeft, Loader2, Sparkles,
@@ -43,7 +43,6 @@ import {
   LayoutGrid
 } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 import { CalendarDayCell } from "@/components/CalendarDayCell";
 import { ReportsView } from "@/components/ReportsView";
 import { getHolidayForDate, COMMEMORATIVE_DATES } from "@/lib/constants/holidays";
@@ -80,6 +79,7 @@ const MONTHS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Jul
 
 function ContentPlanner() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile } = useProfile();
   const { items, isLoading, addItem, addBatchItems, deleteItem, updateItem, getItemsForDate } = useCalendarItems();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -93,7 +93,9 @@ function ContentPlanner() {
   const [showStatistics, setShowStatistics] = useState(false);
   const [showTrends, setShowTrends] = useState(false);
   const [pipelineView, setPipelineView] = useState<"kanban" | "list">("kanban");
-  const [showGeneratePosts, setShowGeneratePosts] = useState(false);
+  const [showGeneratePosts, setShowGeneratePosts] = useState(
+    () => Boolean((location.state as { openGenerator?: boolean } | null)?.openGenerator),
+  );
 
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
