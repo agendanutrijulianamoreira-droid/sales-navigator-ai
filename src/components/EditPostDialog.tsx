@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarIcon, Loader2, Copy, AlertCircle, Palette } from "lucide-react";
+import { CalendarIcon, Loader2, Copy, AlertCircle, Palette, ArrowRight, Sparkles } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CalendarItem } from "@/hooks/useCalendarItems";
 import { useGenerations } from "@/hooks/useGenerations";
@@ -39,10 +39,6 @@ const CONTENT_TYPES = [
 ];
 
 export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post }: EditPostDialogProps) {
-  // safety: we expect a post when the dialog is shown
-  if (open && !post) {
-    return null;
-  }
   const navigate = useNavigate();
   const { getGeneration } = useGenerations();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -129,6 +125,29 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
     }
   };
 
+  const handleCreatePost = async () => {
+    if (!post || !selectedDate || !titulo.trim()) {
+      toast.error("Preencha o título e a data antes de criar o post.");
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      if (hasChanges) {
+        await onUpdate(post.id, {
+          date: format(selectedDate, "yyyy-MM-dd"),
+          tipo,
+          titulo: titulo.trim(),
+          notas: notas.trim() || undefined,
+          status,
+        });
+      }
+      onOpenChange(false);
+      navigate(`/post-creator/${post.id}`);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleClose = () => {
     if (hasChanges) {
       if (!window.confirm("Você tem mudanças não salvas. Deseja descartar?")) {
@@ -185,16 +204,18 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
     }
   };
 
+  if (open && !post) return null;
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CalendarIcon className="h-5 w-5 text-primary" />
-            Editar Post
+            Rascunho do calendário
           </DialogTitle>
           <DialogDescription>
-            Atualize os detalhes do seu post agendado
+            Revise a ideia e siga para o estúdio de criação quando estiver pronta.
           </DialogDescription>
         </DialogHeader>
 
@@ -345,6 +366,19 @@ export function EditPostDialog({ open, onOpenChange, onUpdate, onDuplicate, post
               </p>
             )}
           </div>
+        </div>
+
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 rounded-lg bg-primary p-2 text-primary-foreground"><Sparkles className="h-4 w-4" /></div>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold">Transformar rascunho em post</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Edite título, corpo, assinatura e escolha a capa. Os slides internos recebem imagens de um banco público.</p>
+            </div>
+          </div>
+          <Button className="mt-4 w-full gap-2" onClick={handleCreatePost} disabled={isUpdating || !post}>
+            Criar post <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
 
         <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">

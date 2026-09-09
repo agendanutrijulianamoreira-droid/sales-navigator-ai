@@ -26,6 +26,7 @@ const BrandHub = lazy(() => import("./pages/BrandHub"));
 const BusinessLab = lazy(() => import("./pages/BusinessLab"));
 const ContentPlanner = lazy(() => import("./pages/ContentPlanner"));
 const CarouselCreator = lazy(() => import("./pages/CarouselCreator"));
+const PostCreator = lazy(() => import("./pages/PostCreator"));
 const Conversion = lazy(() => import("./pages/Conversion"));
 const Results = lazy(() => import("./pages/Results"));
 const Mentor = lazy(() => import("./pages/Mentor"));
@@ -112,6 +113,7 @@ const App = () => (
                 <Route path="/business-lab" element={<BusinessLab />} />
                 <Route path="/planner" element={<ContentPlanner />} />
                 <Route path="/carousel-creator" element={<CarouselCreator />} />
+                <Route path="/post-creator/:draftId" element={<PostCreator />} />
                 <Route path="/conversion" element={<Conversion />} />
                 <Route path="/results" element={<Results />} />
                 <Route path="/mentor" element={<Mentor />} />

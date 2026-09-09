@@ -64,6 +64,7 @@ export function BrandKit() {
       await handleColorChange("brand_neutral_color", palette.neutral);
       await handleFontChange("brand_font_title", palette.font_title || "Space Grotesk");
       await handleFontChange("brand_font_body", palette.font_body || "Inter");
+      await updateProfile({ instagram_handle: cleanHandle });
 
       toast.success("Paleta gerada pela IA com sucesso! ✨");
       setIgHandle("");

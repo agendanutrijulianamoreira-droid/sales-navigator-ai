@@ -75,6 +75,19 @@ export default function Settings() {
               </p>
             </div>
             <div className="space-y-2">
+              <Label>Instagram para o rodapé</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 font-semibold text-muted-foreground">@</span>
+                <Input
+                  value={profile?.instagram_handle || ""}
+                  onChange={(e) => updateProfile({ instagram_handle: e.target.value.replace(/^@/, "").replace(/\s/g, "") })}
+                  placeholder="seuinstagram"
+                  className="pl-8"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">A IA usa este @ no rodapé dos novos posts.</p>
+            </div>
+            <div className="space-y-2">
               <Label>Email</Label>
               <Input
                 value={user?.email || ""}

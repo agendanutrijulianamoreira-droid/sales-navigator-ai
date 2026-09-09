@@ -10,6 +10,7 @@ import { useMarketingStrategy } from "@/hooks/useMarketingStrategy";
 import { supabase } from "@/integrations/supabase/client";
 import { ScheduleDialog } from "@/components/ScheduleDialog";
 import { EditPostDialog } from "@/components/EditPostDialog";
+import { GeneratePostsDialog, GENERATION_PERIODS, type GenerationPeriod } from "@/components/GeneratePostsDialog";
 import { SmartAlerts } from "@/components/SmartAlerts";
 import { ContentStatistics } from "@/components/ContentStatistics";
 import { DateSuggestions } from "@/components/DateSuggestions";
@@ -80,7 +81,7 @@ const MONTHS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Jul
 function ContentPlanner() {
   const navigate = useNavigate();
   const { profile } = useProfile();
-  const { items, isLoading, addItem, deleteItem, updateItem, getItemsForDate } = useCalendarItems();
+  const { items, isLoading, addItem, addBatchItems, deleteItem, updateItem, getItemsForDate } = useCalendarItems();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"month" | "week" | "pipeline" | "reports">("month");
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
@@ -92,6 +93,7 @@ function ContentPlanner() {
   const [showStatistics, setShowStatistics] = useState(false);
   const [showTrends, setShowTrends] = useState(false);
   const [pipelineView, setPipelineView] = useState<"kanban" | "list">("kanban");
+  const [showGeneratePosts, setShowGeneratePosts] = useState(false);
 
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
@@ -165,7 +167,20 @@ function ContentPlanner() {
   const handleDuplicatePost = async (post: CalendarItem) => {
     const newDate = new Date(post.data);
     newDate.setDate(newDate.getDate() + 7);
-    await addItem({ data: newDate.toISOString().split('T')[0], tipo: post.tipo, titulo: `${post.titulo} (Cópia)`, notas: post.notas || undefined });
+    await addItem({
+      data: newDate.toISOString().split('T')[0],
+      tipo: post.tipo,
+      titulo: `${post.titulo} (Cópia)`,
+      notas: post.notas,
+      status: "rascunho",
+      conteudo_corpo: post.conteudo_corpo,
+      cabecalho: post.cabecalho,
+      rodape: post.rodape,
+      estrategia_snapshot: post.estrategia_snapshot,
+      cover_mode: post.cover_mode,
+      cover_image_url: post.cover_image_url,
+      slide_images: post.slide_images,
+    });
     toast.success("Post duplicado!");
   };
 
@@ -183,23 +198,19 @@ function ContentPlanner() {
   const { generateContent, isLoading: isAISpecialistLoading } = useAISpecialist();
   const [isGeneratingMonth, setIsGeneratingMonth] = useState(false);
   const [monthProgress, setMonthProgress] = useState("");
-  const { addBatchItems } = useCalendarItems();
   const { hasPremiumAccess, isLoading: isRoleLoading } = useUserRole();
   const { products } = useProducts();
   const { strategy } = useMarketingStrategy();
 
   const isPremium = hasPremiumAccess();
 
-  const handleGenerateAIPlan = async (daysCount: number = 30) => {
+  const handleGenerateAIPlan = async (period: GenerationPeriod) => {
     if (!isPremium) {
       toast.error("Funcionalidade exclusiva para usuários Elite, Teste e Admin!");
       return;
     }
 
-    if (items.length > 5) {
-      const confirm = window.confirm(`Isso irá gerar ~${daysCount} novos itens no seu calendário. Deseja continuar?`);
-      if (!confirm) return;
-    }
+    const option = GENERATION_PERIODS[period];
 
     setIsGeneratingMonth(true);
     setMonthProgress("Analisando seu perfil e produtos...");
@@ -217,7 +228,9 @@ function ContentPlanner() {
           profile,
           products,
           startDate: startDate.toISOString().split("T")[0],
-          daysCount,
+          daysCount: option.days,
+          postCount: option.posts,
+          period,
           monthlyStrategy
         },
       });
@@ -230,8 +243,9 @@ function ContentPlanner() {
 
       setMonthProgress(`Agendando ${data.length} posts no calendário...`);
       await addBatchItems(data);
-      if (daysCount <= 7) setView("week");
-      toast.success(`🎯 ${data.length} posts agendados pelo Maestro!`);
+      setShowGeneratePosts(false);
+      setView("pipeline");
+      toast.success(`🎯 ${data.length} ${data.length === 1 ? "rascunho criado" : "rascunhos criados"} pelo Maestro!`);
     } catch (error) {
       console.error("Erro ao gerar plano:", error);
       toast.error(error instanceof Error ? error.message : "Erro ao gerar planejamento");
@@ -497,6 +511,18 @@ function ContentPlanner() {
                 ))}
               </SelectContent>
             </Select>
+            )}
+
+            {view !== "reports" && (
+            <Button
+              variant="outline"
+              className="h-9 gap-2 border-primary/30 bg-primary/5 font-bold text-primary hover:bg-primary/10"
+              onClick={() => isPremium ? setShowGeneratePosts(true) : toast.error("Funcionalidade exclusiva para usuários Elite, Teste e Admin!")}
+              disabled={isGeneratingMonth || isRoleLoading}
+            >
+              {isGeneratingMonth ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              Gerar posts
+            </Button>
             )}
 
             {view !== "reports" && (
@@ -926,25 +952,10 @@ function ContentPlanner() {
                   <Plus className="h-5 w-5 mr-3" />
                   Sugestão Manual
                 </Button>
-                {isPremium && view === "week" && (
-                  <Button
-                    variant="outline"
-                    className="rounded-full shadow-lg bg-white border-primary/30 hover:bg-primary/5 text-primary font-bold pr-6 pl-4 py-6"
-                    onClick={() => handleGenerateAIPlan(7)}
-                    disabled={isGeneratingMonth}
-                  >
-                    {isGeneratingMonth ? (
-                      <Loader2 className="h-5 w-5 mr-3 animate-spin" />
-                    ) : (
-                      <Sparkles className="h-5 w-5 mr-3" />
-                    )}
-                    {isGeneratingMonth ? (monthProgress || "Gerando...") : "Gerar Semana com IA"}
-                  </Button>
-                )}
                 {isPremium && (
                   <Button
                     className="rounded-full shadow-lg bg-primary hover:bg-primary/90 text-white font-bold pr-6 pl-4 py-6"
-                    onClick={() => handleGenerateAIPlan(30)}
+                    onClick={() => setShowGeneratePosts(true)}
                     disabled={isGeneratingMonth}
                   >
                     {isGeneratingMonth ? (
@@ -952,7 +963,7 @@ function ContentPlanner() {
                     ) : (
                       <Sparkles className="h-5 w-5 mr-3" />
                     )}
-                    {isGeneratingMonth ? (monthProgress || "Gerando...") : "Gerar Mês com IA"}
+                    {isGeneratingMonth ? (monthProgress || "Gerando...") : "Gerar posts com IA"}
                   </Button>
                 )}
               </div>
@@ -985,9 +996,26 @@ function ContentPlanner() {
               data: post.data,
               tipo: post.tipo,
               titulo: `${post.titulo} (Cópia)`,
-              notas: post.notas
+              notas: post.notas,
+              status: "rascunho",
+              conteudo_corpo: post.conteudo_corpo,
+              cabecalho: post.cabecalho,
+              rodape: post.rodape,
+              estrategia_snapshot: post.estrategia_snapshot,
+              cover_mode: post.cover_mode,
+              cover_image_url: post.cover_image_url,
+              slide_images: post.slide_images,
             });
           }}
+        />
+
+        <GeneratePostsDialog
+          open={showGeneratePosts}
+          onOpenChange={setShowGeneratePosts}
+          onGenerate={handleGenerateAIPlan}
+          isGenerating={isGeneratingMonth}
+          progress={monthProgress}
+          hasStrategy={Boolean(strategy?.length)}
         />
 
         <ScheduleDialog
