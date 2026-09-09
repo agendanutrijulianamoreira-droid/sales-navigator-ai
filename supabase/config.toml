@@ -73,6 +73,14 @@ verify_jwt = true
 enabled = true
 verify_jwt = true
 
+[functions.search-public-images]
+enabled = true
+verify_jwt = true
+
+[functions.refine-post-draft]
+enabled = true
+verify_jwt = true
+
 [functions.generate-carousel-text]
 enabled = true
 verify_jwt = true

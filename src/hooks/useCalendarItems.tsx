@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useToast } from "./use-toast";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface CalendarItem {
   id: string;
@@ -12,7 +13,17 @@ export interface CalendarItem {
   status: string | null;
   generation_id: string | null;
   created_at: string;
+  updated_at: string;
+  conteudo_corpo: string | null;
+  cabecalho: string | null;
+  rodape: string | null;
+  estrategia_snapshot: Json;
+  cover_mode: string | null;
+  cover_image_url: string | null;
+  slide_images: Json;
 }
+
+export type CalendarItemDraft = Omit<CalendarItem, "id" | "created_at" | "updated_at">;
 
 export function useCalendarItems() {
   const { user } = useAuth();
@@ -44,13 +55,7 @@ export function useCalendarItems() {
     fetchItems();
   }, [fetchItems]);
 
-  const addBatchItems = useCallback(async (itemsList: {
-    data: string;
-    tipo: string;
-    titulo?: string;
-    notas?: string;
-    generation_id?: string;
-  }[]) => {
+  const addBatchItems = useCallback(async (itemsList: Array<Partial<CalendarItem> & Pick<CalendarItem, "data" | "tipo">>) => {
     if (!user?.id) return null;
 
     try {
@@ -61,10 +66,17 @@ export function useCalendarItems() {
             user_id: user.id,
             data: item.data,
             tipo: item.tipo,
-            titulo: item.titulo || null,
-            notas: item.notas || null,
+            titulo: item.titulo ?? null,
+            notas: item.notas ?? null,
             generation_id: item.generation_id || null,
-            status: "planejado",
+            status: item.status || "planejado",
+            conteudo_corpo: item.conteudo_corpo ?? null,
+            cabecalho: item.cabecalho ?? null,
+            rodape: item.rodape ?? null,
+            estrategia_snapshot: item.estrategia_snapshot ?? {},
+            cover_mode: item.cover_mode ?? null,
+            cover_image_url: item.cover_image_url ?? null,
+            slide_images: item.slide_images ?? [],
           }))
         )
         .select();
@@ -81,13 +93,7 @@ export function useCalendarItems() {
     }
   }, [user?.id, toast]);
 
-  const addItem = useCallback(async (item: {
-    data: string;
-    tipo: string;
-    titulo?: string;
-    notas?: string;
-    generation_id?: string;
-  }) => {
+  const addItem = useCallback(async (item: Partial<CalendarItem> & Pick<CalendarItem, "data" | "tipo">) => {
     return addBatchItems([item]).then(res => res ? res[0] : null);
   }, [addBatchItems]);
 

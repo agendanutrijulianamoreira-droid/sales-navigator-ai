@@ -32,7 +32,7 @@ serve(async (req) => {
 
 
   try {
-    const { profile, products, startDate, daysCount = 30, monthlyStrategy } = await req.json();
+    const { profile, products, startDate, daysCount = 30, postCount = 12, period = "monthly", monthlyStrategy } = await req.json();
 
     const nicho = profile?.nicho || "nutrição";
     const subNicho = profile?.sub_nicho || "";
@@ -42,6 +42,11 @@ serve(async (req) => {
     const personaIdeal = profile?.persona_ideal || "";
     const tomVoz = profile?.tom_voz || "empático";
     const inimigoComum = profile?.inimigo_comum || "";
+    const nome = String(profile?.nome || "Sua marca").trim();
+    const especialidade = String(profile?.sub_nicho || profile?.nicho || "Nutrição").trim();
+    const instagram = String(profile?.instagram_handle || "seuinstagram").replace(/^@/, "").trim();
+    const safeDaysCount = Math.min(31, Math.max(1, Number(daysCount) || 30));
+    const safePostCount = Math.min(16, Math.max(1, Number(postCount) || 12));
 
     const productsList = (products || [])
       .slice(0, 3)
@@ -68,14 +73,14 @@ ${monthlyStrategy ? `
 - Produto Foco: ${products?.find((p: any) => p.id === monthlyStrategy.product_id)?.nome || "Geral"}
 ` : "Siga o fluxo padrão do Funil Infinito."}
 
-MISSÃO: Criar um plano editorial de ${daysCount} dias seguindo o framework "Funil Infinito":
+MISSÃO: Criar EXATAMENTE ${safePostCount} rascunho(s), distribuídos nos próximos ${safeDaysCount} dias, seguindo o framework "Funil Infinito":
 - Semana 1: ATRAIR (alcance, viralização, dor/evento)
 - Semana 2: AQUECER (autoridade, bastidores, superação)
 - Semana 3: PROVAR (resultados, depoimentos, comparativos)
 - Semana 4: CONVERTER (ofertas, CTAs, levantada de mão)
 
 REGRAS:
-1. Distribua os tipos: carrossel (12-15), reels (6-8), stories (4-6), post_unico (3-4), levantada (2-3)
+1. Distribua proporcionalmente os tipos entre carrossel, reels, stories, post_unico e levantada. Para apenas 1 conteúdo, escolha o formato de maior impacto estratégico.
 2. Nunca repita o mesmo tipo 2 dias seguidos
 3. Fins de semana = conteúdo leve (conexão, bastidores, stories)
 4. Cada TÍTULO é um GANCHO NEURO de 3 segundos. Use:
@@ -89,9 +94,14 @@ REGRAS:
 7. Inclua 2-3 posts de oferta direta dos produtos cadastrados
 8. Storytelling em 1ª pessoa sempre que possível (ativa neurônios-espelho)
 
-IMPORTANTE: Retorne APENAS um JSON array válido, sem markdown, sem texto antes ou depois.
+9. Gere o texto completo da legenda/corpo, pronto para edição e publicação, com parágrafos curtos, CTA coerente e sem promessas clínicas absolutas.
+10. O título deve existir quando o formato pedir gancho visual (carrossel, post único, reels ou levantada). Para stories, pode ser curto e conversacional.
+11. O cabeçalho é sempre "${nome} | ${especialidade}" e o rodapé é sempre "@${instagram}".
+12. Inclua um snapshot estratégico estruturado para explicar por que cada rascunho existe e 2-4 termos visuais em inglês para buscar imagens coerentes.
+
+IMPORTANTE: Retorne APENAS um JSON array válido com EXATAMENTE ${safePostCount} itens, sem markdown, sem texto antes ou depois.
 Formato exato:
-[{"data":"YYYY-MM-DD","tipo":"carrossel","titulo":"Título gancho","notas":"Objetivo: X | Gatilho: curiosidade | CTA: Y | Pilar: Z"}]`;
+[{"data":"YYYY-MM-DD","tipo":"carrossel","titulo":"Título gancho","conteudo_corpo":"Legenda completa com parágrafos e CTA","cabecalho":"${nome} | ${especialidade}","rodape":"@${instagram}","notas":"Objetivo: X | Gatilho: curiosidade | CTA: Y | Pilar: Z","estrategia_snapshot":{"periodo":"${period}","tema":"Tema","objetivo":"Objetivo","pilar":"Pilar","etapa_funil":"ATRAIR","produto":"Produto ou geral","cta":"CTA","termos_imagem":"healthy food woman"}}]`;
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
@@ -108,7 +118,7 @@ Formato exato:
           { role: "system", content: systemPrompt },
           {
             role: "user",
-            content: `Gere o plano editorial começando em ${startDate}. São ${daysCount} dias. Retorne APENAS o JSON array.`,
+            content: `Gere ${safePostCount} rascunho(s) editoriais começando em ${startDate}, distribuídos em ${safeDaysCount} dia(s). Período escolhido: ${period}. Retorne APENAS o JSON array.`,
           },
         ],
         temperature: 0.8,
@@ -142,12 +152,31 @@ Formato exato:
     const validTypes = ["carrossel", "post_unico", "reels", "stories", "levantada"];
     const cleanedItems = items
       .filter((item: any) => item.data && item.tipo && item.titulo)
+      .slice(0, safePostCount)
       .map((item: any) => ({
-        data: item.data,
+        data: String(item.data).slice(0, 10),
         tipo: validTypes.includes(item.tipo) ? item.tipo : "carrossel",
-        titulo: item.titulo,
-        notas: item.notas || "",
+        titulo: String(item.titulo).slice(0, 180),
+        notas: String(item.notas || "").slice(0, 1000),
+        status: "rascunho",
+        conteudo_corpo: String(item.conteudo_corpo || "").slice(0, 12000),
+        cabecalho: String(item.cabecalho || `${nome} | ${especialidade}`).slice(0, 180),
+        rodape: String(item.rodape || `@${instagram}`).slice(0, 100),
+        estrategia_snapshot: {
+          periodo: period,
+          tema: item.estrategia_snapshot?.tema || monthlyStrategy?.theme || "",
+          objetivo: item.estrategia_snapshot?.objetivo || monthlyStrategy?.goal || "",
+          pilar: item.estrategia_snapshot?.pilar || "",
+          etapa_funil: item.estrategia_snapshot?.etapa_funil || "",
+          produto: item.estrategia_snapshot?.produto || "Geral",
+          cta: item.estrategia_snapshot?.cta || "",
+          termos_imagem: String(item.estrategia_snapshot?.termos_imagem || "healthy nutrition").slice(0, 120),
+        },
       }));
+
+    if (cleanedItems.length !== safePostCount) {
+      throw new Error(`A IA retornou ${cleanedItems.length} de ${safePostCount} rascunhos. Tente novamente.`);
+    }
 
     return new Response(JSON.stringify(cleanedItems), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

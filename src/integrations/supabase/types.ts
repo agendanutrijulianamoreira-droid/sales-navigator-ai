@@ -73,36 +73,60 @@ export type Database = {
       }
       calendar_items: {
         Row: {
+          cabecalho: string | null
+          conteudo_corpo: string | null
+          cover_image_url: string | null
+          cover_mode: string | null
           created_at: string
           data: string
+          estrategia_snapshot: Json
           generation_id: string | null
           id: string
           notas: string | null
+          rodape: string | null
+          slide_images: Json
           status: string | null
           tipo: string
           titulo: string | null
+          updated_at: string
           user_id: string
         }
         Insert: {
+          cabecalho?: string | null
+          conteudo_corpo?: string | null
+          cover_image_url?: string | null
+          cover_mode?: string | null
           created_at?: string
           data: string
+          estrategia_snapshot?: Json
           generation_id?: string | null
           id?: string
           notas?: string | null
+          rodape?: string | null
+          slide_images?: Json
           status?: string | null
           tipo: string
           titulo?: string | null
+          updated_at?: string
           user_id: string
         }
         Update: {
+          cabecalho?: string | null
+          conteudo_corpo?: string | null
+          cover_image_url?: string | null
+          cover_mode?: string | null
           created_at?: string
           data?: string
+          estrategia_snapshot?: Json
           generation_id?: string | null
           id?: string
           notas?: string | null
+          rodape?: string | null
+          slide_images?: Json
           status?: string | null
           tipo?: string
           titulo?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -459,6 +483,7 @@ export type Database = {
           foto_url: string | null
           id: string
           inimigo_comum: string | null
+          instagram_handle: string | null
           intensidade_tom: string
           mecanismo_unico: string | null
           nicho: string | null
@@ -499,6 +524,7 @@ export type Database = {
           foto_url?: string | null
           id?: string
           inimigo_comum?: string | null
+          instagram_handle?: string | null
           intensidade_tom?: string
           mecanismo_unico?: string | null
           nicho?: string | null
@@ -539,6 +565,7 @@ export type Database = {
           foto_url?: string | null
           id?: string
           inimigo_comum?: string | null
+          instagram_handle?: string | null
           intensidade_tom?: string
           mecanismo_unico?: string | null
           nicho?: string | null
