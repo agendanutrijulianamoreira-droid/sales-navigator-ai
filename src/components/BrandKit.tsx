@@ -1,16 +1,23 @@
-import { useMemo, useState, type ChangeEvent } from "react";
-import { Upload, Image as ImageIcon, Palette, Type, Loader2, Sparkles, Instagram } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState, type ChangeEvent } from "react";
+import { Image as ImageIcon, Instagram, Loader2, Palette, Pencil, Sparkles, Upload } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { useProfile } from "@/hooks/useProfile";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAssets } from "@/hooks/useAssets";
+import { useAuth } from "@/hooks/useAuth";
+import type { Profile } from "@/hooks/useProfile";
 import { useBrand } from "@/contexts/BrandContext";
-import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const TITLE_FONTS = ["Space Grotesk", "Merriweather", "Montserrat", "Playfair Display"];
@@ -18,124 +25,171 @@ const BODY_FONTS = ["Inter", "Source Sans 3", "DM Sans", "Lora"];
 
 type UploadKind = "logo" | "watermark";
 
-export function BrandKit() {
+type VisualDraft = {
+  primary: string;
+  secondary: string;
+  neutral: string;
+  heading: string;
+  body: string;
+  instagram: string;
+};
+
+type BrandKitProps = {
+  profile: Profile | null;
+  updateProfile: (updates: Partial<Profile>) => Promise<{ error: Error | null }>;
+};
+
+export function BrandKit({ profile, updateProfile }: BrandKitProps) {
   const { user } = useAuth();
-  const { profile, updateProfile } = useProfile();
   const { addAsset } = useAssets();
   const { brand, updateBrand } = useBrand();
+  const [editOpen, setEditOpen] = useState(false);
   const [uploading, setUploading] = useState<UploadKind | null>(null);
-  const [igHandle, setIgHandle] = useState("");
   const [isImporting, setIsImporting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [draft, setDraft] = useState<VisualDraft>({
+    primary: brand.primary,
+    secondary: brand.secondary,
+    neutral: brand.background,
+    heading: brand.fontHeading,
+    body: brand.fontBody,
+    instagram: "",
+  });
 
-  const handleMagicImport = async () => {
-    let cleanHandle = igHandle.trim();
-    if (cleanHandle.startsWith("@")) cleanHandle = cleanHandle.substring(1);
-
-    if (!cleanHandle || cleanHandle.length < 2) {
-      toast.error("Digite um @ usuário válido do Instagram");
-      return;
-    }
-
-    setIsImporting(true);
-
-    try {
-      const nicho = profile?.nicho || "";
-      const subNicho = profile?.sub_nicho || "";
-      const persona = profile?.persona_ideal || "";
-      const nome = profile?.nome || "";
-
-      const { data, error } = await supabase.functions.invoke("generate-brand-palette", {
-        body: {
-          instagram_handle: cleanHandle,
-          nicho,
-          sub_nicho: subNicho,
-          persona,
-          nome,
-        },
-      });
-
-      if (error) throw error;
-
-      const palette = data?.palette;
-      if (!palette) throw new Error("Resposta inválida da IA");
-
-      await handleColorChange("brand_primary_color", palette.primary);
-      await handleColorChange("brand_secondary_color", palette.secondary);
-      await handleColorChange("brand_neutral_color", palette.neutral);
-      await handleFontChange("brand_font_title", palette.font_title || "Space Grotesk");
-      await handleFontChange("brand_font_body", palette.font_body || "Inter");
-      await updateProfile({ instagram_handle: cleanHandle });
-
-      toast.success("Paleta gerada pela IA com sucesso! ✨");
-      setIgHandle("");
-    } catch (err) {
-      console.error("Erro na importação mágica:", err);
-      toast.error("Não foi possível gerar a paleta. Tente novamente.");
-    } finally {
-      setIsImporting(false);
-    }
-  };
-
-  const previewPalette = useMemo(
-    () => ({
+  useEffect(() => {
+    setDraft({
       primary: profile?.brand_primary_color || brand.primary,
       secondary: profile?.brand_secondary_color || brand.secondary,
       neutral: profile?.brand_neutral_color || brand.background,
       heading: profile?.brand_font_title || brand.fontHeading,
       body: profile?.brand_font_body || brand.fontBody,
-    }),
-    [profile, brand],
-  );
+      instagram: profile?.instagram_handle || "",
+    });
+  }, [profile, brand]);
 
-  const handleColorChange = async (field: "brand_primary_color" | "brand_secondary_color" | "brand_neutral_color", value: string) => {
-    await updateProfile({ [field]: value });
-
-    if (field === "brand_primary_color") updateBrand({ primary: value });
-    if (field === "brand_secondary_color") updateBrand({ secondary: value });
-    if (field === "brand_neutral_color") updateBrand({ background: value });
+  const handleDialogChange = (open: boolean) => {
+    if (open) {
+      setDraft({
+        primary: profile?.brand_primary_color || brand.primary,
+        secondary: profile?.brand_secondary_color || brand.secondary,
+        neutral: profile?.brand_neutral_color || brand.background,
+        heading: profile?.brand_font_title || brand.fontHeading,
+        body: profile?.brand_font_body || brand.fontBody,
+        instagram: profile?.instagram_handle || "",
+      });
+    }
+    setEditOpen(open);
   };
 
-  const handleFontChange = async (field: "brand_font_title" | "brand_font_body", value: string) => {
-    await updateProfile({ [field]: value });
+  const saveVisualIdentity = async (nextDraft = draft) => {
+    const validColor = /^#[0-9a-f]{6}$/i;
+    if (![nextDraft.primary, nextDraft.secondary, nextDraft.neutral].every((color) => validColor.test(color))) {
+      toast.error("Use cores no formato hexadecimal, como #7C3AED.");
+      return false;
+    }
 
-    if (field === "brand_font_title") updateBrand({ fontHeading: value });
-    if (field === "brand_font_body") updateBrand({ fontBody: value });
+    setIsSaving(true);
+    const { error } = await updateProfile({
+      brand_primary_color: nextDraft.primary,
+      brand_secondary_color: nextDraft.secondary,
+      brand_neutral_color: nextDraft.neutral,
+      brand_font_title: nextDraft.heading,
+      brand_font_body: nextDraft.body,
+      instagram_handle: nextDraft.instagram.replace(/^@/, "").trim(),
+    });
+    setIsSaving(false);
+
+    if (error) {
+      toast.error("Não foi possível salvar a identidade visual.");
+      return false;
+    }
+
+    updateBrand({
+      primary: nextDraft.primary,
+      secondary: nextDraft.secondary,
+      background: nextDraft.neutral,
+      fontHeading: nextDraft.heading,
+      fontBody: nextDraft.body,
+    });
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (await saveVisualIdentity()) {
+      toast.success("Identidade visual salva.");
+      setEditOpen(false);
+    }
+  };
+
+  const handleMagicImport = async () => {
+    const cleanHandle = draft.instagram.replace(/^@/, "").trim();
+    if (cleanHandle.length < 2) {
+      toast.error("Digite um usuário válido do Instagram.");
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-brand-palette", {
+        body: {
+          instagram_handle: cleanHandle,
+          nicho: profile?.nicho || "",
+          sub_nicho: profile?.sub_nicho || "",
+          persona: profile?.persona_ideal || "",
+          nome: profile?.nome || "",
+        },
+      });
+      if (error) throw error;
+      if (!data?.palette) throw new Error("A IA não retornou uma paleta válida.");
+
+      const generatedDraft: VisualDraft = {
+        primary: data.palette.primary,
+        secondary: data.palette.secondary,
+        neutral: data.palette.neutral,
+        heading: data.palette.font_title || "Space Grotesk",
+        body: data.palette.font_body || "Inter",
+        instagram: cleanHandle,
+      };
+
+      setDraft(generatedDraft);
+      if (await saveVisualIdentity(generatedDraft)) {
+        toast.success("Identidade criada e salva pela IA.");
+      }
+    } catch (error) {
+      console.error("Erro ao criar identidade visual:", error);
+      toast.error("Não foi possível criar a identidade pelo Instagram.");
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const handleUpload = async (event: ChangeEvent<HTMLInputElement>, kind: UploadKind) => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
-
     if (!ACCEPTED_TYPES.includes(file.type)) {
-      toast.error("Envie PNG, JPG ou WEBP.");
+      toast.error("Envie uma imagem PNG, JPG ou WEBP.");
       return;
     }
 
     setUploading(kind);
-
     try {
-      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-      const path = `${user.id}/${kind}-${Date.now()}.${ext}`;
-
+      const extension = file.name.split(".").pop()?.toLowerCase() || "png";
+      const path = `${user.id}/${kind}-${Date.now()}.${extension}`;
       const { error: uploadError } = await supabase.storage.from("assets").upload(path, file, {
         cacheControl: "3600",
         upsert: true,
       });
-
       if (uploadError) throw uploadError;
 
       const { data } = supabase.storage.from("assets").getPublicUrl(path);
-      const publicUrl = data.publicUrl;
-
       await addAsset({
         tipo: "brand",
         subtipo: kind,
-        url: publicUrl,
+        url: data.publicUrl,
         metadata: { filename: file.name, size: file.size, mimeType: file.type },
       });
-
-      await updateProfile(kind === "logo" ? { brand_logo_url: publicUrl } : { brand_watermark_url: publicUrl });
-      toast.success(kind === "logo" ? "Logo atualizado." : "Marca d'água atualizada.");
+      await updateProfile(kind === "logo" ? { brand_logo_url: data.publicUrl } : { brand_watermark_url: data.publicUrl });
+      toast.success(kind === "logo" ? "Logo atualizado." : "Marca d’água atualizada.");
     } catch (error) {
       console.error("Erro ao enviar arquivo de marca:", error);
       toast.error("Não foi possível enviar a imagem.");
@@ -146,182 +200,187 @@ export function BrandKit() {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-      <div className="space-y-6">
-        
-        {/* Magic Import Box */}
-        <Card className="border-primary/20 bg-primary/5 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-            <Instagram className="w-24 h-24" />
+    <>
+      <section className="border border-border bg-card" aria-labelledby="visual-identity-title">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4 md:px-6">
+          <div>
+            <h3 id="visual-identity-title" className="font-semibold text-foreground">Identidade visual</h3>
+            <p className="mt-1 text-xs text-muted-foreground">Aplicada automaticamente aos conteúdos.</p>
           </div>
-          <CardHeader className="pb-3 border-b border-primary/10">
-            <CardTitle className="flex items-center gap-2 text-primary">
-              <Sparkles className="w-5 h-5" /> Importação Mágica (Instagram) 🚀
-            </CardTitle>
-            <CardDescription className="text-primary/70">
-              Evite configurar tudo manualmente! Escreva seu @ e deixe a IA extrair sua paleta de cores perfeita.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-5">
-            <div className="flex gap-3 items-end max-w-sm">
-              <div className="flex-1 space-y-2">
-                <Label>Qual é o seu arroba?</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">@</span>
-                  <Input 
-                    placeholder="nutrisucesso" 
-                    className="pl-8 bg-white border-primary/20" 
-                    value={igHandle} 
-                    onChange={(e) => setIgHandle(e.target.value)}
+          <Button variant="ghost" size="sm" className="gap-2" onClick={() => handleDialogChange(true)}>
+            <Pencil className="h-3.5 w-3.5" /> Editar identidade
+          </Button>
+        </div>
+
+        <div className="grid divide-y divide-border sm:grid-cols-[1fr_1fr_1.2fr] sm:divide-x sm:divide-y-0">
+          <div className="flex items-center gap-3 px-5 py-5 md:px-6">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden border border-border bg-muted/30">
+              {profile?.brand_logo_url ? (
+                <img src={profile.brand_logo_url} alt="Logo da marca" className="h-full w-full object-contain" loading="lazy" />
+              ) : (
+                <ImageIcon className="h-5 w-5 text-muted-foreground" />
+              )}
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Logo</p>
+              <p className="mt-1 text-sm font-medium text-foreground">{profile?.brand_logo_url ? "Configurado" : "Não enviado"}</p>
+            </div>
+          </div>
+
+          <div className="px-5 py-5 md:px-6">
+            <p className="text-xs text-muted-foreground">Cores</p>
+            <div className="mt-2 flex items-center gap-2" aria-label="Cores atuais da marca">
+              {[draft.primary, draft.secondary, draft.neutral].map((color, index) => (
+                <span key={`${color}-${index}`} className="h-8 w-8 border border-black/10" style={{ backgroundColor: color }} />
+              ))}
+            </div>
+          </div>
+
+          <div className="px-5 py-5 md:px-6">
+            <p className="text-xs text-muted-foreground">Fontes</p>
+            <p className="mt-2 text-sm font-semibold text-foreground" style={{ fontFamily: draft.heading }}>{draft.heading}</p>
+            <p className="mt-1 text-xs text-muted-foreground" style={{ fontFamily: draft.body }}>{draft.body} para textos</p>
+          </div>
+        </div>
+      </section>
+
+      <Dialog open={editOpen} onOpenChange={handleDialogChange}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Editar identidade visual</DialogTitle>
+            <DialogDescription>Configure uma vez para manter todos os conteúdos consistentes.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-7 py-2">
+            <section className="border border-primary/20 bg-primary/5 p-4">
+              <div className="mb-4 flex items-start gap-3">
+                <Instagram className="mt-0.5 h-5 w-5 text-primary" />
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground">Criar pelo Instagram</h4>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">Informe seu usuário para a IA sugerir cores e fontes.</p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">@</span>
+                  <Input
+                    aria-label="Usuário do Instagram"
+                    className="pl-8"
+                    value={draft.instagram}
+                    onChange={(event) => setDraft((current) => ({ ...current, instagram: event.target.value }))}
+                    placeholder="seuinstagram"
                     disabled={isImporting}
                   />
                 </div>
+                <Button onClick={handleMagicImport} disabled={isImporting || isSaving} className="gap-2">
+                  {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  {isImporting ? "Criando..." : "Criar identidade"}
+                </Button>
               </div>
-              <Button onClick={handleMagicImport} disabled={isImporting} className="gap-2">
-                {isImporting ? <><Loader2 className="w-4 h-4 animate-spin"/> Gerando...</> : <><Sparkles className="w-4 h-4"/> Importar</>}
-              </Button>
-            </div>
-            {isImporting && (
-              <div className="mt-4 text-xs font-semibold text-primary animate-pulse flex items-center gap-2">
-                🪄 A IA está analisando seu nicho e criando a paleta perfeita...
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Palette className="h-5 w-5 text-primary" /> Paleta da marca</CardTitle>
-            <CardDescription>Ajuste as cores usadas nas experiências e materiais gerados.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-3">
-            {[
-              { key: "brand_primary_color", label: "Primária", value: previewPalette.primary },
-              { key: "brand_secondary_color", label: "Secundária", value: previewPalette.secondary },
-              { key: "brand_neutral_color", label: "Neutra", value: previewPalette.neutral },
-            ].map((item) => (
-              <div key={item.key} className="space-y-2">
-                <Label>{item.label}</Label>
-                <div className="flex items-center gap-3 rounded-xl border border-border p-3">
-                  <input
-                    type="color"
-                    value={item.value}
-                    onChange={(e) => handleColorChange(item.key as "brand_primary_color" | "brand_secondary_color" | "brand_neutral_color", e.target.value)}
-                    className="h-10 w-12 cursor-pointer rounded-md border border-border bg-transparent"
-                  />
-                  <Input value={item.value} onChange={(e) => handleColorChange(item.key as any, e.target.value)} />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Type className="h-5 w-5 text-primary" /> Tipografia</CardTitle>
-            <CardDescription>Defina as fontes de títulos e de textos do seu sistema.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Fonte de títulos</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {TITLE_FONTS.map((font) => (
-                  <Button key={font} type="button" variant={previewPalette.heading === font ? "default" : "outline"} className="justify-start" onClick={() => handleFontChange("brand_font_title", font)}>
-                    {font}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Fonte de corpo</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {BODY_FONTS.map((font) => (
-                  <Button key={font} type="button" variant={previewPalette.body === font ? "default" : "outline"} className="justify-start" onClick={() => handleFontChange("brand_font_body", font)}>
-                    {font}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Upload className="h-5 w-5 text-primary" /> Arquivos da marca</CardTitle>
-            <CardDescription>Envie o logo principal e a marca d'água para reutilização automática.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2">
-            {[
-              { kind: "logo", label: "Logo principal", url: profile?.brand_logo_url },
-              { kind: "watermark", label: "Marca d'água", url: profile?.brand_watermark_url },
-            ].map((item) => (
-              <div key={item.kind} className="space-y-3 rounded-xl border border-border p-4">
-                <div className="flex items-center justify-between">
-                  <Label>{item.label}</Label>
-                  <Badge variant="outline">PNG / JPG / WEBP</Badge>
-                </div>
-
-                <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 overflow-hidden">
-                  {item.url ? (
-                    <img src={item.url} alt={item.label} className="h-full w-full object-contain" loading="lazy" />
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <ImageIcon className="h-8 w-8" />
-                      <span className="text-sm">Nenhuma imagem enviada</span>
+            <section>
+              <h4 className="mb-4 text-sm font-semibold text-foreground">Cores da marca</h4>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {[
+                  { key: "primary", label: "Principal" },
+                  { key: "secondary", label: "Apoio" },
+                  { key: "neutral", label: "Fundo" },
+                ].map((item) => {
+                  const key = item.key as "primary" | "secondary" | "neutral";
+                  return (
+                    <div key={key} className="space-y-2">
+                      <Label htmlFor={`brand-${key}`}>{item.label}</Label>
+                      <div className="flex gap-2">
+                        <input
+                          aria-label={`Selecionar cor ${item.label.toLowerCase()}`}
+                          type="color"
+                          value={draft[key]}
+                          onChange={(event) => setDraft((current) => ({ ...current, [key]: event.target.value }))}
+                          className="h-10 w-12 cursor-pointer border border-border bg-transparent p-1"
+                        />
+                        <Input
+                          id={`brand-${key}`}
+                          value={draft[key]}
+                          onChange={(event) => setDraft((current) => ({ ...current, [key]: event.target.value }))}
+                        />
+                      </div>
                     </div>
-                  )}
+                  );
+                })}
+              </div>
+            </section>
+
+            <section>
+              <h4 className="mb-4 text-sm font-semibold text-foreground">Fontes</h4>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Para títulos</Label>
+                  <Select value={draft.heading} onValueChange={(value) => setDraft((current) => ({ ...current, heading: value }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {TITLE_FONTS.map((font) => <SelectItem key={font} value={font}>{font}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label>Para textos</Label>
+                  <Select value={draft.body} onValueChange={(value) => setDraft((current) => ({ ...current, body: value }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {BODY_FONTS.map((font) => <SelectItem key={font} value={font}>{font}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </section>
 
-                <Input type="file" accept={ACCEPTED_TYPES.join(",")}
-                  onChange={(e) => handleUpload(e, item.kind as UploadKind)}
-                  disabled={uploading !== null}
-                />
-
-                {uploading === item.kind && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" /> Enviando...
+            <section>
+              <h4 className="mb-4 text-sm font-semibold text-foreground">Arquivos da marca</h4>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {[
+                  { kind: "logo" as const, label: "Logo", url: profile?.brand_logo_url },
+                  { kind: "watermark" as const, label: "Marca d’água", url: profile?.brand_watermark_url },
+                ].map((item) => (
+                  <div key={item.kind} className="border border-border p-4">
+                    <div className="mb-3 flex h-24 items-center justify-center overflow-hidden bg-muted/30">
+                      {item.url ? (
+                        <img src={item.url} alt={item.label} className="h-full w-full object-contain" loading="lazy" />
+                      ) : (
+                        <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                      )}
+                    </div>
+                    <Label htmlFor={`upload-${item.kind}`} className="mb-2 block">{item.label}</Label>
+                    <div className="relative">
+                      <Input
+                        id={`upload-${item.kind}`}
+                        type="file"
+                        accept={ACCEPTED_TYPES.join(",")}
+                        onChange={(event) => handleUpload(event, item.kind)}
+                        disabled={uploading !== null}
+                      />
+                      {uploading === item.kind && (
+                        <span className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando...
+                        </span>
+                      )}
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Preview da identidade</CardTitle>
-          <CardDescription>Uma visão rápida de como a marca está sendo aplicada hoje.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="rounded-2xl border border-border p-6" style={{ backgroundColor: previewPalette.neutral }}>
-            <div className="space-y-4 rounded-xl border border-border bg-background p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Marca</p>
-                  <h3 className="text-2xl" style={{ color: previewPalette.primary, fontFamily: previewPalette.heading }}>
-                    {profile?.nome || "Sua Marca"}
-                  </h3>
-                </div>
-                <div className="flex gap-2">
-                  <div className="h-8 w-8 rounded-full border border-border" style={{ backgroundColor: previewPalette.primary }} />
-                  <div className="h-8 w-8 rounded-full border border-border" style={{ backgroundColor: previewPalette.secondary }} />
-                </div>
-              </div>
-
-              <p style={{ fontFamily: previewPalette.body }} className="text-sm text-foreground/80">
-                Posicionamento, oferta e ativos visuais alinhados para manter consistência em todo o sistema.
-              </p>
-
-              <div className="flex gap-3">
-                <Button type="button">Primário</Button>
-                <Button type="button" variant="outline">Secundário</Button>
-              </div>
-            </div>
+            </section>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => handleDialogChange(false)} disabled={isSaving || isImporting}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={isSaving || isImporting} className="gap-2">
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              {isSaving ? "Salvando..." : "Salvar identidade"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
