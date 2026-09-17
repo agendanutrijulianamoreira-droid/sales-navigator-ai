@@ -185,7 +185,10 @@ export function useMarketingStrategy() {
     }
   };
 
-  const generateWithAI = async (inputs?: AnnualPlanningInputs) => {
+  const generateWithAI = async (
+    inputs?: AnnualPlanningInputs,
+    baseStrategy?: MonthStrategy[],
+  ) => {
     try {
       setIsLoading(true);
       const context = inputs || planningInputs;
@@ -221,7 +224,7 @@ export function useMarketingStrategy() {
 
       const generated = JSON.parse(jsonMatch[0]) as Array<Partial<MonthStrategy>>;
       const merged = Array.from({ length: 12 }, (_, index) => {
-        const current = strategy?.[index];
+        const current = baseStrategy?.[index] || strategy?.[index];
         const aiMonth = generated[index] || {};
 
         return normalizeMonthStrategy(
