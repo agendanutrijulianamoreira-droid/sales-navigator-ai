@@ -62,6 +62,7 @@ export function useMarketingStrategy() {
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchStrategy = useCallback(async () => {
+    setIsLoading(true);
     try {
       const {
         data: { user },
@@ -98,6 +99,8 @@ export function useMarketingStrategy() {
     } catch (error) {
       console.error("Erro ao buscar estratégia:", error);
       toast.error("Não foi possível carregar o planejamento anual.");
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
