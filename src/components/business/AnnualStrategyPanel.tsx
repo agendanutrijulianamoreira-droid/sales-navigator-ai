@@ -345,7 +345,7 @@ export function AnnualStrategyPanel() {
 
     const saved = await saveStrategy(editableStrategy, inputs, "Plano-base salvo.");
     if (!saved) return;
-    const generated = await generateWithAI(inputs);
+    const generated = await generateWithAI(inputs, saved);
     if (generated) setEditableStrategy(generated);
   };
 
