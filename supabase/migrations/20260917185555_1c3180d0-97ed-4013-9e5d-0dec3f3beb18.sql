@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.has_premium_access(uuid) FROM authenticated;
