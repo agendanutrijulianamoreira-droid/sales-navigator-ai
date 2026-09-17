@@ -281,7 +281,7 @@ export function AnnualStrategyPanel() {
   }, [strategy]);
 
   useEffect(() => {
-    if (initialized.current || settingsLoading) return;
+    if (initialized.current || settingsLoading || isLoading) return;
 
     setInputs(planningInputs || {
       year: currentYear,
@@ -294,7 +294,7 @@ export function AnnualStrategyPanel() {
       selectedScenario: "probable",
     });
     initialized.current = true;
-  }, [currentYear, planningInputs, settings, settingsLoading]);
+  }, [currentYear, isLoading, planningInputs, settings, settingsLoading]);
 
   const planningProducts = useMemo(
     () => products.map((product) => ({
@@ -369,7 +369,7 @@ export function AnnualStrategyPanel() {
     });
   };
 
-  if ((settingsLoading || productsLoading) && !initialized.current) {
+  if ((settingsLoading || productsLoading || isLoading) && !initialized.current) {
     return (
       <div className="flex h-80 flex-col items-center justify-center gap-3">
         <Loader2 className="h-9 w-9 animate-spin text-primary" />
