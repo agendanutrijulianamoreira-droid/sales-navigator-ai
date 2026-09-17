@@ -80,9 +80,18 @@ const MONTHS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Jul
 function ContentPlanner() {
   const navigate = useNavigate();
   const location = useLocation();
+  const plannerState = location.state as {
+    openGenerator?: boolean;
+    targetMonth?: number;
+    targetYear?: number;
+  } | null;
   const { profile } = useProfile();
   const { items, isLoading, addItem, addBatchItems, deleteItem, updateItem, getItemsForDate } = useCalendarItems();
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(() => {
+    const now = new Date();
+    if (!plannerState?.targetMonth) return now;
+    return new Date(plannerState.targetYear || now.getFullYear(), plannerState.targetMonth - 1, 1);
+  });
   const [view, setView] = useState<"month" | "week" | "pipeline" | "reports">("month");
   const [showScheduleDialog, setShowScheduleDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -94,7 +103,7 @@ function ContentPlanner() {
   const [showTrends, setShowTrends] = useState(false);
   const [pipelineView, setPipelineView] = useState<"kanban" | "list">("kanban");
   const [showGeneratePosts, setShowGeneratePosts] = useState(
-    () => Boolean((location.state as { openGenerator?: boolean } | null)?.openGenerator),
+    () => Boolean(plannerState?.openGenerator),
   );
 
   const currentMonth = currentDate.getMonth();
@@ -218,8 +227,18 @@ function ContentPlanner() {
     setMonthProgress("Analisando seu perfil e produtos...");
 
     try {
-      const startDate = view === "week" ? weekDates[0] : new Date();
-      if (view !== "week") startDate.setDate(startDate.getDate() + 1);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const startDate = view === "week"
+        ? new Date(weekDates[0])
+        : new Date(currentYear, currentMonth, 1);
+
+      if (startDate < tomorrow) {
+        startDate.setTime(tomorrow.getTime());
+      }
 
       setMonthProgress("O Maestro está criando seu plano editorial...");
 
