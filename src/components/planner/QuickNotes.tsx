@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FileText, Plus, X } from "lucide-react";
 
 interface Note { id: string; conteudo: string }
-const notesClient = supabase as SupabaseClient;
+// The table is already provisioned; the generated client types update asynchronously.
+const notesClient = supabase;
 
 export function QuickNotes() {
   const { user } = useAuth();
@@ -15,18 +15,18 @@ export function QuickNotes() {
 
   useEffect(() => {
     if (!user?.id) return;
-    notesClient.from("quick_notes").select("id, conteudo").eq("user_id", user.id).order("created_at")
+    notesClient.from("quick_notes" as "calendar_items").select("id, conteudo").eq("user_id", user.id).order("created_at")
       .then(({ data }) => setNotes(data ?? []));
   }, [user?.id]);
 
   const add = async () => {
     if (!user?.id) return;
-    const { data } = await notesClient.from("quick_notes").insert({ user_id: user.id, conteudo: "" }).select("id, conteudo").single();
+    const { data } = await notesClient.from("quick_notes" as "calendar_items").insert({ user_id: user.id, conteudo: "" } as never).select("id, conteudo").single();
     if (data) setNotes((p) => [...p, data]);
   };
-  const save = (id: string, conteudo: string) => notesClient.from("quick_notes").update({ conteudo }).eq("id", id);
+  const save = (id: string, conteudo: string) => notesClient.from("quick_notes" as "calendar_items").update({ conteudo } as never).eq("id", id);
   const remove = async (id: string) => {
-    await notesClient.from("quick_notes").delete().eq("id", id);
+    await notesClient.from("quick_notes" as "calendar_items").delete().eq("id", id);
     setNotes((p) => p.filter((n) => n.id !== id));
   };
 

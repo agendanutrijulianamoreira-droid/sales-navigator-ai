@@ -95,23 +95,33 @@ export default function ContentPlanner() {
       const start = o.period === "weekly" ? startOfWeek(currentDate) : new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
       const today = new Date(); today.setHours(0, 0, 0, 0);
       if (start < today) start.setTime(today.getTime());
-      const daysCount = o.period === "weekly" ? 7 : Math.min(31, new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate() - start.getDate() + 1);
-      const postCount = o.period === "weekly" ? o.perWeek : Math.min(31, Math.ceil(daysCount / 7 * o.perWeek));
-      const { data, error } = await supabase.functions.invoke("generate-month-plan", { body: {
-        profile, products, startDate: toISO(start), daysCount, postCount,
-        period: o.period, objective: o.objective, formats: o.formats,
-      } });
-      if (error) {
-        const response = "context" in error ? error.context as Response : null;
-        const body = response && typeof response.json === "function" ? await response.json().catch(() => null) : null;
-        throw new Error(body?.error || error.message);
+      const daysCount = o.period === "weekly" ? Math.min(7, 7 - (start.getDay() + 6) % 7) : Math.min(31, new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate() - start.getDate() + 1);
+      const postCount = Math.min(o.perWeek, daysCount);
+      const batches = o.period === "weekly" ? 1 : Math.ceil(daysCount / 7);
+      let total = 0;
+      for (let batch = 0; batch < batches; batch++) {
+        const batchStart = new Date(start);
+        batchStart.setDate(batchStart.getDate() + 7 * batch);
+        const batchDays = Math.min(7, daysCount - batch * 7);
+        if (batchDays <= 0) continue;
+        setProgress(`Criando ideias ${batch + 1} de ${batches}...`);
+        const { data, error } = await supabase.functions.invoke("generate-month-plan", { body: {
+          profile, products, startDate: toISO(batchStart), daysCount: batchDays,
+          postCount: Math.min(postCount, batchDays), period: o.period, objective: o.objective, formats: o.formats,
+        } });
+        if (error) {
+          const response = "context" in error ? error.context as Response : null;
+          const body = response && typeof response.json === "function" ? await response.json().catch(() => null) : null;
+          throw new Error(body?.error || error.message);
+        }
+        if (!Array.isArray(data) || !data.length) throw new Error(data?.error || "Nenhuma ideia foi gerada.");
+        setProgress(`Salvando ideias ${batch + 1} de ${batches}...`);
+        const saved = await addBatchItems(data);
+        if (!saved) throw new Error("Não foi possível salvar as ideias. Tente novamente.");
+        total += saved.length;
       }
-      if (!Array.isArray(data) || !data.length) throw new Error(data?.error || "Nenhuma ideia foi gerada.");
-      setProgress("Salvando ideias...");
-      const saved = await addBatchItems(data);
-      if (!saved) throw new Error("Não foi possível salvar as ideias. Tente novamente.");
       setOpenGenerator(false);
-      toast.success(`${saved.length} ideias adicionadas ao calendário`);
+      toast.success(`${total} ideias adicionadas ao calendário`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível gerar o calendário");
     } finally { setLoading(false); setProgress(""); }
