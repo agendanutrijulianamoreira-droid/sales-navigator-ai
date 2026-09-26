@@ -47,9 +47,9 @@ export function QuickNotes() {
             onBlur={(e) => e.target.value !== n.conteudo && save(n.id, e.target.value)}
             className="pr-9"
           />
-          <button onClick={() => remove(n.id)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground opacity-0 group-hover:opacity-100" aria-label="Remover nota">
+          <Button variant="ghost" size="icon" onClick={() => remove(n.id)} className="absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground opacity-0 group-hover:opacity-100" aria-label="Remover nota">
             <X className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
       ))}
     </div>

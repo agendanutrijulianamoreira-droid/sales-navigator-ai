@@ -171,7 +171,7 @@ export default function ContentPlanner() {
                   const dayItems = items.filter((i) => i.data === key && i.status !== "arquivado");
                   return (
                     <div key={key} className={`min-w-0 ${view === "month" ? "min-h-[135px]" : "min-h-[220px]"} ${date.getMonth() !== currentDate.getMonth() && view === "month" ? "opacity-45" : ""}`}>
-                      <button onClick={() => openIdea(key)} className={`mx-auto mb-3 flex h-9 w-9 items-center justify-center rounded-full text-lg font-semibold ${today ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`} aria-label={`Nova ideia em ${key}`}>{date.getDate()}</button>
+                      <Button variant={today ? "default" : "ghost"} size="icon" onClick={() => openIdea(key)} className="mx-auto mb-3 flex h-9 w-9 rounded-full text-lg font-semibold" aria-label={`Nova ideia em ${key}`}>{date.getDate()}</Button>
                       <div className={`flex h-[calc(100%-3rem)] flex-wrap content-start justify-center gap-2 rounded-xl border p-2 transition-colors hover:border-primary/40 ${today ? "border-primary/40 bg-primary/5" : "border-border bg-card/60"}`}>
                         {dayItems.slice(0, view === "month" ? 3 : 8).map((item) => <FormatTile key={item.id} item={item} compact={view === "month"} onClick={() => openIdea(key, item)} />)}
                         {dayItems.length > (view === "month" ? 3 : 8) && <span className="text-xs text-muted-foreground">+{dayItems.length - (view === "month" ? 3 : 8)}</span>}
