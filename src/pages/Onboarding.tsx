@@ -32,6 +32,7 @@ export default function Onboarding() {
     nome: profile?.nome || "",
     titulo_profissional: profile?.titulo_profissional || "",
     registro_profissional: profile?.registro_profissional || "",
+    instagram_handle: profile?.instagram_handle || "",
     experiencias_marcantes: profile?.experiencias_marcantes || "",
     nicho: profile?.nicho || "",
     sub_nicho: profile?.sub_nicho || "",
@@ -54,6 +55,10 @@ export default function Onboarding() {
   };
 
   const handleNext = async () => {
+    if (step === 1 && formData.instagram_handle && !/^[A-Za-z0-9._]{1,30}$/.test(formData.instagram_handle)) {
+      toast({ variant: "destructive", title: "Usuário do Instagram inválido", description: "Use apenas letras, números, pontos e sublinhados." });
+      return;
+    }
     setIsSubmitting(true);
     const { error } = await updateProfile({ ...formData, onboarding_step: step + 1 });
     setIsSubmitting(false);
@@ -139,6 +144,11 @@ export default function Onboarding() {
                   <p className="text-xs text-muted-foreground">
                     Assinatura que a IA vai usar: <strong>{[formData.titulo_profissional, formData.nome || "Seu Nome"].filter(Boolean).join(" ")}{formData.registro_profissional ? ` — ${formData.registro_profissional}` : ""}</strong>
                   </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="instagram-handle">Instagram (opcional)</Label>
+                  <Input id="instagram-handle" value={formData.instagram_handle} onChange={(e) => updateField("instagram_handle", e.target.value.replace(/^@/, "").replace(/\s/g, ""))} placeholder="seuperfil" maxLength={30} />
+                  <p className="text-xs text-muted-foreground">Seu @ aparece nos posts. Para definir sua especialidade, use as opções da próxima etapa.</p>
                 </div>
                 <div className="space-y-2">
                   <Label>Experiências marcantes</Label>

@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FileText, Plus, X } from "lucide-react";
 
 interface Note { id: string; conteudo: string }
-// The table is already provisioned; the generated client types update asynchronously.
-const notesClient: SupabaseClient = supabase;
+const notesClient = supabase;
 
 export function QuickNotes() {
   const { user } = useAuth();
