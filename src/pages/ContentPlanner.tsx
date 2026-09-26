@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { useCalendarItems, type CalendarItem } from "@/hooks/useCalendarItems";
 import { useProfile } from "@/hooks/useProfile";
 import { useProducts } from "@/hooks/useProducts";
-import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CalendarDays, FolderOpen, ChevronLeft, ChevronRight, Plus, Sparkles, Loader2 } from "lucide-react";
@@ -47,7 +46,6 @@ export default function ContentPlanner() {
   const { items, isLoading, addItem, addBatchItems, updateItem, deleteItem } = useCalendarItems();
   const { profile } = useProfile();
   const { products } = useProducts();
-  const { hasPremiumAccess } = useUserRole();
 
   const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const weekStart = startOfWeek(currentDate);
@@ -88,7 +86,6 @@ export default function ContentPlanner() {
     if (await deleteItem(selected.id)) setIdeaOpen(false);
   };
   const generate = async (o: GenerateOptions) => {
-    if (!hasPremiumAccess()) { toast.error("Geração disponível para Elite, Teste e Admin."); return; }
     setLoading(true);
     setProgress("Criando seu calendário...");
     try {

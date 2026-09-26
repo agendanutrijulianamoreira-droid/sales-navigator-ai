@@ -33,6 +33,9 @@ serve(async (req) => {
 
   try {
     const { profile, products, startDate, daysCount = 30, postCount = 12, period = "monthly", monthlyStrategy, objective, formats } = await req.json();
+    if (typeof startDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(startDate) || Number.isNaN(Date.parse(`${startDate}T12:00:00Z`))) {
+      return new Response(JSON.stringify({ error: "Data inicial inválida" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     // Scientific grounding from cached research
     let researchBlock = "";
@@ -71,7 +74,7 @@ serve(async (req) => {
     const safeDaysCount = Math.min(31, Math.max(1, Number(daysCount) || 30));
     const safePostCount = Math.min(7, Math.max(1, Number(postCount) || 5));
 
-    const productsList = (products || [])
+    const productsList = (Array.isArray(products) ? products : [])
       .slice(0, 3)
       .map((p: any) => `${p.nome} (R$${p.ticket})`)
       .join(", ");
@@ -175,8 +178,11 @@ Formato exato:
 
     // Validate and clean items
     const validTypes = allowedFormats;
+    const endDate = new Date(`${startDate}T12:00:00Z`);
+    endDate.setUTCDate(endDate.getUTCDate() + safeDaysCount);
+    const exclusiveEnd = endDate.toISOString().slice(0, 10);
     const cleanedItems = items
-      .filter((item: any) => item.data && item.tipo && item.titulo)
+      .filter((item: any) => item && typeof item.data === "string" && /^\d{4}-\d{2}-\d{2}$/.test(item.data) && item.data >= startDate && item.data < exclusiveEnd && item.tipo && item.titulo)
       .slice(0, safePostCount)
       .map((item: any) => ({
         data: String(item.data).slice(0, 10),
