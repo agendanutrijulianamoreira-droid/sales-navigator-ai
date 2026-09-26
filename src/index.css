@@ -215,3 +215,10 @@
     background: hsla(var(--muted-foreground) / 0.3);
   }
 }
+
+:root {
+  --fmt-carrossel: 174 62% 42%;
+  --fmt-reels: 42 62% 52%;
+  --fmt-post: 266 58% 58%;
+  --fmt-stories: 217 70% 52%;
+}
