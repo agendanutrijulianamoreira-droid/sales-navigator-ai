@@ -32,7 +32,28 @@ serve(async (req) => {
 
 
   try {
-    const { profile, products, startDate, daysCount = 30, postCount = 12, period = "monthly", monthlyStrategy } = await req.json();
+    const { profile, products, startDate, daysCount = 30, postCount = 12, period = "monthly", monthlyStrategy, objective, formats } = await req.json();
+
+    // Scientific grounding from cached research
+    let researchBlock = "";
+    try {
+      const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.45.0");
+      const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+      const { data: research } = await admin
+        .from("research_items")
+        .select("title, source, url")
+        .eq("type", "pubmed")
+        .order("fetched_at", { ascending: false })
+        .limit(8);
+      if (research?.length) {
+        researchBlock = `\nESTUDOS RECENTES (use como base científica quando fizer sentido, cite a fonte na legenda de forma simples, nunca invente estudos):\n${research.map((r: any) => `- ${r.title} (${r.source})`).join("\n")}\n`;
+      }
+    } catch (_e) { /* optional */ }
+
+    const allowedFormats: string[] = Array.isArray(formats) && formats.length ? formats : ["carrossel", "reels", "post_unico", "stories"];
+    const objectiveText = objective && objective !== "todos"
+      ? `OBJETIVO PRINCIPAL DO PERÍODO: ${objective === "engajamento" ? "Engajamento (comentários, salvamentos, compartilhamentos)" : objective === "vender" ? "Vender (conversão para consultas e produtos)" : "Crescer (alcance e novos seguidores)"}. Priorize esse objetivo.`
+      : "Equilibre engajamento, crescimento e vendas.";
 
     const nicho = profile?.nicho || "nutrição";
     const subNicho = profile?.sub_nicho || "";
@@ -80,7 +101,9 @@ MISSÃO: Criar EXATAMENTE ${safePostCount} rascunho(s), distribuídos nos próxi
 - Semana 4: CONVERTER (ofertas, CTAs, levantada de mão)
 
 REGRAS:
-1. Distribua proporcionalmente os tipos entre carrossel, reels, stories, post_unico e levantada. Para apenas 1 conteúdo, escolha o formato de maior impacto estratégico.
+${objectiveText}
+${researchBlock}
+1. Use SOMENTE estes formatos (campo "tipo"): ${allowedFormats.join(", ")}. Distribua proporcionalmente entre eles.
 2. Nunca repita o mesmo tipo 2 dias seguidos
 3. Fins de semana = conteúdo leve (conexão, bastidores, stories)
 4. Cada TÍTULO é um GANCHO NEURO de 3 segundos. Use:
