@@ -1,0 +1,2 @@
+ALTER TABLE public.calendar_items DROP CONSTRAINT IF EXISTS calendar_items_status_check;
+ALTER TABLE public.calendar_items ADD CONSTRAINT calendar_items_status_check CHECK (status IN ('planejado', 'criado', 'rascunho', 'producao', 'pronto', 'em_aprovacao', 'aprovado', 'agendado', 'publicado', 'arquivado'));
