@@ -145,7 +145,7 @@ Formato exato:
           },
         ],
         temperature: 0.8,
-        max_tokens: 8000,
+        max_tokens: 16000,
       }),
     });
 
