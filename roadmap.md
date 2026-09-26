@@ -1,6 +1,7 @@
 # Roadmap
-- [ ] Novo calendário (plano aprovado): faixa semana/mês, Gerar calendário, Editar ideia, feed 3x3, notas rápidas
-- [ ] Corrigir erro "non-2xx" ao gerar rascunhos (generate-month-plan)
-- [ ] Artigos científicos: botão "Criar conteúdo" a partir de cada artigo (Research Hub)
-- [ ] Configurações: perfil, cores da marca, cenário da foto, estilo da roupa, Instagram, e-mail e senha
-- [ ] Onboarding: verificar @ do Instagram e detectar especialidade
+- [x] Calendário semana/mês, geração por objetivo/cadência/formato, edição de ideias, feed e notas rápidas.
+- [x] Corrigida a autenticação da geração de rascunhos; teste autenticado retorna uma ideia válida.
+- [x] Artigos científicos já oferecem “Criar conteúdo” no Research Hub.
+- [x] Perfil, cores da marca, preferências de foto, @Instagram e e-mail existentes; alteração de senha adicionada.
+- [x] @Instagram configurável no cadastro inicial; especialidade é definida na etapa de nicho, sem alegar verificação externa do Instagram.
+- [ ] Verificação real do calendário pela interface: conta de teste autenticada é redirecionada a “Escolha seu plano” sem assinatura ativa.

@@ -25,13 +25,14 @@ const OBJECTIVES = [
 
 function Chip({ active, onClick, children, pill }: { active: boolean; onClick: () => void; children: React.ReactNode; pill?: boolean }) {
   return (
-    <button
+    <Button
       type="button"
       onClick={onClick}
-      className={`border px-4 py-2 text-sm font-medium transition-colors ${pill ? "rounded-full" : "rounded-lg"} ${active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-muted/40 text-muted-foreground hover:text-foreground"}`}
+      variant={active ? "default" : "outline"}
+      className={`h-auto min-h-9 whitespace-normal px-3 py-2 text-xs sm:text-sm ${pill ? "rounded-full" : "rounded-lg"}`}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -89,7 +90,7 @@ export function GenerateCalendarDialog({ open, onOpenChange, onGenerate, loading
           {loading && progress && <p className="text-sm text-muted-foreground">{progress}</p>}
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancelar</Button>
-            <Button disabled={!ready || loading} onClick={() => ready && onGenerate({ period, perWeek, objective: objective!, formats })}>
+            <Button disabled={!ready || loading} onClick={() => objective && formats.length && onGenerate({ period, perWeek, objective, formats })}>
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
               Gerar
             </Button>

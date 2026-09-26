@@ -22,8 +22,8 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
     );
     const token = authHeader.replace("Bearer ", "");
-    const { data: _claims, error: _authErr } = await _authClient.auth.getClaims(token);
-    if (_authErr || !_claims?.claims) {
+    const { data: _identity, error: _authErr } = await _authClient.auth.getUser(token);
+    if (_authErr || !_identity?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
   } catch (_e) {
@@ -33,6 +33,9 @@ serve(async (req) => {
 
   try {
     const { profile, products, startDate, daysCount = 30, postCount = 12, period = "monthly", monthlyStrategy, objective, formats } = await req.json();
+    if (typeof startDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(startDate) || Number.isNaN(Date.parse(`${startDate}T12:00:00Z`))) {
+      return new Response(JSON.stringify({ error: "Data inicial inválida" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     // Scientific grounding from cached research
     let researchBlock = "";
@@ -42,15 +45,17 @@ serve(async (req) => {
       const { data: research } = await admin
         .from("research_items")
         .select("title, source, url")
-        .eq("type", "pubmed")
+        .eq("type", "article")
         .order("fetched_at", { ascending: false })
         .limit(8);
       if (research?.length) {
-        researchBlock = `\nESTUDOS RECENTES (use como base científica quando fizer sentido, cite a fonte na legenda de forma simples, nunca invente estudos):\n${research.map((r: any) => `- ${r.title} (${r.source})`).join("\n")}\n`;
+        researchBlock = `\nESTUDOS RECENTES (use como base científica quando fizer sentido, cite a fonte na legenda de forma simples, nunca invente estudos):\n${research.map((r: any) => `- ${r.title} (${r.source}; ${r.url})`).join("\n")}\n`;
       }
     } catch (_e) { /* optional */ }
 
-    const allowedFormats: string[] = Array.isArray(formats) && formats.length ? formats : ["carrossel", "reels", "post_unico", "stories"];
+    const validFormats = ["carrossel", "reels", "post_unico", "stories"];
+    const allowedFormats: string[] = Array.isArray(formats) ? formats.filter((f: unknown): f is string => typeof f === "string" && validFormats.includes(f)) : [];
+    if (!allowedFormats.length) allowedFormats.push(...validFormats);
     const objectiveText = objective && objective !== "todos"
       ? `OBJETIVO PRINCIPAL DO PERÍODO: ${objective === "engajamento" ? "Engajamento (comentários, salvamentos, compartilhamentos)" : objective === "vender" ? "Vender (conversão para consultas e produtos)" : "Crescer (alcance e novos seguidores)"}. Priorize esse objetivo.`
       : "Equilibre engajamento, crescimento e vendas.";
@@ -67,9 +72,9 @@ serve(async (req) => {
     const especialidade = String(profile?.sub_nicho || profile?.nicho || "Nutrição").trim();
     const instagram = String(profile?.instagram_handle || "seuinstagram").replace(/^@/, "").trim();
     const safeDaysCount = Math.min(31, Math.max(1, Number(daysCount) || 30));
-    const safePostCount = Math.min(31, Math.max(1, Number(postCount) || 12));
+    const safePostCount = Math.min(7, Math.max(1, Number(postCount) || 5));
 
-    const productsList = (products || [])
+    const productsList = (Array.isArray(products) ? products : [])
       .slice(0, 3)
       .map((p: any) => `${p.nome} (R$${p.ticket})`)
       .join(", ");
@@ -106,21 +111,22 @@ ${researchBlock}
 1. Use SOMENTE estes formatos (campo "tipo"): ${allowedFormats.join(", ")}. Distribua proporcionalmente entre eles.
 2. Nunca repita o mesmo tipo 2 dias seguidos
 3. Fins de semana = conteúdo leve (conexão, bastidores, stories)
-4. Cada TÍTULO é um GANCHO NEURO de 3 segundos. Use:
+4. Cada TÍTULO deve despertar curiosidade sem prometer resultados clínicos. Use:
    - Pattern interrupt ("Pare de...", "Não faça isso se...")
    - Loop aberto / curiosidade ("Descobri por acidente...", "O que ninguém te conta sobre...")
-   - Número específico ("Os 3 sinais de que...", "87% das mulheres ignoram...")
+   - Número específico apenas quando houver evidência para sustentá-lo ("Os 3 sinais de que...")
    - Aversão à perda ("O que você está perdendo ao...")
    - Contradição com o senso comum ("Beber mais água pode estar te atrapalhando")
 5. Notas devem conter: objetivo do post | gatilho neuro usado (curiosidade/escassez/prova/autoridade/aversão à perda) | CTA sugerido | pilar
-6. Linguagem sensorial e específica: "inflamação subclínica", "fadiga adrenal", "neblina mental" — nunca "saúde" ou "bem-estar" genéricos
-7. Inclua 2-3 posts de oferta direta dos produtos cadastrados
-8. Storytelling em 1ª pessoa sempre que possível (ativa neurônios-espelho)
+6. Linguagem clara e clinicamente responsável. Não use diagnósticos sem fundamento nem termos como "fadiga adrenal".
+7. Inclua oferta direta somente quando houver produtos cadastrados e quando couber no objetivo.
+8. Use storytelling em 1ª pessoa somente se o profissional forneceu uma experiência real; nunca invente depoimentos.
 
 9. Gere o texto completo da legenda/corpo, pronto para edição e publicação, com parágrafos curtos, CTA coerente e sem promessas clínicas absolutas.
 10. O título deve existir quando o formato pedir gancho visual (carrossel, post único, reels ou levantada). Para stories, pode ser curto e conversacional.
 11. O cabeçalho é sempre "${nome} | ${especialidade}" e o rodapé é sempre "@${instagram}".
 12. Inclua um snapshot estratégico estruturado para explicar por que cada rascunho existe e 2-4 termos visuais em inglês para buscar imagens coerentes.
+13. Não invente estudos, dados ou citações. Cite apenas os estudos fornecidos acima com fonte e URL, sem transformar associação em causalidade. Evite os termos proibidos do profissional: ${String(profile?.termos_proibidos || "nenhum").slice(0, 500)}.
 
 IMPORTANTE: Retorne APENAS um JSON array válido com EXATAMENTE ${safePostCount} itens, sem markdown, sem texto antes ou depois.
 Formato exato:
@@ -145,7 +151,6 @@ Formato exato:
           },
         ],
         temperature: 0.8,
-        max_tokens: 16000,
       }),
     });
 
@@ -173,8 +178,11 @@ Formato exato:
 
     // Validate and clean items
     const validTypes = allowedFormats;
+    const endDate = new Date(`${startDate}T12:00:00Z`);
+    endDate.setUTCDate(endDate.getUTCDate() + safeDaysCount);
+    const exclusiveEnd = endDate.toISOString().slice(0, 10);
     const cleanedItems = items
-      .filter((item: any) => item.data && item.tipo && item.titulo)
+      .filter((item: any) => item && typeof item.data === "string" && /^\d{4}-\d{2}-\d{2}$/.test(item.data) && item.data >= startDate && item.data < exclusiveEnd && item.tipo && item.titulo)
       .slice(0, safePostCount)
       .map((item: any) => ({
         data: String(item.data).slice(0, 10),

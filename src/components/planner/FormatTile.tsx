@@ -2,6 +2,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import type { CalendarItem } from "@/hooks/useCalendarItems";
 import { getFormat, statusLabel } from "./formats";
 import { Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function FormatTile({ item, onClick, compact }: { item: CalendarItem; onClick: () => void; compact?: boolean }) {
   const f = getFormat(item.tipo);
@@ -12,16 +13,17 @@ export function FormatTile({ item, onClick, compact }: { item: CalendarItem; onC
   return (
     <HoverCard openDelay={150}>
       <HoverCardTrigger asChild>
-        <button
+        <Button
+          variant="ghost"
           onClick={onClick}
-          className={`flex flex-col items-center justify-center rounded-xl text-primary-foreground shadow-md transition-transform hover:scale-105 ${compact ? "h-7 w-full flex-row gap-1 px-2" : "h-[72px] w-[72px] gap-1"} ${horario ? "border-2 border-dashed border-primary-foreground/60" : ""}`}
+          className={`flex flex-col items-center justify-center rounded-lg text-primary-foreground shadow-md transition-transform hover:scale-105 ${compact ? "h-7 w-full flex-row gap-1 px-2" : "h-[72px] w-[72px] gap-1"} ${horario ? "border-2 border-dashed border-primary-foreground/60" : ""}`}
           style={{ background: `linear-gradient(135deg, ${color}, hsl(var(${f.token}) / 0.75))` }}
         >
           {horario && !compact ? <Clock className="h-4 w-4" /> : <Icon className={compact ? "h-3 w-3" : "h-5 w-5"} />}
           <span className={compact ? "truncate text-[10px] font-semibold" : "text-[11px] font-semibold"}>
             {horario && !compact ? horario : f.label}
           </span>
-        </button>
+        </Button>
       </HoverCardTrigger>
       <HoverCardContent className="w-80 overflow-hidden p-0">
         <div className="flex items-center justify-between px-4 py-2 text-xs font-bold uppercase text-primary-foreground" style={{ background: color }}>

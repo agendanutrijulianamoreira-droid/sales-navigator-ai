@@ -1,1060 +1,193 @@
 import { useState } from "react";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
-import { useProfile } from "@/hooks/useProfile";
-import { useCalendarItems, CalendarItem } from "@/hooks/useCalendarItems";
-import { useAISpecialist } from "@/hooks/useAISpecialist";
-import { useUserRole } from "@/hooks/useUserRole";
-import { useProducts } from "@/hooks/useProducts";
-import { useMarketingStrategy } from "@/hooks/useMarketingStrategy";
-import { supabase } from "@/integrations/supabase/client";
-import { ScheduleDialog } from "@/components/ScheduleDialog";
-import { EditPostDialog } from "@/components/EditPostDialog";
-import { GeneratePostsDialog, GENERATION_PERIODS, type GenerationPeriod } from "@/components/GeneratePostsDialog";
-import { SmartAlerts } from "@/components/SmartAlerts";
-import { ContentStatistics } from "@/components/ContentStatistics";
-import { DateSuggestions } from "@/components/DateSuggestions";
-import { DraggablePostCard } from "@/components/DraggablePostCard";
-import { DroppableDay } from "@/components/DroppableDay";
-import { TrendsSidebar } from "@/components/TrendsSidebar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLocation, useNavigate } from "react-router-dom";
+import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { 
-  Calendar, Grid3X3, Plus, ChevronLeft, ChevronRight, Pencil, Trash2,
-  FileText, ArrowLeft, Loader2, Sparkles,
-  Copy, Download, Search, MoreHorizontal, Zap,
-  CalendarDays,
-  Target,
-  Columns3,
-  StickyNote,
-  BarChart2,
-  List,
-  LayoutGrid
-} from "lucide-react";
+import { useCalendarItems, type CalendarItem } from "@/hooks/useCalendarItems";
+import { useProfile } from "@/hooks/useProfile";
+import { useProducts } from "@/hooks/useProducts";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CalendarDayCell } from "@/components/CalendarDayCell";
-import { ReportsView } from "@/components/ReportsView";
-import { getHolidayForDate, COMMEMORATIVE_DATES } from "@/lib/constants/holidays";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Sparkles, Loader2 } from "lucide-react";
+import { FormatTile } from "@/components/planner/FormatTile";
+import { FeedPreview } from "@/components/planner/FeedPreview";
+import { QuickNotes } from "@/components/planner/QuickNotes";
+import { GenerateCalendarDialog, type GenerateOptions } from "@/components/planner/GenerateCalendarDialog";
+import { IdeaDialog, type IdeaValues } from "@/components/planner/IdeaDialog";
+import { toISO } from "@/components/planner/formats";
+import type { Json } from "@/integrations/supabase/types";
 
-const CONTENT_TYPES = {
-  carrossel: { label: "Carrossel", icon: Grid3X3, color: "bg-blue-500" },
-  post_unico: { label: "Post Único", icon: FileText, color: "bg-green-500" },
-  reels: { label: "Reels", icon: FileText, color: "bg-purple-500" },
-  stories: { label: "Stories", icon: FileText, color: "bg-orange-500" },
-  levantada: { label: "Levantada de Mão", icon: FileText, color: "bg-pink-500" },
-};
+const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+function startOfWeek(date: Date) {
+  const day = new Date(date);
+  day.setHours(12, 0, 0, 0);
+  day.setDate(day.getDate() - (day.getDay() + 6) % 7);
+  return day;
+}
+function daysFrom(start: Date, length: number) {
+  return Array.from({ length }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    return d;
+  });
+}
 
-const PIPELINE_STATUS = {
-  planejado:    { label: "Planejado",    color: "bg-gray-400",   textColor: "text-gray-600",   bgLight: "bg-gray-50",   border: "border-gray-200" },
-  rascunho:     { label: "Rascunho",     color: "bg-amber-400",  textColor: "text-amber-700",  bgLight: "bg-amber-50",  border: "border-amber-200" },
-  em_aprovacao: { label: "Em aprovação", color: "bg-sky-400",    textColor: "text-sky-700",    bgLight: "bg-sky-50",    border: "border-sky-200" },
-  aprovado:     { label: "Aprovado",     color: "bg-green-500",  textColor: "text-green-700",  bgLight: "bg-green-50",  border: "border-green-200" },
-  agendado:     { label: "Agendado",     color: "bg-purple-500", textColor: "text-purple-700", bgLight: "bg-purple-50", border: "border-purple-200" },
-  publicado:    { label: "Publicado",    color: "bg-emerald-500",textColor: "text-emerald-700",bgLight: "bg-emerald-50",border: "border-emerald-200" },
-} as const;
-
-const STATUS_ORDER = ["planejado", "rascunho", "em_aprovacao", "aprovado", "agendado", "publicado"] as const;
-
-const DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-const MONTHS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-
-function ContentPlanner() {
+export default function ContentPlanner() {
   const navigate = useNavigate();
   const location = useLocation();
-  const plannerState = location.state as {
-    openGenerator?: boolean;
-    targetMonth?: number;
-    targetYear?: number;
-  } | null;
+  const initial = location.state as { openGenerator?: boolean; targetMonth?: number; targetYear?: number } | null;
+  const [currentDate, setCurrentDate] = useState(() => initial?.targetMonth ? new Date(initial.targetYear ?? new Date().getFullYear(), initial.targetMonth - 1, 1) : new Date());
+  const [view, setView] = useState<"week" | "month">("week");
+  const [openGenerator, setOpenGenerator] = useState(Boolean(initial?.openGenerator));
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState("");
+  const [ideaOpen, setIdeaOpen] = useState(false);
+  const [selected, setSelected] = useState<CalendarItem | null>(null);
+  const [defaultDate, setDefaultDate] = useState(toISO(new Date()));
+  const { items, isLoading, addItem, addBatchItems, updateItem, deleteItem } = useCalendarItems();
   const { profile } = useProfile();
-  const { items, isLoading, addItem, addBatchItems, deleteItem, updateItem, getItemsForDate } = useCalendarItems();
-  const [currentDate, setCurrentDate] = useState(() => {
-    const now = new Date();
-    if (!plannerState?.targetMonth) return now;
-    return new Date(plannerState.targetYear || now.getFullYear(), plannerState.targetMonth - 1, 1);
-  });
-  const [view, setView] = useState<"month" | "week" | "pipeline" | "reports">("month");
-  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedPost, setSelectedPost] = useState<CalendarItem | undefined>();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<string | null>(null);
-  const [showStatistics, setShowStatistics] = useState(false);
-  const [showTrends, setShowTrends] = useState(false);
-  const [pipelineView, setPipelineView] = useState<"kanban" | "list">("kanban");
-  const [showGeneratePosts, setShowGeneratePosts] = useState(
-    () => Boolean(plannerState?.openGenerator),
-  );
-
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
-
-  const getWeekDates = () => {
-    const dates = [];
-    const startOfWeek = new Date(currentDate);
-    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(startOfWeek);
-      date.setDate(startOfWeek.getDate() + i);
-      dates.push(date);
-    }
-    return dates;
-  };
-
-  const weekDates = getWeekDates();
-
-  const filteredItems = items.filter(item => {
-    const matchesSearch = !searchQuery ||
-      item.titulo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.notas?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = !filterType || item.tipo === filterType;
-    const normalizedStatus = item.status === "criado" ? "pronto" : (item.status ?? "planejado");
-    const matchesStatus = !filterStatus || normalizedStatus === filterStatus;
-    return matchesSearch && matchesFilter && matchesStatus;
-  });
-
-  const handleSchedule = async (data: { date: string; tipo: string; titulo: string; notas?: string; status?: string; horario?: string }) => {
-    await addItem({ data: data.date, tipo: data.tipo, titulo: data.titulo, notas: data.notas });
-  };
-
-  const handleEditPost = (post: CalendarItem) => {
-    setSelectedPost(post);
-  };
-
-  const handleStatusChange = async (itemId: string, newStatus: string, itemData: string) => {
-    await updateItem(itemId, { status: newStatus });
-
-    if (newStatus === "aprovado") {
-      // Auto-advance to agendado after 1.5s
-      const formattedDate = new Date(itemData + "T12:00:00").toLocaleDateString("pt-BR", {
-        weekday: "long", day: "numeric", month: "long",
-      });
-      toast.success(`✅ Aprovado! Agendando automaticamente…`, { duration: 1500 });
-      setTimeout(async () => {
-        await updateItem(itemId, { status: "agendado" });
-        toast.success(`🗓️ Post agendado para ${formattedDate}`, { duration: 3000 });
-      }, 1500);
-    }
-  };
-
-  const handleUpdatePost = async (id: string, data: { date: string; tipo: string; titulo: string; notas?: string }) => {
-    await updateItem(id, { data: data.date, tipo: data.tipo, titulo: data.titulo, notas: data.notas || null });
-    toast.success("Post atualizado!");
-  };
-
-  const handleApplyIdea = (idea: { tipo: string; titulo: string; hook: string; descricao: string }) => {
-    setSelectedDate(new Date()); // O usuário pode arrastar depois
-    addItem({
-      data: new Date().toISOString().split("T")[0],
-      tipo: idea.tipo,
-      titulo: idea.titulo,
-      notas: `Gancho sugerido: ${idea.hook}\n\nEstratégia: ${idea.descricao}`
-    });
-    toast.success("Ideia viral adicionada ao calendário! Arraste para o dia desejado.");
-  };
-
-  const handleDuplicatePost = async (post: CalendarItem) => {
-    const newDate = new Date(post.data);
-    newDate.setDate(newDate.getDate() + 7);
-    await addItem({
-      data: newDate.toISOString().split('T')[0],
-      tipo: post.tipo,
-      titulo: `${post.titulo} (Cópia)`,
-      notas: post.notas,
-      status: "rascunho",
-      conteudo_corpo: post.conteudo_corpo,
-      cabecalho: post.cabecalho,
-      rodape: post.rodape,
-      estrategia_snapshot: post.estrategia_snapshot,
-      cover_mode: post.cover_mode,
-      cover_image_url: post.cover_image_url,
-      slide_images: post.slide_images,
-    });
-    toast.success("Post duplicado!");
-  };
-
-  const handleExportCSV = () => {
-    const csv = [["Data", "Tipo", "Título", "Notas"], ...items.map(item => [item.data, item.tipo, item.titulo || "", item.notas || ""])].map(row => row.map(cell => `"${cell}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `planejamento-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    toast.success("Exportado!");
-  };
-
-  const { generateContent, isLoading: isAISpecialistLoading } = useAISpecialist();
-  const [isGeneratingMonth, setIsGeneratingMonth] = useState(false);
-  const [monthProgress, setMonthProgress] = useState("");
-  const { hasPremiumAccess, isLoading: isRoleLoading } = useUserRole();
   const { products } = useProducts();
-  const { strategy } = useMarketingStrategy();
 
-  const isPremium = hasPremiumAccess();
+  const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const weekStart = startOfWeek(currentDate);
+  const monthGridStart = startOfWeek(monthStart);
+  const weeks = Math.ceil(((monthStart.getDay() + 6) % 7 + new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()) / 7);
+  const dates = view === "week" ? daysFrom(weekStart, 7) : daysFrom(monthGridStart, weeks * 7);
+  const monthLabel = currentDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
 
-  const handleGenerateAIPlan = async (period: GenerationPeriod) => {
-    if (!isPremium) {
-      toast.error("Funcionalidade exclusiva para usuários Elite, Teste e Admin!");
-      return;
-    }
-
-    const option = GENERATION_PERIODS[period];
-
-    setIsGeneratingMonth(true);
-    setMonthProgress("Analisando seu perfil e produtos...");
-
-    try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-
-      const startDate = view === "week"
-        ? new Date(weekDates[0])
-        : new Date(currentYear, currentMonth, 1);
-
-      if (startDate < tomorrow) {
-        startDate.setTime(tomorrow.getTime());
-      }
-
-      setMonthProgress("O Maestro está criando seu plano editorial...");
-
-      const monthlyStrategy = strategy?.find(s => s.month === currentMonth + 1);
-
-      const { data, error } = await supabase.functions.invoke("generate-month-plan", {
-        body: {
-          profile,
-          products,
-          startDate: startDate.toISOString().split("T")[0],
-          daysCount: option.days,
-          postCount: option.posts,
-          period,
-          monthlyStrategy
-        },
-      });
-
-      if (error) throw error;
-
-      if (!Array.isArray(data) || data.length === 0) {
-        throw new Error("Plano vazio retornado pela IA");
-      }
-
-      setMonthProgress(`Agendando ${data.length} posts no calendário...`);
-      await addBatchItems(data);
-      setShowGeneratePosts(false);
-      setView("pipeline");
-      toast.success(`🎯 ${data.length} ${data.length === 1 ? "rascunho criado" : "rascunhos criados"} pelo Maestro!`);
-    } catch (error) {
-      console.error("Erro ao gerar plano:", error);
-      toast.error(error instanceof Error ? error.message : "Erro ao gerar planejamento");
-    } finally {
-      setIsGeneratingMonth(false);
-      setMonthProgress("");
-    }
+  const openIdea = (date: string, item?: CalendarItem) => {
+    setDefaultDate(date);
+    setSelected(item ?? null);
+    setIdeaOpen(true);
   };
-
-  const handleGenerateManual = async () => {
-    const confirm = window.confirm("Isso irá criar uma sugestão base de posts para as próximas 4 semanas. Deseja continuar?");
-    if (!confirm) return;
-
-    setIsGeneratingMonth(true);
-    setMonthProgress("Criando planejamento manual...");
-
-    const suggestedItems = [];
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() + 1);
-
-    const template = [
-      { day: 1, tipo: "carrossel", titulo: "Dica Educativa", notas: "Resolva uma dor comum do seu público." },
-      { day: 3, tipo: "reels", titulo: "Post de Autoridade", notas: "Quebre um mito ou mostre um resultado." },
-      { day: 5, tipo: "post_unico", titulo: "Oferta Direta", notas: "Convide seu seguidor para uma ação." },
-      { day: 0, tipo: "stories", titulo: "Bastidores/Vlog", notas: "Humanize sua marca e mostre o dia a dia." }
-    ];
-
-    for (let week = 0; week < 4; week++) {
-      template.forEach(t => {
-        const date = new Date(startDate);
-        const currentDay = startDate.getDay();
-        const dayOffset = (t.day - currentDay + 7) % 7 + (week * 7);
-        date.setDate(startDate.getDate() + dayOffset);
-
-        suggestedItems.push({
-          data: date.toISOString().split('T')[0],
-          tipo: t.tipo,
-          titulo: t.titulo,
-          notas: t.notas
-        });
-      });
-    }
-
-    try {
-      await addBatchItems(suggestedItems);
-      toast.success("Plano manual criado com sucesso!");
-    } catch (error) {
-      console.error("Erro ao gerar plano manual:", error);
-      toast.error("Erro ao criar planejamento manual.");
-    } finally {
-      setIsGeneratingMonth(false);
-      setMonthProgress("");
-    }
+  const saveIdea = async (v: IdeaValues) => {
+    const snap = (selected?.estrategia_snapshot && typeof selected.estrategia_snapshot === "object" && !Array.isArray(selected.estrategia_snapshot)) ? selected.estrategia_snapshot : {};
+    const payload = {
+      data: v.data, tipo: v.tipo, titulo: v.titulo.trim(), status: v.status,
+      notas: v.notas, conteudo_corpo: v.conteudo_corpo,
+      estrategia_snapshot: { ...snap, horario: v.horario } as Json,
+    };
+    const success = selected ? await updateItem(selected.id, payload) : await addItem(payload);
+    if (!success) throw new Error("Não foi possível salvar a ideia");
+    setIdeaOpen(false);
+    toast.success("Ideia salva");
   };
-
-  const handleDropPost = async (postId: string, newDate: string) => {
-    const post = items.find(item => item.id === postId);
-    if (post && post.data !== newDate) {
-      await updateItem(postId, { data: newDate });
-      toast.success("Post movido!");
-    }
-  };
-
-  const getTypeCounts = () => {
-    const monthItems = items.filter(item => {
-      const itemDate = new Date(item.data);
-      return itemDate.getFullYear() === currentYear && itemDate.getMonth() === currentMonth;
+  const createFromIdea = async (v: IdeaValues) => {
+    await saveIdea(v);
+    navigate("/carousel-creator", {
+      state: {
+        topic: `${v.titulo}. ${v.notas}`,
+        preselectedFormat: ({ carrossel: "carousel", reels: "reels_script", post_unico: "single_post", stories: "stories" } as Record<string, string>)[v.tipo],
+        ideaDescription: v.conteudo_corpo,
+      },
     });
-    const counts: Record<string, number> = {};
-    Object.keys(CONTENT_TYPES).forEach(key => counts[key] = 0);
-    monthItems.forEach(item => { if (counts[item.tipo] !== undefined) counts[item.tipo]++; });
-    return counts;
+  };
+  const deleteSelected = async () => {
+    if (!selected || !window.confirm("Excluir esta ideia?")) return;
+    if (await deleteItem(selected.id)) setIdeaOpen(false);
+  };
+  const generate = async (o: GenerateOptions) => {
+    setLoading(true);
+    setProgress("Criando seu calendário...");
+    try {
+      const start = o.period === "weekly" ? startOfWeek(currentDate) : new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      if (start < today) start.setTime(today.getTime());
+      const daysCount = o.period === "weekly" ? Math.min(7, 7 - (start.getDay() + 6) % 7) : Math.min(31, new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate() - start.getDate() + 1);
+      const postCount = Math.min(o.perWeek, daysCount);
+      const batches = o.period === "weekly" ? 1 : Math.ceil(daysCount / 7);
+      let total = 0;
+      for (let batch = 0; batch < batches; batch++) {
+        const batchStart = new Date(start);
+        batchStart.setDate(batchStart.getDate() + 7 * batch);
+        const batchDays = Math.min(7, daysCount - batch * 7);
+        if (batchDays <= 0) continue;
+        setProgress(`Criando ideias ${batch + 1} de ${batches}...`);
+        const { data, error } = await supabase.functions.invoke("generate-month-plan", { body: {
+          profile, products, startDate: toISO(batchStart), daysCount: batchDays,
+          postCount: Math.min(postCount, batchDays), period: o.period, objective: o.objective, formats: o.formats,
+        } });
+        if (error) {
+          const response = "context" in error ? error.context as Response : null;
+          const body = response && typeof response.json === "function" ? await response.json().catch(() => null) : null;
+          throw new Error(body?.error || error.message);
+        }
+        if (!Array.isArray(data) || !data.length) throw new Error(data?.error || "Nenhuma ideia foi gerada.");
+        setProgress(`Salvando ideias ${batch + 1} de ${batches}...`);
+        const saved = await addBatchItems(data);
+        if (!saved) throw new Error("Não foi possível salvar as ideias. Tente novamente.");
+        total += saved.length;
+      }
+      setOpenGenerator(false);
+      toast.success(`${total} ideias adicionadas ao calendário`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível gerar o calendário");
+    } finally { setLoading(false); setProgress(""); }
   };
 
-  const typeCounts = getTypeCounts();
-
-  const handleQuickAction = (type: string, date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    
-    switch (type) {
-      case 'text':
-        setSelectedDate(date);
-        setShowScheduleDialog(true);
-        break;
-      case 'image':
-        setSelectedDate(date);
-        setShowScheduleDialog(true);
-        break;
-      case 'layout':
-        navigate('/carousel-creator', { state: { preselectedFormat: 'carousel' } });
-        break;
-      case 'ready_posts':
-        navigate('/library');
-        break;
-      case 'service_highlight':
-      case 'service_process':
-      case 'service_benefits':
-      case 'topics':
-      case 'step_by_step':
-        // Estes gatilhos podem abrir o Maestro ou Gerador com contexto
-        toast.info("Abrindo assistente de geração para este tema...");
-        navigate('/carousel-creator', { 
-          state: { 
-            topic: type.replace('_', ' '),
-            autoGenerateDesign: true 
-          } 
-        });
-        break;
-      default:
-        setSelectedDate(date);
-        setShowScheduleDialog(true);
-    }
-  };
-
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-  }
+  const move = (offset: number) => setCurrentDate((prev) => {
+    const next = new Date(prev);
+    if (view === "week") next.setDate(next.getDate() + 7 * offset);
+    else next.setMonth(next.getMonth() + offset);
+    return next;
+  });
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="min-h-screen bg-white flex flex-col">
-        {/* Canva-style Minimalist Header */}
-        <header className="min-h-16 flex flex-wrap items-center justify-between gap-4 px-4 md:px-6 py-3 border-b border-gray-100 sticky top-0 bg-white z-50">
-          <div className="flex items-center gap-6">
-            <h1 className="text-xl font-bold text-gray-900 leading-none">Planejador de Conteúdo</h1>
-
-            <div className="flex items-center bg-gray-50 rounded-lg p-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 text-xs font-semibold"
-                onClick={() => setCurrentDate(new Date())}
-              >
-                Hoje
-              </Button>
-              <div className="flex items-center gap-1 border-l border-gray-200 ml-1 pl-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-gray-500"
-                  onClick={() => {
-                    if (view === "week") {
-                      const d = new Date(currentDate);
-                      d.setDate(d.getDate() - 7);
-                      setCurrentDate(d);
-                    } else {
-                      setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
-                    }
-                  }}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-gray-500"
-                  onClick={() => {
-                    if (view === "week") {
-                      const d = new Date(currentDate);
-                      d.setDate(d.getDate() + 7);
-                      setCurrentDate(d);
-                    } else {
-                      setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
-                    }
-                  }}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+    <AppLayout title="Calendário de conteúdo" description="Planeje o que publicar, da ideia ao post pronto">
+      <div className="space-y-7">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex gap-1 rounded-lg bg-muted p-1">
+            <Button variant="secondary" size="sm" className="gap-2"><CalendarDays className="h-4 w-4" />Calendário</Button>
+            <Button variant="ghost" size="sm" className="gap-2" onClick={() => navigate("/carousel-creator")}><Plus className="h-4 w-4" />Criar conteúdo</Button>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex rounded-lg border bg-muted/50 p-1">
+              <Button variant={view === "week" ? "secondary" : "ghost"} size="sm" onClick={() => setView("week")}>Semana</Button>
+              <Button variant={view === "month" ? "secondary" : "ghost"} size="sm" onClick={() => setView("month")}>Mês</Button>
+            </div>
+            <Button variant="secondary" size="sm" onClick={() => openIdea(toISO(currentDate))}><Plus className="mr-1 h-4 w-4" />Nova ideia</Button>
+            <Button variant="outline" size="sm" onClick={() => setOpenGenerator(true)}><Sparkles className="mr-1 h-4 w-4" />Gerar calendário</Button>
+          </div>
+          <div className="flex items-center gap-2 rounded-full bg-muted px-2 py-1">
+            <Button variant="ghost" size="icon" aria-label="Anterior" onClick={() => move(-1)}><ChevronLeft className="h-4 w-4" /></Button>
+            <span className="min-w-36 text-center text-sm font-semibold capitalize">{monthLabel}</span>
+            <Button variant="ghost" size="icon" aria-label="Próximo" onClick={() => move(1)}><ChevronRight className="h-4 w-4" /></Button>
+          </div>
+        </div>
+        {isLoading ? <div className="flex justify-center py-24"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div> : (
+          <div className="overflow-x-auto">
+            <div className="min-w-[660px]">
+              <div className="grid grid-cols-7 gap-2 pb-3">
+                {WEEKDAYS.map((d) => <div key={d} className="text-center text-xs font-semibold uppercase text-muted-foreground">{d}</div>)}
+              </div>
+              <div className="grid grid-cols-7 gap-2">
+                {dates.map((date) => {
+                  const key = toISO(date);
+                  const today = key === toISO(new Date());
+                  const dayItems = items.filter((i) => i.data === key && i.status !== "arquivado");
+                  return (
+                    <div key={key} className={`min-w-0 ${view === "month" ? "min-h-[135px]" : "min-h-[220px]"} ${date.getMonth() !== currentDate.getMonth() && view === "month" ? "opacity-45" : ""}`}>
+                      <Button variant={today ? "default" : "ghost"} size="icon" onClick={() => openIdea(key)} className="mx-auto mb-3 flex h-9 w-9 rounded-full text-lg font-semibold" aria-label={`Nova ideia em ${key}`}>{date.getDate()}</Button>
+                      <div className={`flex h-[calc(100%-3rem)] flex-wrap content-start justify-center gap-2 rounded-xl border p-2 transition-colors hover:border-primary/40 ${today ? "border-primary/40 bg-primary/5" : "border-border bg-card/60"}`}>
+                        {dayItems.slice(0, view === "month" ? 3 : 8).map((item) => <FormatTile key={item.id} item={item} compact={view === "month"} onClick={() => openIdea(key, item)} />)}
+                        {dayItems.length > (view === "month" ? 3 : 8) && <span className="text-xs text-muted-foreground">+{dayItems.length - (view === "month" ? 3 : 8)}</span>}
+                        {!dayItems.length && <Button variant="ghost" size="icon" className="h-8 w-8 opacity-50 hover:opacity-100" onClick={() => openIdea(key)} aria-label={`Adicionar ideia em ${key}`}><Plus className="h-4 w-4" /></Button>}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-
-            <span className="text-lg font-semibold text-gray-700 capitalize">
-              {view === "week"
-                ? `${weekDates[0].toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} – ${weekDates[6].toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}`
-                : `${MONTHS[currentMonth]} de ${currentYear}`}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex bg-gray-50 rounded-lg p-1">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 text-xs font-bold px-3 text-primary">
-                    <CalendarDays className="h-4 w-4 mr-2" />
-                    Planejar
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[calc(100vw-2rem)] md:w-80 p-0 overflow-hidden glass-card border-border/50">
-                  <div className="p-4 border-b border-gray-100 bg-primary/5">
-                    <h3 className="font-bold text-sm text-primary flex items-center gap-2">
-                      <Sparkles className="h-4 w-4" />
-                      Datas Estratégicas ({MONTHS[currentMonth]})
-                    </h3>
-                    <p className="text-[10px] text-muted-foreground mt-1 italic">Dica: Clique para ir até a data no calendário</p>
-                  </div>
-                  <ScrollArea className="h-[50vh] md:h-80">
-                    {COMMEMORATIVE_DATES.filter(d => d.month === currentMonth).map((d, i) => (
-                      <DropdownMenuItem 
-                        key={i} 
-                        onClick={() => {
-                          const targetDate = new Date(currentYear, d.month, d.day);
-                          setCurrentDate(targetDate);
-                        }}
-                      >
-                        <div className="flex flex-col">
-                          <span className="font-bold text-xs">{d.day}/{d.month + 1} - {d.label}</span>
-                          <span className="text-[10px] text-muted-foreground capitalize">{d.type}</span>
-                        </div>
-                      </DropdownMenuItem>
-                    ))}
-                    {COMMEMORATIVE_DATES.filter(d => d.month === currentMonth).length === 0 && (
-                      <div className="p-4 text-center text-xs text-muted-foreground">Nenhuma data este mês</div>
-                    )}
-                  </ScrollArea>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <div className="w-px h-4 bg-gray-200 self-center mx-1" />
-
-              <Button
-                variant={view === "month" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-8 text-xs font-semibold px-3"
-                onClick={() => setView("month")}
-              >
-                Mês
-              </Button>
-              <Button
-                variant={view === "week" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-8 text-xs font-semibold px-3"
-                onClick={() => setView("week")}
-              >
-                Semana
-              </Button>
-              <Button
-                variant={view === "pipeline" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-8 text-xs font-semibold px-3 gap-1"
-                onClick={() => setView("pipeline")}
-              >
-                <Columns3 className="h-3.5 w-3.5" /> Pipeline
-              </Button>
-              <Button
-                variant={view === "reports" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-8 text-xs font-semibold px-3 gap-1"
-                onClick={() => setView("reports")}
-              >
-                <BarChart2 className="h-3.5 w-3.5" /> Relatórios
-              </Button>
-            </div>
-
-            {view !== "reports" && (
-            <Select value={filterType || "todos"} onValueChange={(v) => setFilterType(v === "todos" ? null : v)}>
-              <SelectTrigger className="w-[180px] h-9 bg-gray-50 border-none text-sm font-medium">
-                <SelectValue placeholder="Todos os eventos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os eventos</SelectItem>
-                {Object.entries(CONTENT_TYPES).map(([key, config]) => (
-                  <SelectItem key={key} value={key}>{config.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            )}
-
-            {view !== "reports" && (
-            <Button
-              variant="outline"
-              className="h-9 gap-2 border-primary/30 bg-primary/5 font-bold text-primary hover:bg-primary/10"
-              onClick={() => isPremium ? setShowGeneratePosts(true) : toast.error("Funcionalidade exclusiva para usuários Elite, Teste e Admin!")}
-              disabled={isGeneratingMonth || isRoleLoading}
-            >
-              {isGeneratingMonth ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              Gerar posts
-            </Button>
-            )}
-
-            {view !== "reports" && (
-            <Button
-              className="bg-primary hover:bg-primary/90 text-white font-bold h-9"
-              onClick={() => { setSelectedDate(new Date()); setShowScheduleDialog(true); }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar
-            </Button>
-            )}
-
-            <div className="flex items-center gap-1 ml-2">
-              <Button
-                variant={showTrends ? "secondary" : "ghost"}
-                size="icon"
-                className={`h-9 w-9 ${showTrends ? "text-orange-600 bg-orange-50" : "text-gray-400"}`}
-                onClick={() => setShowTrends(!showTrends)}
-              >
-                <Zap className={`h-4 w-4 ${showTrends ? "fill-orange-600" : ""}`} />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-400">
-                <Search className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-9 w-9 text-gray-400">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </header>
-
-
-        {/* ─── Status filter chips ─── */}
-        {view !== "reports" && (
-          <div className="flex items-center gap-1.5 px-4 py-2 bg-white border-b border-gray-100 overflow-x-auto">
-            {[
-              { key: null,            label: "Todos",          dot: "bg-gray-300" },
-              { key: "planejado",     label: "Planejado",      dot: "bg-gray-400" },
-              { key: "rascunho",      label: "Rascunho",       dot: "bg-amber-400" },
-              { key: "em_aprovacao",  label: "Em aprovação",   dot: "bg-sky-400" },
-              { key: "aprovado",      label: "Aprovado",       dot: "bg-green-500" },
-              { key: "pronto",        label: "Pronto",         dot: "bg-blue-500" },
-              { key: "agendado",      label: "Agendado",       dot: "bg-purple-500" },
-              { key: "publicado",     label: "Publicado",      dot: "bg-emerald-500" },
-            ].map(({ key, label, dot }) => {
-              const active = filterStatus === key;
-              const count = key === null
-                ? items.length
-                : items.filter(i => {
-                    const s = i.status === "criado" ? "pronto" : (i.status ?? "planejado");
-                    return s === key;
-                  }).length;
-              return (
-                <button
-                  key={String(key)}
-                  onClick={() => setFilterStatus(active && key !== null ? null : key)}
-                  className={`inline-flex items-center gap-1.5 shrink-0 text-[11px] font-semibold px-3 py-1 rounded-full border transition-all ${
-                    active
-                      ? "bg-primary text-white border-primary shadow-sm"
-                      : "bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:text-gray-700"
-                  }`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-white/70" : dot}`} />
-                  {label}
-                  {count > 0 && (
-                    <span className={`text-[10px] font-bold ${active ? "text-white/80" : "text-gray-400"}`}>
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
           </div>
         )}
-
-        <div className="flex-1 flex overflow-hidden">
-          <main className="flex-1 overflow-hidden flex flex-col">
-
-            {view === "reports" ? (
-              /* ═══ REPORTS VIEW ═══ */
-              <ReportsView items={items} />
-            ) : view === "pipeline" ? (
-              /* ═══ PIPELINE / KANBAN VIEW ═══ */
-              <>
-              {/* Pipeline sub-toolbar */}
-              <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100 bg-gray-50/50">
-                <span className="text-xs font-semibold text-gray-500 mr-1">Visualizar como:</span>
-                <button
-                  onClick={() => setPipelineView("kanban")}
-                  className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${
-                    pipelineView === "kanban"
-                      ? "bg-primary text-white border-primary shadow-sm"
-                      : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <LayoutGrid className="h-3.5 w-3.5" /> Kanban
-                </button>
-                <button
-                  onClick={() => setPipelineView("list")}
-                  className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${
-                    pipelineView === "list"
-                      ? "bg-primary text-white border-primary shadow-sm"
-                      : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <List className="h-3.5 w-3.5" /> Lista
-                </button>
-              </div>
-
-              {pipelineView === "list" ? (
-              /* ─── LIST VIEW ─── */
-              <ScrollArea className="flex-1">
-                <div className="p-4 space-y-1">
-                  {(() => {
-                    const STATUS_DOT: Record<string, string> = {
-                      planejado: "bg-gray-400", rascunho: "bg-amber-400",
-                      em_aprovacao: "bg-sky-400", aprovado: "bg-green-500",
-                      agendado: "bg-purple-500", publicado: "bg-emerald-500",
-                    };
-                    const STATUS_LABEL: Record<string, string> = {
-                      planejado: "Planejado", rascunho: "Rascunho",
-                      em_aprovacao: "Em aprovação", aprovado: "Aprovado",
-                      agendado: "Agendado", publicado: "Publicado",
-                    };
-                    const TYPE_COLOR: Record<string, string> = {
-                      carrossel: "bg-violet-500", post_unico: "bg-emerald-500",
-                      reels: "bg-pink-500", stories: "bg-amber-500", levantada: "bg-red-500",
-                    };
-                    const TYPE_LABEL: Record<string, string> = {
-                      carrossel: "Carrossel", post_unico: "Post Único",
-                      reels: "Reels", stories: "Stories", levantada: "Levantada",
-                    };
-                    const listItems = filteredItems
-                      .filter(item => {
-                        const d = new Date(item.data);
-                        return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
-                      })
-                      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
-
-                    if (listItems.length === 0) {
-                      return <div className="text-center py-16 text-sm text-gray-400">Nenhum conteúdo neste mês</div>;
-                    }
-
-                    return listItems.map((item) => {
-                      const normalizedStatus = item.status === "criado" ? "pronto" : (item.status ?? "planejado");
-                      const dot = STATUS_DOT[normalizedStatus] ?? "bg-gray-400";
-                      const statusLabel = STATUS_LABEL[normalizedStatus] ?? normalizedStatus;
-                      const typeColor = TYPE_COLOR[item.tipo] ?? "bg-gray-400";
-                      const typeLabel = TYPE_LABEL[item.tipo] ?? item.tipo;
-                      const formattedDate = new Date(item.data + "T12:00:00").toLocaleDateString("pt-BR", {
-                        day: "2-digit", month: "short", weekday: "short",
-                      });
-                      return (
-                        <div
-                          key={item.id}
-                          className="flex items-center gap-3 bg-white rounded-lg border border-gray-100 px-4 py-3 hover:shadow-sm transition-all cursor-pointer group"
-                          onClick={() => setSelectedPost(item)}
-                        >
-                          {/* Status dot */}
-                          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dot}`} />
-
-                          {/* Date */}
-                          <span className="text-[11px] font-semibold text-gray-400 w-24 shrink-0 capitalize">
-                            {formattedDate}
-                          </span>
-
-                          {/* Format badge */}
-                          <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded text-white shrink-0 ${typeColor}`}>
-                            {typeLabel}
-                          </span>
-
-                          {/* Title */}
-                          <p className="text-sm font-medium text-gray-800 flex-1 line-clamp-1">
-                            {item.titulo || "Sem título"}
-                          </p>
-
-                          {/* Status label */}
-                          <span className="text-[11px] font-semibold text-gray-400 shrink-0">
-                            {statusLabel}
-                          </span>
-
-                          {/* Actions on hover */}
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                            <Button
-                              variant="ghost" size="icon"
-                              className="h-7 w-7 hover:bg-primary/10"
-                              onClick={(e) => { e.stopPropagation(); setSelectedPost(item); }}
-                            >
-                              <Pencil className="h-3.5 w-3.5 text-primary" />
-                            </Button>
-                            <Button
-                              variant="ghost" size="icon"
-                              className="h-7 w-7 hover:bg-red-50"
-                              onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }}
-                            >
-                              <Trash2 className="h-3.5 w-3.5 text-red-400" />
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
-              </ScrollArea>
-              ) : (
-              /* ─── KANBAN VIEW ─── */
-              <ScrollArea className="flex-1 p-4">
-                <div className="grid grid-cols-6 gap-3 min-h-[600px]">
-                  {STATUS_ORDER.map((statusKey) => {
-                    const status = PIPELINE_STATUS[statusKey];
-                    const columnItems = filteredItems
-                      .filter(item => {
-                        const itemDate = new Date(item.data);
-                        const inMonth = itemDate.getFullYear() === currentYear && itemDate.getMonth() === currentMonth;
-                        // Backward compat: treat 'criado' as 'pronto'
-                        const itemStatus = item.status === "criado" ? "pronto" : (item.status || "planejado");
-                        return inMonth && itemStatus === statusKey;
-                      })
-                      .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
-
-                    return (
-                      <div key={statusKey} className={`rounded-xl ${status.bgLight} ${status.border} border p-3 flex flex-col`}>
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2.5 h-2.5 rounded-full ${status.color}`} />
-                            <span className={`text-xs font-bold uppercase tracking-wider ${status.textColor}`}>{status.label}</span>
-                          </div>
-                          <span className="text-xs font-semibold text-gray-400 bg-white rounded-full w-6 h-6 flex items-center justify-center">
-                            {columnItems.length}
-                          </span>
-                        </div>
-
-                        <div className="space-y-2 flex-1">
-                          {columnItems.length === 0 ? (
-                            <div className="text-center py-8 text-xs text-gray-400">Nenhum conteúdo</div>
-                          ) : (
-                            columnItems.map((item) => {
-                              const typeConfig = CONTENT_TYPES[item.tipo as keyof typeof CONTENT_TYPES];
-                              const nextStatus = STATUS_ORDER[Math.min(STATUS_ORDER.indexOf(statusKey) + 1, STATUS_ORDER.length - 1)];
-                              const prevStatus = STATUS_ORDER[Math.max(STATUS_ORDER.indexOf(statusKey) - 1, 0)];
-
-                              return (
-                                <div
-                                  key={item.id}
-                                  className="bg-white rounded-lg border border-gray-100 p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
-                                  onClick={() => setSelectedPost(item)}
-                                >
-                                  <div className="flex items-start justify-between mb-1.5">
-                                    <span className={`inline-block text-[9px] font-bold uppercase px-1.5 py-0.5 rounded text-white ${typeConfig?.color || "bg-gray-400"}`}>
-                                      {typeConfig?.label || item.tipo}
-                                    </span>
-                                    <span className="text-[10px] text-gray-400">
-                                      {new Date(item.data + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm font-medium text-gray-800 line-clamp-2 mb-1">
-                                    {item.titulo || "Sem título"}
-                                  </p>
-                                  {item.notas && (
-                                    <p className="text-[11px] text-gray-400 line-clamp-1 flex items-center gap-1 mb-2">
-                                      <StickyNote className="h-3 w-3 shrink-0" /> {item.notas}
-                                    </p>
-                                  )}
-                                  <div className="flex items-center gap-1 pt-1.5 border-t border-gray-50 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    {statusKey !== "planejado" && (
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-6 text-[10px] px-2 text-gray-500"
-                                        onClick={(e) => { e.stopPropagation(); handleStatusChange(item.id, prevStatus, item.data); }}
-                                      >
-                                        ← {PIPELINE_STATUS[prevStatus].label}
-                                      </Button>
-                                    )}
-                                    {statusKey !== "publicado" && (
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className={`h-6 text-[10px] px-2 ml-auto font-semibold ${PIPELINE_STATUS[nextStatus].textColor}`}
-                                        onClick={(e) => { e.stopPropagation(); handleStatusChange(item.id, nextStatus, item.data); }}
-                                      >
-                                        {PIPELINE_STATUS[nextStatus].label} →
-                                      </Button>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
-              )}
-              </>
-            ) : view === "week" ? (
-            /* ═══ WEEK VIEW ═══ */
-            <>
-            {/* Weekly summary bar */}
-            {(() => {
-              const weekPosts = weekDates.flatMap(d => getItemsForDate(d));
-              const typeCounts = weekPosts.reduce((acc, p) => {
-                acc[p.tipo] = (acc[p.tipo] || 0) + 1;
-                return acc;
-              }, {} as Record<string, number>);
-              const typeLabels: Record<string, string> = {
-                carrossel: "Carrossel", post_unico: "Post Único",
-                reels: "Reels", stories: "Stories", levantada: "Levantada"
-              };
-              return weekPosts.length > 0 ? (
-                <div className="flex items-center gap-3 px-4 py-2 bg-primary/5 border-b border-primary/10 text-xs font-medium text-primary/80 flex-wrap">
-                  <span className="font-bold">{weekPosts.length} post{weekPosts.length > 1 ? "s" : ""} esta semana</span>
-                  {Object.entries(typeCounts).map(([tipo, count]) => (
-                    <span key={tipo} className="text-gray-500">
-                      {typeLabels[tipo] ?? tipo}: <span className="font-bold text-gray-700">{count}</span>
-                    </span>
-                  ))}
-                </div>
-              ) : null;
-            })()}
-            <div className="grid grid-cols-7 border-b border-gray-100 bg-white">
-              {weekDates.map((d, i) => {
-                const isToday =
-                  d.getDate() === new Date().getDate() &&
-                  d.getMonth() === new Date().getMonth() &&
-                  d.getFullYear() === new Date().getFullYear();
-                return (
-                  <div
-                    key={i}
-                    className={`px-3 py-2 border-r border-gray-50 last:border-r-0 ${isToday ? "bg-primary/5" : ""}`}
-                  >
-                    <p className="text-[10px] font-bold text-gray-400 uppercase">{DAYS[i]}</p>
-                    <p className={`text-lg font-bold ${isToday ? "text-primary" : "text-gray-700"}`}>
-                      {d.getDate()}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-            <ScrollArea className="flex-1">
-              <div className="grid grid-cols-7 h-full min-h-[600px]">
-                {weekDates.map((d, i) => {
-                  const posts = getItemsForDate(d);
-                  const isToday =
-                    d.getDate() === new Date().getDate() &&
-                    d.getMonth() === new Date().getMonth() &&
-                    d.getFullYear() === new Date().getFullYear();
-                  return (
-                    <CalendarDayCell
-                      key={i}
-                      date={d}
-                      dayNumber={d.getDate()}
-                      isToday={isToday}
-                      posts={posts}
-                      holiday={getHolidayForDate(d.getDate(), d.getMonth())}
-                      onAddClick={(date) => { setSelectedDate(date); setShowScheduleDialog(true); }}
-                      onEditPost={handleEditPost}
-                      onDeletePost={deleteItem}
-                      onDropPost={handleDropPost}
-                      variant="week"
-                    />
-                  );
-                })}
-              </div>
-            </ScrollArea>
-            </>
-            ) : (
-            /* ═══ MONTH VIEW ═══ */
-            <>
-            {/* Calendar Grid Header (Days Name) */}
-            <div className="grid grid-cols-7 border-b border-gray-100 bg-white">
-              {DAYS.map((day) => (
-                <div key={day} className="text-left px-4 py-2 text-xs font-semibold text-gray-500 border-r border-gray-50 last:border-r-0">
-                  {day}.
-                </div>
-              ))}
-            </div>
-
-            <ScrollArea className="flex-1">
-              <div className="grid grid-cols-7 h-full">
-                {/* Empty spaces at start */}
-                {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-                  <div key={`empty-${i}`} className="border-b border-r border-gray-50 min-h-[150px] bg-gray-50/20" />
-                ))}
-
-                {/* Actual Days */}
-                {Array.from({ length: daysInMonth }).map((_, i) => {
-                  const dayNumber = i + 1;
-                  const d = new Date(currentYear, currentMonth, dayNumber);
-                  const posts = getItemsForDate(d);
-                  const isToday = dayNumber === new Date().getDate() &&
-                    currentMonth === new Date().getMonth() &&
-                    currentYear === new Date().getFullYear();
-
-                  return (
-                    <CalendarDayCell
-                      key={dayNumber}
-                      date={d}
-                      dayNumber={dayNumber}
-                      isToday={isToday}
-                      posts={posts}
-                      holiday={getHolidayForDate(dayNumber, currentMonth)}
-                      onAddClick={(date) => { setSelectedDate(date); setShowScheduleDialog(true); }}
-                      onEditPost={handleEditPost}
-                      onDeletePost={deleteItem}
-                      onDropPost={handleDropPost}
-                    />
-                  );
-                })}
-              </div>
-
-            </ScrollArea>
-            </>
-            )}
-
-            {/* Floating generation buttons (visible on month/week views) */}
-            {view !== "pipeline" && view !== "reports" && (
-              <div className="fixed bottom-6 right-6 flex flex-col gap-2 z-[60]">
-                <Button
-                  variant="outline"
-                  className="rounded-full shadow-lg bg-white border-primary/20 hover:bg-primary/5 text-primary font-bold pr-6 pl-4 py-6"
-                  onClick={handleGenerateManual}
-                  disabled={isGeneratingMonth}
-                >
-                  <Plus className="h-5 w-5 mr-3" />
-                  Sugestão Manual
-                </Button>
-                {isPremium && (
-                  <Button
-                    className="rounded-full shadow-lg bg-primary hover:bg-primary/90 text-white font-bold pr-6 pl-4 py-6"
-                    onClick={() => setShowGeneratePosts(true)}
-                    disabled={isGeneratingMonth}
-                  >
-                    {isGeneratingMonth ? (
-                      <Loader2 className="h-5 w-5 mr-3 animate-spin" />
-                    ) : (
-                      <Sparkles className="h-5 w-5 mr-3" />
-                    )}
-                    {isGeneratingMonth ? (monthProgress || "Gerando...") : "Gerar posts com IA"}
-                  </Button>
-                )}
-              </div>
-            )}
-          </main>
-
-          {showTrends && (
-            <aside className="animate-in slide-in-from-right duration-300">
-              <TrendsSidebar onApplyIdea={handleApplyIdea} />
-            </aside>
-          )}
+        <div className="grid items-start gap-8 border-t pt-6 lg:grid-cols-[minmax(0,3fr)_minmax(260px,2fr)]">
+          <FeedPreview items={items} onOpen={(i) => openIdea(i.data, i)} />
+          <QuickNotes />
         </div>
-
-        <EditPostDialog
-          open={!!selectedPost}
-          onOpenChange={(open) => !open && setSelectedPost(undefined)}
-          post={selectedPost}
-          onUpdate={async (id, data) => {
-            await updateItem(id, {
-              titulo: data.titulo,
-              tipo: data.tipo,
-              notas: data.notas,
-              status: data.status || undefined,
-              data: data.date
-            });
-            setSelectedPost(undefined);
-          }}
-          onDuplicate={async (post) => {
-            await addItem({
-              data: post.data,
-              tipo: post.tipo,
-              titulo: `${post.titulo} (Cópia)`,
-              notas: post.notas,
-              status: "rascunho",
-              conteudo_corpo: post.conteudo_corpo,
-              cabecalho: post.cabecalho,
-              rodape: post.rodape,
-              estrategia_snapshot: post.estrategia_snapshot,
-              cover_mode: post.cover_mode,
-              cover_image_url: post.cover_image_url,
-              slide_images: post.slide_images,
-            });
-          }}
-        />
-
-        <GeneratePostsDialog
-          open={showGeneratePosts}
-          onOpenChange={setShowGeneratePosts}
-          onGenerate={handleGenerateAIPlan}
-          isGenerating={isGeneratingMonth}
-          progress={monthProgress}
-          hasStrategy={Boolean(strategy?.length)}
-        />
-
-        <ScheduleDialog
-          open={showScheduleDialog}
-          onOpenChange={setShowScheduleDialog}
-          defaultDate={selectedDate || undefined}
-          onSchedule={async (data) => {
-            await addItem({
-              data: data.date,
-              tipo: data.tipo,
-              titulo: data.titulo
-            });
-            setShowScheduleDialog(false);
-          }}
-        />
       </div>
-    </DndProvider>
+      <GenerateCalendarDialog open={openGenerator} onOpenChange={setOpenGenerator} onGenerate={generate} loading={loading} progress={progress} />
+      <IdeaDialog open={ideaOpen} onOpenChange={setIdeaOpen} item={selected} defaultDate={defaultDate} onSave={saveIdea} onCreate={createFromIdea} onDelete={deleteSelected} />
+    </AppLayout>
   );
-};
-
-export default ContentPlanner;
+}
