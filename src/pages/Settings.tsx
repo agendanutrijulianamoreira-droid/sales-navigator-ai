@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { User, Mail, Shield, LogOut, MessageSquareWarning } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,6 +22,17 @@ const INTENSIDADE_LABELS: Record<string, string> = {
 export default function Settings() {
   const { profile, updateProfile } = useProfile();
   const { user, signOut } = useAuth();
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordBusy, setPasswordBusy] = useState(false);
+
+  const changePassword = async () => {
+    if (newPassword.length < 8) { toast.error("Use ao menos 8 caracteres."); return; }
+    setPasswordBusy(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setPasswordBusy(false);
+    if (error) toast.error(error.message);
+    else { setNewPassword(""); toast.success("Senha atualizada."); }
+  };
 
   const handleSave = async () => {
     toast.success("Configurações salvas!");
@@ -190,6 +203,14 @@ export default function Settings() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">Nova senha</Label>
+              <div className="flex gap-2">
+                <Input id="new-password" type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Ao menos 8 caracteres" />
+                <Button variant="outline" disabled={passwordBusy || !newPassword} onClick={changePassword}>Alterar</Button>
+              </div>
+            </div>
+            <Separator />
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Sair da conta</p>
