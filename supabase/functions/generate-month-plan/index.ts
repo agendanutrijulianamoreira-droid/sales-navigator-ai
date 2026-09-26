@@ -42,11 +42,11 @@ serve(async (req) => {
       const { data: research } = await admin
         .from("research_items")
         .select("title, source, url")
-        .eq("type", "pubmed")
+        .eq("type", "article")
         .order("fetched_at", { ascending: false })
         .limit(8);
       if (research?.length) {
-        researchBlock = `\nESTUDOS RECENTES (use como base científica quando fizer sentido, cite a fonte na legenda de forma simples, nunca invente estudos):\n${research.map((r: any) => `- ${r.title} (${r.source})`).join("\n")}\n`;
+        researchBlock = `\nESTUDOS RECENTES (use como base científica quando fizer sentido, cite a fonte na legenda de forma simples, nunca invente estudos):\n${research.map((r: any) => `- ${r.title} (${r.source}; ${r.url})`).join("\n")}\n`;
       }
     } catch (_e) { /* optional */ }
 
