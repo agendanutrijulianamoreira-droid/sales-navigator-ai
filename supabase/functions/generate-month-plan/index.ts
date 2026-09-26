@@ -67,7 +67,7 @@ serve(async (req) => {
     const especialidade = String(profile?.sub_nicho || profile?.nicho || "Nutrição").trim();
     const instagram = String(profile?.instagram_handle || "seuinstagram").replace(/^@/, "").trim();
     const safeDaysCount = Math.min(31, Math.max(1, Number(daysCount) || 30));
-    const safePostCount = Math.min(16, Math.max(1, Number(postCount) || 12));
+    const safePostCount = Math.min(31, Math.max(1, Number(postCount) || 12));
 
     const productsList = (products || [])
       .slice(0, 3)
@@ -172,13 +172,13 @@ Formato exato:
     }
 
     // Validate and clean items
-    const validTypes = ["carrossel", "post_unico", "reels", "stories", "levantada"];
+    const validTypes = allowedFormats;
     const cleanedItems = items
       .filter((item: any) => item.data && item.tipo && item.titulo)
       .slice(0, safePostCount)
       .map((item: any) => ({
         data: String(item.data).slice(0, 10),
-        tipo: validTypes.includes(item.tipo) ? item.tipo : "carrossel",
+        tipo: validTypes.includes(item.tipo) ? item.tipo : validTypes[0],
         titulo: String(item.titulo).slice(0, 180),
         notas: String(item.notas || "").slice(0, 1000),
         status: "rascunho",
@@ -197,8 +197,8 @@ Formato exato:
         },
       }));
 
-    if (cleanedItems.length !== safePostCount) {
-      throw new Error(`A IA retornou ${cleanedItems.length} de ${safePostCount} rascunhos. Tente novamente.`);
+    if (cleanedItems.length === 0) {
+      throw new Error("A IA não retornou rascunhos válidos. Tente novamente.");
     }
 
     return new Response(JSON.stringify(cleanedItems), {
