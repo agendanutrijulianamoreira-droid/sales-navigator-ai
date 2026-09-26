@@ -7,7 +7,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useProducts } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CalendarDays, FolderOpen, ChevronLeft, ChevronRight, Plus, Sparkles, Loader2 } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Sparkles, Loader2 } from "lucide-react";
 import { FormatTile } from "@/components/planner/FormatTile";
 import { FeedPreview } from "@/components/planner/FeedPreview";
 import { QuickNotes } from "@/components/planner/QuickNotes";
@@ -137,7 +137,7 @@ export default function ContentPlanner() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex gap-1 rounded-lg bg-muted p-1">
             <Button variant="secondary" size="sm" className="gap-2"><CalendarDays className="h-4 w-4" />Calendário</Button>
-            <Button variant="ghost" size="sm" className="gap-2" onClick={() => navigate("/carousel-creator")}><FolderOpen className="h-4 w-4" />Conteúdos</Button>
+            <Button variant="ghost" size="sm" className="gap-2" onClick={() => navigate("/carousel-creator")}><Plus className="h-4 w-4" />Criar conteúdo</Button>
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-4">
