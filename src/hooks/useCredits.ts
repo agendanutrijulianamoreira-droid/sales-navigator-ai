@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
-import { useProfile } from "./useProfile";
 import { useUserRole } from "./useUserRole";
 import { toast } from "sonner";
 
@@ -10,11 +9,9 @@ export function useCredits() {
     const [credits, setCredits] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
 
-    const { profile } = useProfile();
     const { hasRole, isLoading: isRoleLoading } = useUserRole();
 
-    // Check both systems for maximum reliability during transition
-    const isAdmin = profile?.role === 'admin' || hasRole('admin');
+    const isAdmin = hasRole('admin');
 
     // Loading should wait for roles too
     const isActuallyLoading = loading || isRoleLoading;
