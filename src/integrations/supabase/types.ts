@@ -74,15 +74,21 @@ export type Database = {
       calendar_items: {
         Row: {
           cabecalho: string | null
+          campanha: string | null
+          canal: string
           conteudo_corpo: string | null
           cover_image_url: string | null
           cover_mode: string | null
           created_at: string
           data: string
           estrategia_snapshot: Json
+          etapa_funil: string | null
+          fonte: string | null
           generation_id: string | null
           id: string
           notas: string | null
+          objetivo: string | null
+          produto: string | null
           rodape: string | null
           slide_images: Json
           status: string | null
@@ -93,15 +99,21 @@ export type Database = {
         }
         Insert: {
           cabecalho?: string | null
+          campanha?: string | null
+          canal?: string
           conteudo_corpo?: string | null
           cover_image_url?: string | null
           cover_mode?: string | null
           created_at?: string
           data: string
           estrategia_snapshot?: Json
+          etapa_funil?: string | null
+          fonte?: string | null
           generation_id?: string | null
           id?: string
           notas?: string | null
+          objetivo?: string | null
+          produto?: string | null
           rodape?: string | null
           slide_images?: Json
           status?: string | null
@@ -112,15 +124,21 @@ export type Database = {
         }
         Update: {
           cabecalho?: string | null
+          campanha?: string | null
+          canal?: string
           conteudo_corpo?: string | null
           cover_image_url?: string | null
           cover_mode?: string | null
           created_at?: string
           data?: string
           estrategia_snapshot?: Json
+          etapa_funil?: string | null
+          fonte?: string | null
           generation_id?: string | null
           id?: string
           notas?: string | null
+          objetivo?: string | null
+          produto?: string | null
           rodape?: string | null
           slide_images?: Json
           status?: string | null

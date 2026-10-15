@@ -8,6 +8,13 @@
       "when": 1792078330679,
       "tag": "0000_secure_credit_consumption",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792078340630,
+      "tag": "0001_calendar_strategy_metadata",
+      "breakpoints": true
     }
   ]
 }
