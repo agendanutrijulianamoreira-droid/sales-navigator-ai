@@ -6,7 +6,7 @@ import type { Json } from "@/integrations/supabase/types";
 
 export interface CalendarItem {
   id: string;
-  canal: string;
+  canal?: string;
   data: string;
   tipo: string;
   titulo: string | null;
@@ -19,11 +19,11 @@ export interface CalendarItem {
   cabecalho: string | null;
   rodape: string | null;
   estrategia_snapshot: Json;
-  objetivo: string | null;
-  etapa_funil: string | null;
-  campanha: string | null;
-  produto: string | null;
-  fonte: string | null;
+  objetivo?: string | null;
+  etapa_funil?: string | null;
+  campanha?: string | null;
+  produto?: string | null;
+  fonte?: string | null;
   cover_mode: string | null;
   cover_image_url: string | null;
   slide_images: Json;

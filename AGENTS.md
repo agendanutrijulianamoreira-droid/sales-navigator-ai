@@ -2,3 +2,5 @@
 - Keep calendar ideas in `calendar_items` and personal scratch notes in `quick_notes`; both belong to the signed-in user so planning survives sessions without mixing published media and drafts.
 - Generate month plans as sequential seven-day requests to `generate-month-plan`; short batches avoid gateway output truncation and persist completed weeks when a later request fails.
 - Reuse the existing Research Hub, Brand Kit, and Photo Studio for source articles and visual preferences rather than maintaining duplicate settings.
+- Resolve role-based UI state through `useUserRole`, never profile fields; privileges originate from the protected role table and server validation.
+- Keep pending calendar strategy metadata optional in client types until its migration is applied; generated database types must reflect the live schema rather than assumed columns.
