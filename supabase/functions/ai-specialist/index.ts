@@ -259,7 +259,17 @@ serve(async (req) => {
     const messages: any[] = [
       {
         role: "system",
-        content: systemPrompt + userContext + "\n\nResponda sempre em português do Brasil. Seja direto e acionável."
+        content: systemPrompt + userContext + `
+
+Responda sempre em português do Brasil. Seja direto e acionável.
+
+PROTOCOLO DE AÇÕES DO PRODUTO:
+Quando houver uma próxima ação concreta e útil, você pode incluir ao final uma única linha oculta neste formato exato:
+<!--ASSISTANT_ACTIONS [{"type":"open_calendar","label":"Abrir calendário"}] -->
+Tipos permitidos: open_calendar, create_content, open_offers, create_calendar_item.
+Para create_calendar_item, payload deve conter date no formato YYYY-MM-DD, title e pode conter format, notes e content.
+Só sugira create_calendar_item quando a pessoa pedir para planejar/agendar ou aprovar explicitamente uma ideia. A ação sempre será confirmada antes de gravar.
+Não coloque markdown dentro do bloco, não invente data e não inclua mais de 3 ações.`
       }
     ];
 

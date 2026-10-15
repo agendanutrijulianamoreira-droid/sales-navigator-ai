@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useProfile } from "./useProfile";
 import { useProducts } from "./useProducts";
+import { parseAssistantActions, type AssistantAction } from "@/lib/assistantActions";
 
 export type Specialist =
   | "COMMAND_CENTER"
@@ -17,6 +18,7 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   specialist?: string;
+  actions?: AssistantAction[];
 }
 
 // Map page specialist names to edge function specialist names
@@ -30,6 +32,12 @@ const specialistMap: Record<string, Specialist> = {
   cfo_strategist: "CFO_STRATEGIST",
   mentor_orchestrator: "MENTOR_ORCHESTRATOR",
 };
+
+export interface SpecialistResponse {
+  content: string;
+  specialist: string;
+  actions: AssistantAction[];
+}
 
 export function useAISpecialist() {
   const { profile } = useProfile();
@@ -121,8 +129,8 @@ export function useAISpecialist() {
       }
 
       onDone();
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
+    } catch (error: unknown) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
         console.log("Geração interrompida pelo usuário");
       } else {
         console.error("AI Specialist error:", error);
@@ -137,7 +145,7 @@ export function useAISpecialist() {
   const generateContent = useCallback(async (
     specialistKey: string,
     subtipo: string,
-    inputData: Record<string, any>
+    inputData: Record<string, unknown>
   ) => {
     const specialist = specialistMap[specialistKey] || "MENTOR_ORCHESTRATOR";
     const prompt = `Tipo: ${subtipo}\nDados: ${JSON.stringify(inputData, null, 2)}`;
@@ -160,7 +168,7 @@ export function useAISpecialist() {
     return fullContent;
   }, [streamResponse]);
 
-  const routeToSpecialist = useCallback(async (query: string): Promise<{ content: string; specialist: string }> => {
+  const routeToSpecialist = useCallback(async (query: string): Promise<SpecialistResponse> => {
     setIsLoading(true);
     try {
       const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mentor-router`;
@@ -194,15 +202,18 @@ export function useAISpecialist() {
         () => { }
       );
 
+      const parsed = parseAssistantActions(fullContent);
       return {
-        content: fullContent,
-        specialist: specialist.toLowerCase()
+        content: parsed.content,
+        specialist: specialist.toLowerCase(),
+        actions: parsed.actions,
       };
     } catch (error) {
       console.error("Route to specialist error:", error);
       return {
         content: "Desculpe, ocorreu um erro. Por favor, tente novamente.",
-        specialist: "mentor_orchestrator"
+        specialist: "mentor_orchestrator",
+        actions: [],
       };
     } finally {
       setIsLoading(false);

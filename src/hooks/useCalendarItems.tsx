@@ -6,6 +6,7 @@ import type { Json } from "@/integrations/supabase/types";
 
 export interface CalendarItem {
   id: string;
+  canal: string;
   data: string;
   tipo: string;
   titulo: string | null;
@@ -18,6 +19,11 @@ export interface CalendarItem {
   cabecalho: string | null;
   rodape: string | null;
   estrategia_snapshot: Json;
+  objetivo: string | null;
+  etapa_funil: string | null;
+  campanha: string | null;
+  produto: string | null;
+  fonte: string | null;
   cover_mode: string | null;
   cover_image_url: string | null;
   slide_images: Json;
@@ -64,6 +70,7 @@ export function useCalendarItems() {
         .insert(
           itemsList.map(item => ({
             user_id: user.id,
+            canal: item.canal || "instagram",
             data: item.data,
             tipo: item.tipo,
             titulo: item.titulo ?? null,
@@ -74,6 +81,11 @@ export function useCalendarItems() {
             cabecalho: item.cabecalho ?? null,
             rodape: item.rodape ?? null,
             estrategia_snapshot: item.estrategia_snapshot ?? {},
+            objetivo: item.objetivo ?? null,
+            etapa_funil: item.etapa_funil ?? null,
+            campanha: item.campanha ?? null,
+            produto: item.produto ?? null,
+            fonte: item.fonte ?? null,
             cover_mode: item.cover_mode ?? null,
             cover_image_url: item.cover_image_url ?? null,
             slide_images: item.slide_images ?? [],

@@ -64,7 +64,13 @@ export default function ContentPlanner() {
     const payload = {
       data: v.data, tipo: v.tipo, titulo: v.titulo.trim(), status: v.status,
       notas: v.notas, conteudo_corpo: v.conteudo_corpo,
-      estrategia_snapshot: { ...snap, horario: v.horario } as Json,
+      canal: v.canal,
+      objetivo: v.objetivo || null,
+      etapa_funil: v.etapa_funil || null,
+      campanha: v.campanha || null,
+      produto: v.produto || null,
+      fonte: v.fonte || null,
+      estrategia_snapshot: { ...snap, horario: v.horario, objetivo: v.objetivo, etapa_funil: v.etapa_funil, campanha: v.campanha, produto: v.produto, fonte: v.fonte } as Json,
     };
     const success = selected ? await updateItem(selected.id, payload) : await addItem(payload);
     if (!success) throw new Error("Não foi possível salvar a ideia");

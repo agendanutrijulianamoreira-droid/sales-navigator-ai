@@ -193,6 +193,12 @@ Formato exato:
         conteudo_corpo: String(item.conteudo_corpo || "").slice(0, 12000),
         cabecalho: String(item.cabecalho || `${nome} | ${especialidade}`).slice(0, 180),
         rodape: String(item.rodape || `@${instagram}`).slice(0, 100),
+        canal: String(item.canal || "instagram").slice(0, 40),
+        objetivo: String(item.estrategia_snapshot?.objetivo || objective || "").slice(0, 80) || null,
+        etapa_funil: String(item.estrategia_snapshot?.etapa_funil || "").slice(0, 80) || null,
+        campanha: String(item.estrategia_snapshot?.campanha || monthlyStrategy?.theme || "").slice(0, 120) || null,
+        produto: String(item.estrategia_snapshot?.produto || "").slice(0, 160) || null,
+        fonte: String(item.estrategia_snapshot?.fonte || "").slice(0, 240) || null,
         estrategia_snapshot: {
           periodo: period,
           tema: item.estrategia_snapshot?.tema || monthlyStrategy?.theme || "",
@@ -201,6 +207,8 @@ Formato exato:
           etapa_funil: item.estrategia_snapshot?.etapa_funil || "",
           produto: item.estrategia_snapshot?.produto || "Geral",
           cta: item.estrategia_snapshot?.cta || "",
+          campanha: item.estrategia_snapshot?.campanha || "",
+          fonte: item.estrategia_snapshot?.fonte || "",
           termos_imagem: String(item.estrategia_snapshot?.termos_imagem || "healthy nutrition").slice(0, 120),
         },
       }));

@@ -14,7 +14,7 @@ export function useCredits() {
     const { hasRole, isLoading: isRoleLoading } = useUserRole();
 
     // Check both systems for maximum reliability during transition
-    const isAdmin = (profile as any)?.role === 'admin' || hasRole('admin');
+    const isAdmin = profile?.role === 'admin' || hasRole('admin');
 
     // Loading should wait for roles too
     const isActuallyLoading = loading || isRoleLoading;
@@ -48,27 +48,28 @@ export function useCredits() {
     }, [fetchCredits]);
 
     const consumeCredit = async (amount: number = 1): Promise<boolean> => {
-        if (!user || credits === null) return false;
-
-        // Admins have infinite credits (bypass consumption)
-        if (isAdmin) {
-            return true;
-        }
-
-        if (credits < amount) {
-            toast.error("Créditos insuficientes. Recarregue sua conta.");
-            return false;
-        }
+        if (!user || credits === null || !Number.isInteger(amount) || amount < 1) return false;
 
         try {
-            const { error } = await supabase
-                .from("user_credits")
-                .update({ credits: credits - amount })
-                .eq("user_id", user.id);
+            const { data, error } = await supabase.rpc("consume_ai_credit", {
+                _user_id: user.id,
+                _feature: "client_generation",
+                _credits: amount,
+            });
 
             if (error) throw error;
 
-            setCredits(prev => (prev !== null ? prev - amount : null));
+            const result = data as { ok?: boolean; reason?: string; remaining?: number } | null;
+            if (!result?.ok) {
+                if (result?.reason === "insufficient_credits" || result?.reason === "no_wallet") {
+                    toast.error("Créditos insuficientes. Recarregue sua conta.");
+                } else {
+                    toast.error("Não foi possível validar os créditos.");
+                }
+                return false;
+            }
+
+            if (typeof result.remaining === "number") setCredits(result.remaining);
             return true;
         } catch (err) {
             console.error("Erro ao consumir créditos:", err);

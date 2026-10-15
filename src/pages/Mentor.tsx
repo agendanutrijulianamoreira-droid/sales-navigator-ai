@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,40 +8,36 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAISpecialist } from "@/hooks/useAISpecialist";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Send, Sparkles, User, Bot, Trash2 } from "lucide-react";
+import { CalendarDays, FilePlus2, Loader2, Send, Sparkles, User, Bot, Trash2, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import type { Json } from "@/integrations/supabase/types";
+import type { AssistantAction } from "@/lib/assistantActions";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
   specialist?: string;
+  actions?: AssistantAction[];
 }
 
 export default function Mentor() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { routeToSpecialist, stopStreaming, isLoading } = useAISpecialist();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<AssistantAction | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (user) {
-      loadOrCreateConversation();
-    }
-  }, [user]);
+  const loadOrCreateConversation = useCallback(async () => {
+    if (!user) return;
 
-  useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const loadOrCreateConversation = async () => {
-    // Get the most recent conversation
     const { data } = await supabase
       .from("conversations")
       .select("*")
-      .eq("user_id", user?.id)
+      .eq("user_id", user.id)
       .eq("specialist", "mentor")
       .order("updated_at", { ascending: false })
       .limit(1)
@@ -51,7 +48,15 @@ export default function Mentor() {
       const loadedMessages = data.messages as unknown as Message[];
       setMessages(Array.isArray(loadedMessages) ? loadedMessages : []);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    loadOrCreateConversation();
+  }, [loadOrCreateConversation]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const saveConversation = async (newMessages: Message[]) => {
     if (!user) return;
@@ -60,7 +65,7 @@ export default function Mentor() {
       await supabase
         .from("conversations")
         .update({
-          messages: newMessages as any,
+          messages: newMessages as unknown as Json,
           updated_at: new Date().toISOString()
         })
         .eq("id", conversationId);
@@ -71,7 +76,7 @@ export default function Mentor() {
           user_id: user.id,
           specialist: "mentor",
           titulo: "Conversa com Mentor",
-          messages: newMessages as any,
+          messages: newMessages as unknown as Json,
         })
         .select()
         .single();
@@ -97,7 +102,8 @@ export default function Mentor() {
         const assistantMessage: Message = {
           role: "assistant",
           content: response.content,
-          specialist: response.specialist
+          specialist: response.specialist,
+          actions: response.actions,
         };
         const updatedMessages = [...newMessages, assistantMessage];
         setMessages(updatedMessages);
@@ -129,6 +135,74 @@ export default function Mentor() {
       mentor_orchestrator: "Mentor",
     };
     return labels[specialist || ""] || "Mentor";
+  };
+
+  const getFallbackActions = (message: Message): AssistantAction[] => {
+    if (message.role !== "assistant" || message.actions?.length) return [];
+    const specialist = message.specialist || "";
+    if (specialist.includes("growth") || specialist.includes("mentor")) {
+      return [
+        { type: "open_calendar", label: "Abrir calendário" },
+        { type: "create_content", label: "Criar conteúdo" },
+      ];
+    }
+    if (specialist.includes("social") || specialist.includes("copy") || specialist.includes("material")) {
+      return [{ type: "create_content", label: "Criar conteúdo" }];
+    }
+    if (specialist.includes("cfo") || specialist.includes("sales") || specialist.includes("closer")) {
+      return [{ type: "open_offers", label: "Ver ofertas" }];
+    }
+    return [];
+  };
+
+  const executeAction = async (action: AssistantAction) => {
+    if (action.type === "open_calendar") {
+      navigate("/planner");
+      return;
+    }
+    if (action.type === "create_content") {
+      navigate("/carousel-creator", { state: { topic: action.payload?.title || "Criar conteúdo a partir da conversa" } });
+      return;
+    }
+    if (action.type === "open_offers") {
+      navigate("/business-lab");
+      return;
+    }
+    setPendingAction(action);
+  };
+
+  const confirmCalendarAction = async () => {
+    if (!user || !pendingAction || pendingAction.type !== "create_calendar_item") return;
+    const payload = pendingAction.payload || {};
+    const title = payload.title?.trim();
+    const date = payload.date && /^\d{4}-\d{2}-\d{2}$/.test(payload.date) ? payload.date : null;
+    if (!title || !date) {
+      toast.error("A ação não trouxe título e data válidos para o calendário.");
+      return;
+    }
+
+    const { error } = await supabase.from("calendar_items").insert({
+      user_id: user.id,
+      data: date,
+      tipo: payload.format || "post_unico",
+      titulo: title,
+      notas: payload.notes || null,
+      conteudo_corpo: payload.content || null,
+      status: "planejado",
+      canal: "instagram",
+      objetivo: null,
+      etapa_funil: null,
+      campanha: null,
+      produto: null,
+      fonte: "Mentor IA",
+      estrategia_snapshot: { origem: "mentor", action: "create_calendar_item" },
+    });
+    if (error) {
+      toast.error("Não foi possível adicionar ao calendário.");
+      return;
+    }
+    setPendingAction(null);
+    toast.success("Item adicionado ao calendário.");
   };
 
   return (
@@ -204,6 +278,22 @@ export default function Mentor() {
                           </p>
                         )}
                         <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        {[...(message.actions || []), ...getFallbackActions(message)].length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2 border-t border-border/60 pt-3">
+                            {[...(message.actions || []), ...getFallbackActions(message)].map((action) => (
+                              <Button
+                                key={`${action.type}-${action.label}`}
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => void executeAction(action)}
+                                className="gap-1.5"
+                              >
+                                {action.type === "open_calendar" || action.type === "create_calendar_item" ? <CalendarDays className="h-3.5 w-3.5" /> : <FilePlus2 className="h-3.5 w-3.5" />}
+                                {action.label}
+                              </Button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       {message.role === "user" && (
                         <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
@@ -226,6 +316,19 @@ export default function Mentor() {
                 <div ref={scrollRef} />
               </div>
             </ScrollArea>
+
+            {pendingAction?.type === "create_calendar_item" && (
+              <div className="mb-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <p className="text-sm font-semibold">Adicionar ao calendário?</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {pendingAction.payload?.title || "Conteúdo sugerido"} · {pendingAction.payload?.date || "data não informada"}
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <Button size="sm" onClick={() => void confirmCalendarAction()} className="gap-1.5"><Check className="h-4 w-4" />Confirmar</Button>
+                  <Button size="sm" variant="outline" onClick={() => setPendingAction(null)} className="gap-1.5"><X className="h-4 w-4" />Cancelar</Button>
+                </div>
+              </div>
+            )}
 
             {/* Input */}
             <div className="flex flex-col gap-2 pt-4 border-t">

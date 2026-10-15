@@ -33,6 +33,13 @@ export function FormatTile({ item, onClick, compact }: { item: CalendarItem; onC
         <div className="space-y-2 p-4">
           <p className="line-clamp-2 font-semibold">{item.titulo || "Sem título"}</p>
           <p className="line-clamp-3 text-sm text-muted-foreground">{item.notas || item.conteudo_corpo || "Sem descrição"}</p>
+          {(item.objetivo || item.etapa_funil || item.campanha) && (
+            <div className="flex flex-wrap gap-1 text-[10px] font-medium text-primary">
+              {item.objetivo && <span className="rounded-full bg-primary/10 px-2 py-0.5">{item.objetivo}</span>}
+              {item.etapa_funil && <span className="rounded-full bg-primary/10 px-2 py-0.5">{item.etapa_funil}</span>}
+              {item.campanha && <span className="rounded-full bg-muted px-2 py-0.5">{item.campanha}</span>}
+            </div>
+          )}
         </div>
       </HoverCardContent>
     </HoverCard>
